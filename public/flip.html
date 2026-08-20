@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Flip Helper - OSRS Tracker</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>OSRS Tracker</h1>
+    <nav>
+      <a href="character.html">Character</a>
+      <a href="collectionlog.html">Collection Log</a>
+      <a href="ge.html">Grand Exchange</a>
+      <a href="flip.html" class="active">Flip Helper</a>
+    </nav>
+    <div id="sessionBar" class="session-bar"></div>
+  </header>
+  <main>
+    <div class="submenu" id="presetStrip">
+      <button type="button" data-preset="volume">High Volume</button>
+      <button type="button" data-preset="margin">High Margin</button>
+      <button type="button" data-preset="roi">Best ROI</button>
+      <button type="button" data-preset="f2p">F2P</button>
+      <button type="button" data-preset="cheap">Cheap Flips</button>
+      <button type="button" data-preset="bankroll">Fits My Bankroll</button>
+      <button type="button" data-preset="watchlist">★ Watchlist</button>
+    </div>
+
+    <div class="filters" id="flipFilters">
+      <details class="filter-drawer" open>
+        <summary>Filters</summary>
+        <div class="filter-fields">
+          <label>Bankroll (gp) <input id="bankroll" type="number" min="0" step="1000" placeholder="0" /></label>
+          <label>Min. volume <input id="minVolume" type="number" min="0" step="100" value="1000" /></label>
+          <label>Min. price <input id="minPrice" type="number" min="0" step="10" value="50" /></label>
+          <label>Max. price <input id="maxPrice" type="number" min="0" step="10" placeholder="none" /></label>
+          <label>Min. margin <input id="minMargin" type="number" min="0" step="100" value="0" /></label>
+          <label>Min. ROI % <input id="minRoi" type="number" min="0" step="0.5" value="0" /></label>
+          <label>Max age (min) <input id="maxAgeMinutes" type="number" min="0" step="1" placeholder="none" /></label>
+          <label>Members
+            <select id="membersOnly">
+              <option value="all">All</option>
+              <option value="members">Members</option>
+              <option value="f2p">F2P</option>
+            </select>
+          </label>
+          <label>Results <input id="resultLimit" type="number" min="1" max="200" value="50" /></label>
+        </div>
+      </details>
+      <button type="button" id="scanBtn">Scan</button>
+    </div>
+
+    <p class="status">The API reports completed trades, not live offers — margins are indicative. Always check the real GE offer box before committing.</p>
+    <div id="status" class="status"></div>
+    <div id="flipResults">
+      <label class="flip-sort">Sort
+        <select id="flipSort">
+          <option value="profitPerLimit">Profit/limit</option>
+          <option value="profit">Profit</option>
+          <option value="margin">Margin</option>
+          <option value="roi">ROI%</option>
+          <option value="volume">Vol/day</option>
+          <option value="realisticProfit">Realistic</option>
+        </select>
+      </label>
+      <div class="table-wrap flip-table-wrap">
+        <table id="flipTable">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Item</th>
+              <th>Buy</th>
+              <th>Sell</th>
+              <th data-sort="margin">Margin</th>
+              <th>Tax</th>
+              <th data-sort="profit">Profit</th>
+              <th data-sort="roi">ROI%</th>
+              <th>Limit</th>
+              <th data-sort="profitPerLimit">Profit/limit</th>
+              <th>Capital</th>
+              <th data-sort="volume">Vol/day</th>
+              <th>Age</th>
+              <th></th>
+              <th data-sort="realisticProfit" id="realisticHead" hidden>Realistic</th>
+            </tr>
+          </thead>
+          <tbody id="flipBody"></tbody>
+        </table>
+      </div>
+      <div id="flipCards" class="flip-cards"></div>
+    </div>
+
+    <h2 class="cl-grid-title">Flip calculator</h2>
+    <div class="filters calc-row">
+      <label>Buy <input id="calcBuy" type="number" min="0" /></label>
+      <label>Sell <input id="calcSell" type="number" min="0" /></label>
+      <label>Qty <input id="calcQty" type="number" min="1" value="1" /></label>
+    </div>
+    <div class="summary" id="calcOut">
+      <div><strong id="calcTax">n/a</strong><span>GE tax (total)</span></div>
+      <div><strong id="calcProfit">n/a</strong><span>Net profit</span></div>
+      <div><strong id="calcRoi">n/a</strong><span>ROI</span></div>
+      <div><strong id="calcCapital">n/a</strong><span>Capital</span></div>
+    </div>
+  </main>
+  <script src="session.js"></script>
+  <script src="format.js"></script>
+  <script src="flip.js"></script>
+</body>
+</html>

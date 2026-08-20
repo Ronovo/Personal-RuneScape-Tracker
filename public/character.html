@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Character Tracker - OSRS Tracker</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>OSRS Tracker</h1>
+    <nav>
+      <a href="character.html" class="active">Character</a>
+      <a href="collectionlog.html">Collection Log</a>
+      <a href="ge.html">Grand Exchange</a>
+      <a href="flip.html">Flip Helper</a>
+    </nav>
+    <div id="sessionBar" class="session-bar"></div>
+  </header>
+  <main>
+    <div class="search-row">
+      <input id="username" type="text" placeholder="OSRS username" autocomplete="off" />
+      <button id="searchBtn">Search</button>
+    </div>
+    <div id="status" class="status"></div>
+
+    <div id="result" hidden>
+      <div class="summary">
+        <div><strong id="combatLevel">-</strong><span>Combat level</span></div>
+        <div><strong id="totalLevel">-</strong><span>Total level</span></div>
+        <div><strong id="totalXp">-</strong><span>Total XP</span></div>
+      </div>
+
+      <div class="submenu">
+        <button data-tab="skills" class="active">Skills</button>
+        <button data-tab="bosses">Bosses</button>
+        <button data-tab="minigames">Minigames</button>
+        <button data-tab="others">Others</button>
+      </div>
+
+      <div id="tab-skills" class="tab-panel"></div>
+      <div id="tab-bosses" class="tab-panel" hidden></div>
+      <div id="tab-minigames" class="tab-panel" hidden></div>
+      <div id="tab-others" class="tab-panel" hidden></div>
+    </div>
+  </main>
+  <script src="session.js"></script>
+  <script src="format.js"></script>
+  <script src="character.js"></script>
+</body>
+</html>

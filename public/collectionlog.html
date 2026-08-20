@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Collection Log - OSRS Tracker</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>OSRS Tracker</h1>
+    <nav>
+      <a href="character.html">Character</a>
+      <a href="collectionlog.html" class="active">Collection Log</a>
+      <a href="ge.html">Grand Exchange</a>
+      <a href="flip.html">Flip Helper</a>
+    </nav>
+    <div id="sessionBar" class="session-bar"></div>
+  </header>
+  <main>
+    <div class="search-row">
+      <input id="username" type="text" placeholder="OSRS username" autocomplete="off" />
+      <button id="searchBtn">Search</button>
+    </div>
+    <p class="status">Data comes from <a href="https://templeosrs.com" target="_blank" rel="noopener">TempleOSRS</a>, which only has a log for players who've synced one via its RuneLite plugin. Jagex doesn't expose collection log contents through any official API.</p>
+    <div id="status" class="status"></div>
+    <div id="syncHelp" class="sync-help" hidden></div>
+
+    <div id="result" hidden>
+      <div class="summary">
+        <div><strong id="itemsObtained">-</strong><span>Items logged</span></div>
+        <div><strong id="categoriesFinished">-</strong><span>Categories complete</span></div>
+        <div><strong id="hiscoresRank">-</strong><span>Collections hiscores rank</span></div>
+      </div>
+      <h2 id="gridTitle" class="cl-grid-title">Pick a category below to see its items</h2>
+      <div id="itemGrid" class="cl-item-grid"></div>
+
+      <h2 class="cl-grid-title">Categories</h2>
+      <div class="submenu" id="groupTabs"></div>
+      <div id="groups"></div>
+    </div>
+  </main>
+  <script src="session.js"></script>
+  <script src="format.js"></script>
+  <script src="collectionlog.js"></script>
+</body>
+</html>

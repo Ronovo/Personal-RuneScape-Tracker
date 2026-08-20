@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Item - OSRS Tracker</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>OSRS Tracker</h1>
+    <nav>
+      <a href="character.html">Character</a>
+      <a href="collectionlog.html">Collection Log</a>
+      <a href="ge.html" class="active">Grand Exchange</a>
+      <a href="flip.html">Flip Helper</a>
+    </nav>
+    <div id="sessionBar" class="session-bar"></div>
+  </header>
+  <main>
+    <a href="ge.html" class="back-link">&larr; Back to Grand Exchange</a>
+    <div id="status" class="status"></div>
+    <div id="result" hidden></div>
+
+    <div id="chartSection" hidden>
+      <div class="submenu" id="rangeToggle">
+        <button type="button" data-range="1d">1D</button>
+        <button type="button" data-range="1w" class="active">1W</button>
+        <button type="button" data-range="1m">1M</button>
+        <button type="button" data-range="3m">3M</button>
+        <button type="button" data-range="1y">1Y</button>
+      </div>
+      <div class="filters" id="seriesToggles">
+        <label><input type="checkbox" data-series="high" checked /> Insta-buy</label>
+        <label><input type="checkbox" data-series="low" checked /> Insta-sell</label>
+        <label><input type="checkbox" data-series="volume" /> Volume bars</label>
+        <label><input type="checkbox" data-series="smooth" /> Smooth</label>
+      </div>
+      <div id="chart" class="chart"></div>
+    </div>
+  </main>
+  <script src="session.js"></script>
+  <script src="format.js"></script>
+  <script src="chart.js"></script>
+  <script src="item.js"></script>
+</body>
+</html>
