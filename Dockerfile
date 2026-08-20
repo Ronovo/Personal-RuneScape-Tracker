@@ -1,13 +1,12 @@
 FROM node:24-alpine
 
+RUN apk add --no-cache git
+
 WORKDIR /app
 
-COPY package.json package-lock.json ./
-RUN npm ci --omit=dev
+RUN git clone --depth 1 https://github.com/Ronovo/Personal-RuneScape-Tracker.git .
 
-COPY server.js ./
-COPY lib ./lib
-COPY public ./public
+RUN npm ci --omit=dev
 
 ENV PORT=4123
 EXPOSE 4123
