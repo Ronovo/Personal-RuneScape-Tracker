@@ -29,8 +29,6 @@
           <label>Min. daily volume <input id="minVolume" type="number" value="500" min="0" step="100" /></label>
           <label>Min. price (gp) <input id="minPrice" type="number" value="50" min="0" step="10" /></label>
           <label>Max. price (gp) <input id="maxPrice" type="number" min="0" step="10" placeholder="none" /></label>
-          <label>Min. margin after tax <input id="minMargin" type="number" value="0" min="0" step="100" /></label>
-          <label>Min. ROI % <input id="minRoi" type="number" value="0" min="0" step="0.5" /></label>
           <label>Sort
             <select id="sortBy">
               <option value="pctChange">% change</option>
@@ -47,23 +45,35 @@
               <option value="f2p">F2P</option>
             </select>
           </label>
-          <label><input id="hideStale" type="checkbox" /> Hide stale (&gt;30m)</label>
+          <label class="filter-check"><input id="hideStale" type="checkbox" /> Hide stale (&gt;30m)</label>
         </div>
       </details>
       <button id="refreshBtn">Refresh</button>
     </div>
 
-    <div class="submenu" id="directionToggle">
-      <button data-dir="risers" class="active">Rising</button>
-      <button data-dir="fallers">Dropping</button>
+    <div class="ge-toolbar">
+      <div class="submenu" id="directionToggle">
+        <button type="button" data-view="risers" class="active">Rising</button>
+        <button type="button" data-view="fallers">Dropping</button>
+        <button type="button" data-view="penny" title="Cheap, heavily traded items under 1,000 gp." aria-label="Penny Arcade: Cheap, heavily traded items under 1,000 gp.">Penny Arcade</button>
+        <button type="button" data-view="random" title="A random set of fresh, actively traded items. Click again to reroll." aria-label="Random: A random set of fresh, actively traded items. Click again to reroll.">Random</button>
+        <button type="button" data-view="spread" title="Fresh, liquid items with the largest positive margin after GE tax." aria-label="Spread: Fresh, liquid items with the largest positive margin after GE tax.">Spread</button>
+        <button type="button" data-view="staircase" title="Items rising across the 1-hour, 6-hour, and 24-hour views." aria-label="Staircase: Items rising across the 1-hour, 6-hour, and 24-hour views.">Staircase</button>
+      </div>
+      <label class="ge-page-size"># of Items
+        <select id="gridSize">
+          <option value="5">5</option>
+          <option value="10">10</option>
+          <option value="25" selected>25</option>
+          <option value="50">50</option>
+        </select>
+      </label>
     </div>
 
     <div id="status" class="status"></div>
     <h2 id="gridTitle">Rising (24h)</h2>
     <div id="grid" class="ge-grid"></div>
   </main>
-  <script src="session.js"></script>
-  <script src="format.js"></script>
-  <script src="ge.js"></script>
+  <script type="module" src="ge.js"></script>
 </body>
 </html>

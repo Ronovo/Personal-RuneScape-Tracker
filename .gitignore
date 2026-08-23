@@ -1,2 +1,19 @@
 node_modules/
 *.log
+dist/
+# public/*.js is tsc output (built from src/client/**/*.ts) - html/css are hand-written and stay tracked.
+public/*.js
+
+# Local environment/secrets
+.env
+.env.*
+!.env.example
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Tool output
+coverage/
+*.tsbuildinfo
