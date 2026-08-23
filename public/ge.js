@@ -1,29 +1,71 @@
 // Grand Exchange movers grid + item search.
-const statusEl = document.getElementById('status');
-const gridEl = document.getElementById('grid');
-const gridTitleEl = document.getElementById('gridTitle');
-const searchInput = document.getElementById('itemSearch');
-const directionButtons = document.querySelectorAll('#directionToggle button');
-
-const GRID_SIZE = 25;
-const { fmtGp, fmtPct, fmtGpShort, escapeHtml } = window.OsrsFormat;
-
-const state = {
-  direction: 'risers' // only meaningful outside search mode
+import { fmtGp, fmtPct, fmtGpShort, pctClass, escapeHtml, fetchJson, errorMessage, el } from './format.js';
+import './session.js';
+const statusEl = el('status');
+const gridEl = el('grid');
+const gridTitleEl = el('gridTitle');
+const searchInput = el('itemSearch');
+const gridSizeEl = el('gridSize');
+const viewButtons = document.querySelectorAll('#directionToggle button[data-view]');
+const MOBILE_MQ = window.matchMedia('(max-width: 700px)');
+const VIEW_TITLES = {
+    risers: 'Rising (24h)',
+    fallers: 'Dropping (24h)',
+    penny: 'Penny Arcade',
+    random: 'Random',
+    spread: 'Spread',
+    staircase: 'Staircase'
 };
-
+const state = {
+    view: 'risers',
+    randomSeed: ''
+};
+function newRandomSeed() {
+    const random = crypto.getRandomValues(new Uint32Array(1))[0];
+    return `${Date.now()}-${random}`;
+}
+// Mobile uses 6/24 instead of 5/25 so its two-column grid ends on a full row.
+function gridSizeChoices() {
+    return MOBILE_MQ.matches ? [6, 10, 24, 50] : [5, 10, 25, 50];
+}
+// Preserve the nearest equivalent choice when crossing the mobile breakpoint.
+function mapGridSize(n) {
+    if (MOBILE_MQ.matches) {
+        if (n === 5)
+            return 6;
+        if (n === 25)
+            return 24;
+        return n;
+    }
+    if (n === 6)
+        return 5;
+    if (n === 24)
+        return 25;
+    return n;
+}
+function currentGridSize() {
+    const n = Number(gridSizeEl.value);
+    return Number.isFinite(n) && n > 0 ? n : gridSizeChoices()[2];
+}
+function syncGridSizeOptions() {
+    const selected = mapGridSize(currentGridSize());
+    gridSizeEl.innerHTML = gridSizeChoices()
+        .map((n) => `<option value="${n}"${n === selected ? ' selected' : ''}>${n}</option>`)
+        .join('');
+}
 // Card is a div (not a single <a>) so the item link and Flip link can coexist.
 function itemCell(item) {
-  const pct = item.pctChange;
-  const pctHtml = pct === null || pct === undefined
-    ? ''
-    : `<span class="pct ${pct >= 0 ? 'up' : 'down'}">${fmtPct(pct)}</span>`;
-  const priceHtml = item.currentPrice ? fmtGp(item.currentPrice) : 'n/a';
-  const margin = item.marginAfterTax != null ? fmtGpShort(item.marginAfterTax) : null;
-  const metaBits = [];
-  if (margin) metaBits.push(`${margin} after tax`);
-  if (item.volume24h != null) metaBits.push(`${Number(item.volume24h).toLocaleString('en-US')} /day`);
-  return `
+    const pct = item.pctChange;
+    const pctHtml = pct === null || pct === undefined
+        ? ''
+        : `<span class="pct ${pctClass(pct)}">${fmtPct(pct)} <span class="pct-label">~24h change</span></span>`;
+    const priceHtml = item.currentPrice ? fmtGp(item.currentPrice) : 'n/a';
+    const margin = item.marginAfterTax != null ? fmtGpShort(item.marginAfterTax) : null;
+    const metaBits = [];
+    if (margin)
+        metaBits.push(`${margin} after tax`);
+    metaBits.push(`${item.volume24h.toLocaleString('en-US')} /day`);
+    return `
     <div class="ge-cell">
       <a class="ge-cell-main" href="item.html?id=${item.id}">
         <img src="${item.icon}" alt="" loading="lazy" />
@@ -35,106 +77,118 @@ function itemCell(item) {
       <a class="flip-link" href="flip.html?ids=${item.id}">Flip</a>
     </div>`;
 }
-
 function renderGrid(items) {
-  gridEl.innerHTML = items.length
-    ? items.map(itemCell).join('')
-    : '<p class="status">No items match.</p>';
+    gridEl.innerHTML = items.length
+        ? items.map(itemCell).join('')
+        : '<p class="status">No items match.</p>';
 }
-
 // Builds the movers query from the filter row. Empty max-price is omitted so
 // the server treats it as "no cap" rather than 0.
 function filterQuery() {
-  const minVolume = document.getElementById('minVolume').value;
-  const minPrice = document.getElementById('minPrice').value;
-  const maxPrice = document.getElementById('maxPrice').value;
-  const minMargin = document.getElementById('minMargin').value;
-  const minRoi = document.getElementById('minRoi').value;
-  const membersOnly = document.getElementById('membersOnly').value;
-  const sort = document.getElementById('sortBy').value;
-  const hideStale = document.getElementById('hideStale').checked ? '1' : '0';
-  const params = new URLSearchParams({
-    minVolume, minPrice, minMargin, minRoi, membersOnly, sort, hideStale, limit: String(GRID_SIZE)
-  });
-  if (maxPrice) params.set('maxPrice', maxPrice);
-  return params;
+    const minVolume = el('minVolume').value;
+    const minPrice = el('minPrice').value;
+    const maxPrice = el('maxPrice').value;
+    const membersOnly = el('membersOnly').value;
+    const sort = el('sortBy').value;
+    const hideStale = el('hideStale').checked ? '1' : '0';
+    const params = new URLSearchParams({
+        minVolume, minPrice, membersOnly, sort, hideStale,
+        limit: String(currentGridSize()), view: state.view
+    });
+    if (state.view === 'random')
+        params.set('seed', state.randomSeed);
+    if (maxPrice)
+        params.set('maxPrice', maxPrice);
+    return params;
 }
-
 async function loadMovers() {
-  gridTitleEl.textContent = state.direction === 'risers' ? 'Rising (24h)' : 'Dropping (24h)';
-  statusEl.textContent = 'Loading...';
-  statusEl.classList.remove('error');
-
-  try {
-    const res = await fetch(`/api/ge/movers?${filterQuery()}`);
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to load movers');
-
-    renderGrid(data[state.direction]);
-    statusEl.textContent = `${data.consideredCount} items matched your filters (prices cached ~5 min).`;
-  } catch (err) {
-    statusEl.textContent = err.message;
-    statusEl.classList.add('error');
-  }
+    gridTitleEl.textContent = VIEW_TITLES[state.view];
+    statusEl.textContent = 'Loading...';
+    statusEl.classList.remove('error');
+    try {
+        const { ok, data } = await fetchJson(`/api/ge/movers?${filterQuery()}`);
+        if (!ok)
+            throw new Error(data.error || 'Failed to load movers');
+        const items = state.view === 'risers' || state.view === 'fallers'
+            ? data[state.view]
+            : data.items ?? [];
+        renderGrid(items);
+        statusEl.textContent = `${data.consideredCount} items matched your filters (prices cached ~5 min).`;
+    }
+    catch (err) {
+        statusEl.textContent = errorMessage(err, 'Failed to load movers');
+        statusEl.classList.add('error');
+    }
 }
-
 // Name search replaces the movers grid until the box is cleared.
 async function loadSearch(query) {
-  gridTitleEl.textContent = `Search: "${query}"`;
-  statusEl.textContent = 'Searching...';
-  statusEl.classList.remove('error');
-
-  try {
-    const res = await fetch(`/api/ge/search?q=${encodeURIComponent(query)}`);
-    const results = await res.json();
-    if (!res.ok) throw new Error(results.error || 'Search failed');
-
-    renderGrid(results.slice(0, GRID_SIZE));
-    statusEl.textContent = `${results.length} item(s) found.`;
-  } catch (err) {
-    statusEl.textContent = err.message;
-    statusEl.classList.add('error');
-  }
+    gridTitleEl.textContent = `Search: "${query}"`;
+    statusEl.textContent = 'Searching...';
+    statusEl.classList.remove('error');
+    try {
+        const { ok, data: body } = await fetchJson(`/api/ge/search?q=${encodeURIComponent(query)}`);
+        if (!ok)
+            throw new Error(body.error || 'Search failed');
+        const results = body;
+        renderGrid(results.slice(0, currentGridSize()));
+        statusEl.textContent = `${results.length} item(s) found.`;
+    }
+    catch (err) {
+        statusEl.textContent = errorMessage(err, 'Search failed');
+        statusEl.classList.add('error');
+    }
 }
-
-function setDirection(dir) {
-  state.direction = dir;
-  directionButtons.forEach((b) => b.classList.toggle('active', b.dataset.dir === dir));
+function setView(view) {
+    // Entering or re-clicking Random gets a new seed, while reloads keep the grid stable.
+    if (view === 'random' && (state.view === 'random' || !state.randomSeed)) {
+        state.randomSeed = newRandomSeed();
+    }
+    state.view = view;
+    viewButtons.forEach((button) => button.classList.toggle('active', button.dataset.view === view));
 }
-
 function isSearching() {
-  return searchInput.value.trim().length > 0;
+    return searchInput.value.trim().length > 0;
 }
-
+function isSpecialView(view) {
+    return view !== 'risers' && view !== 'fallers';
+}
 let searchTimer;
 searchInput.addEventListener('input', () => {
-  clearTimeout(searchTimer);
-  const q = searchInput.value.trim();
-  // Debounce so we don't fire a search on every keystroke.
-  searchTimer = setTimeout(() => {
-    if (q) {
-      loadSearch(q);
-    } else {
-      setDirection('risers');
-      loadMovers();
+    clearTimeout(searchTimer);
+    const q = searchInput.value.trim();
+    // Debounce so we don't fire a search on every keystroke.
+    searchTimer = setTimeout(() => {
+        if (q) {
+            if (isSpecialView(state.view))
+                setView('risers');
+            loadSearch(q);
+        }
+        else {
+            setView('risers');
+            loadMovers();
+        }
+    }, 300);
+});
+viewButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+        searchInput.value = '';
+        setView(btn.dataset.view);
+        loadMovers();
+    });
+});
+function reloadGrid() {
+    if (isSearching()) {
+        loadSearch(searchInput.value.trim());
     }
-  }, 300);
+    else {
+        loadMovers();
+    }
+}
+el('refreshBtn').addEventListener('click', reloadGrid);
+gridSizeEl.addEventListener('change', reloadGrid);
+MOBILE_MQ.addEventListener('change', () => {
+    syncGridSizeOptions();
+    reloadGrid();
 });
-
-directionButtons.forEach((btn) => {
-  btn.addEventListener('click', () => {
-    searchInput.value = '';
-    setDirection(btn.dataset.dir);
-    loadMovers();
-  });
-});
-
-document.getElementById('refreshBtn').addEventListener('click', () => {
-  if (isSearching()) {
-    loadSearch(searchInput.value.trim());
-  } else {
-    loadMovers();
-  }
-});
-
+syncGridSizeOptions();
 loadMovers();

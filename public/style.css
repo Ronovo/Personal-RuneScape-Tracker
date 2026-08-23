@@ -1,8 +1,10 @@
 :root {
   --bg: #1b1712;
   --panel: #26211a;
+  --panel-dark: #201b15;
   --border: #4a3f2f;
   --gold: #d9c27e;
+  --on-gold: #241d13;
   --text: #e8e0d0;
   --muted: #a89a80;
   --up: #6fbf6f;
@@ -100,6 +102,13 @@ main {
   flex-wrap: wrap;
 }
 
+/* GE search is the only field in its row — grow until the placeholder fits. */
+#itemSearch {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: min(100%, 36rem);
+}
+
 input, select, button {
   font-size: 1rem;
   padding: 0.5rem 0.7rem;
@@ -111,13 +120,21 @@ input, select, button {
 
 button {
   background: var(--gold);
-  color: #241d13;
+  color: var(--on-gold);
   font-weight: 600;
   cursor: pointer;
   border: none;
 }
 
 button:hover { opacity: 0.9; }
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
 
 .submenu {
   display: flex;
@@ -139,6 +156,33 @@ button:hover { opacity: 0.9; }
   color: var(--gold);
   border: 1px solid var(--border);
   border-bottom: none;
+}
+
+.ge-toolbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.ge-toolbar .submenu { margin-bottom: 0; }
+
+.ge-page-size {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.cl-filter-sep {
+  width: 1px;
+  align-self: stretch;
+  background: var(--border);
+  margin: 0.15rem 0.4rem 0.35rem;
 }
 
 .summary {
@@ -182,7 +226,7 @@ th, td {
 th {
   color: var(--muted);
   font-weight: 600;
-  background: #201b15;
+  background: var(--panel-dark);
 }
 
 tr:last-child td { border-bottom: none; }
@@ -228,6 +272,12 @@ tr:last-child td { border-bottom: none; }
 .pct.up { color: var(--up); font-weight: 600; }
 .pct.down { color: var(--down); font-weight: 600; }
 
+.ge-cell .pct-label {
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 400;
+}
+
 #groups {
   display: flex;
   flex-wrap: wrap;
@@ -246,7 +296,29 @@ tr:last-child td { border-bottom: none; }
 }
 
 .cl-pill:hover { border-color: var(--gold); }
-.cl-pill.active { background: var(--gold); color: #241d13; font-weight: 600; }
+
+.cl-pill.started {
+  background: #6b5618;
+  border-color: #c4a84a;
+  color: #f0e6c0;
+}
+
+.cl-pill.started .cl-count { color: #d9c27e; }
+
+.cl-pill.complete {
+  background: #2f5a2f;
+  border-color: var(--up);
+  color: #d4f0d4;
+}
+
+.cl-pill.complete .cl-count { color: #9fd49f; }
+
+/* Gold fill only for unstarted + selected so progress colors stay visible. */
+.cl-pill.active { font-weight: 600; box-shadow: 0 0 0 2px var(--gold); }
+.cl-pill.active:not(.started):not(.complete) {
+  background: var(--gold);
+  color: var(--on-gold);
+}
 
 .cl-count {
   color: var(--muted);
@@ -254,7 +326,7 @@ tr:last-child td { border-bottom: none; }
   font-size: 0.78rem;
 }
 
-.cl-pill.active .cl-count { color: #241d13; opacity: 0.75; }
+.cl-pill.active:not(.started):not(.complete) .cl-count { color: var(--on-gold); opacity: 0.75; }
 
 .cl-grid-title {
   color: var(--gold);
@@ -314,6 +386,8 @@ tr:last-child td { border-bottom: none; }
   font-size: 0.9rem;
   margin: 0.5rem 0;
 }
+
+.status strong.warn { color: var(--down); }
 
 .error {
   color: var(--down);
@@ -375,27 +449,6 @@ tr:last-child td { border-bottom: none; }
   .item-stats { grid-template-columns: repeat(2, 1fr); }
 }
 
-.item-stats strong.pct { font-size: 1.3rem; }
-
-.sparkline-container {
-  margin-top: 1rem;
-  color: var(--gold);
-}
-
-.sparkline {
-  width: 100%;
-  height: 100px;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-}
-
-.sparkline-caption {
-  color: var(--muted);
-  font-size: 0.8rem;
-  margin-top: 0.3rem;
-}
-
 .stat-group {
   grid-column: 1 / -1;
   color: var(--gold);
@@ -435,7 +488,7 @@ tr:last-child td { border-bottom: none; }
 
 .chart-tooltip {
   position: absolute;
-  background: #201b15;
+  background: var(--panel-dark);
   border: 1px solid var(--border);
   border-radius: 4px;
   padding: 0.4rem 0.55rem;
@@ -476,8 +529,16 @@ tr:last-child td { border-bottom: none; }
   margin-bottom: 1.5rem;
 }
 
-/* Flip Helper's 15-col table only — character tables should shrink with the page. */
-#flipTable { min-width: 960px; }
+/* No forced min-width: the flip table's columns are user-toggleable now, so it
+   should size to whatever's actually visible and only scroll (.table-wrap,
+   above) when the shown columns genuinely don't fit. */
+
+/* Every cell stays a single line, no matter how many columns are toggled on -
+   otherwise a long item name (or anything else) wraps to a second line and
+   every row on the page grows to match. Combined with the auto table-layout
+   and .table-wrap's overflow-x above, a tight table scrolls horizontally
+   instead of wrapping or squeezing text. */
+#flipTable th, #flipTable td { white-space: nowrap; }
 
 .item-link {
   display: inline-flex;
@@ -500,7 +561,50 @@ tr:last-child td { border-bottom: none; }
   line-height: 1;
 }
 
+.star-btn:hover { color: var(--gold); }
 .star-btn.on { color: var(--gold); }
+
+.calc-btn {
+  background: transparent;
+  color: var(--muted);
+  border: none;
+  padding: 0.1rem 0.3rem;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.calc-btn:hover { color: var(--gold); }
+
+#calcSelectedLabel { color: var(--muted); font-weight: 400; }
+
+.calc-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  flex-wrap: wrap;
+}
+
+.calc-return {
+  padding: 0.3rem 0.55rem;
+  font-size: 0.8rem;
+}
+
+.return-target {
+  animation: return-item-highlight 2s ease-out;
+}
+
+@keyframes return-item-highlight {
+  0%, 70% {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 3px var(--gold);
+  }
+  100% {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    box-shadow: none;
+  }
+}
 
 .conf-dot {
   display: inline-block;
@@ -516,6 +620,9 @@ tr:last-child td { border-bottom: none; }
 
 th[data-sort] { user-select: none; }
 th[data-sort]:hover { color: var(--gold); }
+th[data-sort].sort-active { color: var(--gold); }
+th[data-sort].sort-asc::after { content: ' \25B2'; }
+th[data-sort].sort-desc::after { content: ' \25BC'; }
 
 /* Boxed filter panel. Avoid display:contents on <details> — browsers treat
    it as a block and the fields stack in a single column. */
@@ -535,8 +642,22 @@ th[data-sort]:hover { color: var(--gold); }
   width: 100%;
 }
 
-.filters:has(.filter-drawer) > button {
-  align-self: flex-end;
+/* Checkbox sits on the input row of the grid, not stacked like the other labels. */
+.filters:has(.filter-drawer) label.filter-check {
+  flex-direction: row;
+  align-items: center;
+  align-self: end;
+  min-height: calc(1rem + 1rem + 2px);
+}
+
+.filter-check input[type="checkbox"] {
+  width: auto;
+  height: 1rem;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: none;
+  accent-color: var(--gold);
 }
 
 .filter-drawer {
@@ -556,8 +677,115 @@ th[data-sort]:hover { color: var(--gold); }
   gap: 0.65rem 0.75rem;
 }
 
+.filter-fields > #scanBtn {
+  align-self: end;
+}
+
 .flip-cards { display: none; }
 .flip-sort { display: none; }
+
+.flip-page-size {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.flip-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.btn-outline:hover { color: var(--gold); opacity: 1; }
+
+.flip-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+#flipSearch {
+  flex: 0 1 220px;
+  min-width: 140px;
+}
+
+#columnsBtn {
+  font-size: 0.85rem;
+  padding: 0.35rem 0.6rem;
+}
+
+#sortDirBtn {
+  font-size: 0.8rem;
+  padding: 0.3rem 0.5rem;
+  white-space: nowrap;
+}
+
+/* [hidden] must win over the plain-class display rule below (same specificity,
+   but author CSS otherwise beats the UA stylesheet's [hidden]{display:none}),
+   or toggling the panel's `hidden` attribute silently does nothing. */
+.columns-panel[hidden] { display: none; }
+
+.columns-panel {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.4rem 0.75rem;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.columns-panel label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.columns-panel-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.4rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--border);
+}
+
+#setDefaultBtn, #resetDefaultBtn {
+  font-size: 0.8rem;
+  padding: 0.3rem 0.5rem;
+}
+
+.columns-default-status {
+  font-size: 0.8rem;
+  color: var(--gold);
+}
+
+.flip-pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 
 /* Mobile: compact sticky chrome, 2×2 nav, cards instead of the wide flip table. */
 @media (max-width: 700px) {
@@ -565,8 +793,12 @@ th[data-sort]:hover { color: var(--gold); }
     position: sticky;
     top: 0;
     z-index: 10;
-    flex-direction: column;
-    align-items: flex-start;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      "title session"
+      "nav nav";
+    align-items: center;
     gap: 0.5rem;
     padding: 0.5rem 0.75rem;
     padding-top: max(0.5rem, env(safe-area-inset-top));
@@ -574,9 +806,13 @@ th[data-sort]:hover { color: var(--gold); }
     padding-right: max(0.75rem, env(safe-area-inset-right));
   }
 
-  header h1 { font-size: 1rem; }
+  header h1 {
+    grid-area: title;
+    font-size: 1rem;
+  }
 
   nav {
+    grid-area: nav;
     display: grid;
     grid-template-columns: 1fr 1fr;
     width: 100%;
@@ -593,22 +829,28 @@ th[data-sort]:hover { color: var(--gold); }
     white-space: normal;
   }
 
+  /* Title stays left; session uses the rest of the row so the name/input stay readable. */
   .session-bar {
+    grid-area: session;
     width: 100%;
-    flex-wrap: wrap;
-    white-space: normal;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+    white-space: nowrap;
   }
 
   .session-bar input {
-    flex: 1 1 8rem;
+    flex: 1 1 10rem;
     width: auto;
-    min-width: 0;
-    font-size: 1rem;
+    min-width: 8rem;
+    font-size: 0.9rem;
+    padding: 0.35rem 0.5rem;
   }
 
   .session-bar button {
-    min-height: 44px;
-    font-size: 0.9rem;
+    flex-shrink: 0;
+    min-height: 0;
+    font-size: 0.85rem;
+    padding: 0.35rem 0.6rem;
   }
 
   main {
@@ -642,7 +884,31 @@ th[data-sort]:hover { color: var(--gold); }
     min-height: 40px;
   }
 
+  /* Six GE views wrap into as many rows as fit instead of scrolling sideways. */
+  .ge-toolbar .submenu {
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+
+  .ge-page-size { margin-left: auto; }
+  #groupTabs {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+
+  #groupTabs .cl-filter-sep {
+    flex: 0 0 100%;
+    width: 100%;
+    height: 1px;
+    align-self: auto;
+    margin: 0.15rem 0 0.35rem;
+  }
+
+  .ge-page-size select { min-height: 44px; }
+
   .filter-drawer {
+    position: relative;
     padding: 0;
     margin-bottom: 0.5rem;
   }
@@ -654,6 +920,7 @@ th[data-sort]:hover { color: var(--gold); }
     color: var(--gold);
     font-weight: 600;
     padding: 0.65rem 0.75rem;
+    padding-right: 6rem;
     min-height: 44px;
     list-style: none;
   }
@@ -670,6 +937,15 @@ th[data-sort]:hover { color: var(--gold); }
     padding: 0.7rem;
   }
 
+  .filter-fields > #scanBtn {
+    position: absolute;
+    top: 0.3rem;
+    right: 0.4rem;
+    min-height: 34px;
+    min-width: 5rem;
+    padding-block: 0.35rem;
+  }
+
   .filters {
     flex-direction: column;
     align-items: stretch;
@@ -681,16 +957,16 @@ th[data-sort]:hover { color: var(--gold); }
     gap: 0.25rem;
   }
 
+  .filters label.filter-check {
+    flex-direction: row;
+    align-items: center;
+    min-height: 44px;
+  }
+
   .filters input:not([type="checkbox"]),
   .filters select {
     width: 100%;
     min-height: 44px;
-  }
-
-  .filters > button {
-    min-height: 44px;
-    width: 100%;
-    align-self: stretch;
   }
 
   .calc-row {
@@ -729,6 +1005,25 @@ th[data-sort]:hover { color: var(--gold); }
     min-height: 44px;
   }
 
+  #sortDirBtn {
+    min-height: 44px;
+  }
+
+  .flip-page-size select {
+    flex: 1 1 auto;
+    min-height: 44px;
+  }
+
+  .flip-pagination button {
+    min-height: 44px;
+    flex: 1 1 auto;
+  }
+
+  /* Cards on mobile always show the same fixed fields - column selection
+     only means something for the desktop table, so hide the control entirely. */
+  #columnsBtn { display: none; }
+  .columns-panel { display: none; }
+
   .flip-cards { display: block; }
 
   .flip-card {
@@ -748,6 +1043,12 @@ th[data-sort]:hover { color: var(--gold); }
 
   .flip-card-head .item-link { flex: 1 1 auto; min-width: 0; }
   .flip-card-head .star-btn {
+    min-width: 44px;
+    min-height: 44px;
+    font-size: 1.3rem;
+  }
+
+  .flip-card-head .calc-btn {
     min-width: 44px;
     min-height: 44px;
     font-size: 1.3rem;
