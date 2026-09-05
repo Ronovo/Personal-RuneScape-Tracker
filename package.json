@@ -3,19 +3,34 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "build": "npm run build:server && npm run build:client",
     "build:server": "tsc -p tsconfig.server.json && node scripts/copy-assets.mjs",
     "build:client": "tsc -p tsconfig.client.json",
     "typecheck": "tsc -p tsconfig.server.json --noEmit && tsc -p tsconfig.client.json --noEmit",
-    "start": "npm run build && node dist/server.js"
+    "lint": "eslint .",
+    "test": "npm run build:server && tsc -p tsconfig.client.test.json && node --test \"dist/lib/**/*.test.js\" \"dist/client-tests/client/**/*.test.js\"",
+    "test:coverage": "npm run build:server && tsc -p tsconfig.client.test.json && node --test --experimental-test-coverage \"dist/lib/**/*.test.js\" \"dist/client-tests/client/**/*.test.js\"",
+    "start": "npm run build && node dist/server.js",
+    "stop": "node scripts/stop-server.mjs",
+    "scrape:quests": "node scripts/scrape-quest-metadata.mjs",
+    "scrape:combatachievements": "node scripts/scrape-combat-achievement-metadata.mjs",
+    "import:leagues": "node scripts/import-leagues-task-metadata.mjs",
+    "restart": "npm run stop && npm run start"
   },
   "dependencies": {
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "jose": "^6.2.10"
   },
   "devDependencies": {
-    "typescript": "^5.9.3",
+    "@eslint/js": "^10.0.1",
     "@types/express": "^5.0.3",
-    "@types/node": "^24.7.0"
+    "@types/node": "^24.7.0",
+    "eslint": "^10.9.1",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.69.0"
   }
 }

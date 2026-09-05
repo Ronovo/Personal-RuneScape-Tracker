@@ -6,6 +6,9 @@
     "skipLibCheck": true,
     "noImplicitOverride": true,
     "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noUncheckedIndexedAccess": true,
     "resolveJsonModule": true,
     "verbatimModuleSyntax": true
   }

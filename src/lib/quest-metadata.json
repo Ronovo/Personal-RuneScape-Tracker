@@ -1,0 +1,1212 @@
+{
+  "source": "https://oldschool.runescape.wiki",
+  "scrapedAt": "2026-08-24T19:46:39.887Z",
+  "quests": [
+    {
+      "name": "A Kingdom Divided",
+      "wikiPage": "A Kingdom Divided",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "A Night at the Theatre",
+      "wikiPage": "A Night at the Theatre",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "A Porcine of Interest",
+      "wikiPage": "A Porcine of Interest",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "A Soul's Bane",
+      "wikiPage": "A Soul's Bane",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "A Tail of Two Cats",
+      "wikiPage": "A Tail of Two Cats",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "A Taste of Hope",
+      "wikiPage": "A Taste of Hope",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Alfred Grimhand's Barcrawl",
+      "wikiPage": "Alfred Grimhand's Barcrawl",
+      "kind": "miniquest",
+      "members": true
+    },
+    {
+      "name": "Animal Magnetism",
+      "wikiPage": "Animal Magnetism",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Another Slice of H.A.M.",
+      "wikiPage": "Another Slice of H.A.M.",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "At First Light",
+      "wikiPage": "At First Light",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Barbarian Training",
+      "wikiPage": "Barbarian Training",
+      "kind": "miniquest",
+      "members": true
+    },
+    {
+      "name": "Bear Your Soul",
+      "wikiPage": "Bear Your Soul",
+      "kind": "miniquest",
+      "members": true
+    },
+    {
+      "name": "Below Ice Mountain",
+      "wikiPage": "Below Ice Mountain",
+      "kind": "quest",
+      "members": false
+    },
+    {
+      "name": "Beneath Cursed Sands",
+      "wikiPage": "Beneath Cursed Sands",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Between a Rock...",
+      "wikiPage": "Between a Rock...",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Big Chompy Bird Hunting",
+      "wikiPage": "Big Chompy Bird Hunting",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Biohazard",
+      "wikiPage": "Biohazard",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Black Knights' Fortress",
+      "wikiPage": "Black Knights' Fortress",
+      "kind": "quest",
+      "members": false
+    },
+    {
+      "name": "Bone Voyage",
+      "wikiPage": "Bone Voyage",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Cabin Fever",
+      "wikiPage": "Cabin Fever",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Children of the Sun",
+      "wikiPage": "Children of the Sun",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Client of Kourend",
+      "wikiPage": "Client of Kourend",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Clock Tower",
+      "wikiPage": "Clock Tower",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Cold War",
+      "wikiPage": "Cold War",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Contact!",
+      "wikiPage": "Contact!",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Cook's Assistant",
+      "wikiPage": "Cook's Assistant",
+      "kind": "quest",
+      "members": false
+    },
+    {
+      "name": "Creature of Fenkenstrain",
+      "wikiPage": "Creature of Fenkenstrain",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Current Affairs",
+      "wikiPage": "Current Affairs",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Curse of the Empty Lord",
+      "wikiPage": "Curse of the Empty Lord",
+      "kind": "miniquest",
+      "members": true
+    },
+    {
+      "name": "Daddy's Home",
+      "wikiPage": "Daddy's Home",
+      "kind": "miniquest",
+      "members": true
+    },
+    {
+      "name": "Darkness of Hallowvale",
+      "wikiPage": "Darkness of Hallowvale",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Death on the Isle",
+      "wikiPage": "Death on the Isle",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Death Plateau",
+      "wikiPage": "Death Plateau",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Death to the Dorgeshuun",
+      "wikiPage": "Death to the Dorgeshuun",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Defender of Varrock",
+      "wikiPage": "Defender of Varrock",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Demon Slayer",
+      "wikiPage": "Demon Slayer",
+      "kind": "quest",
+      "members": false
+    },
+    {
+      "name": "Desert Treasure I",
+      "wikiPage": "Desert Treasure I",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Desert Treasure II - The Fallen Empire",
+      "wikiPage": "Desert Treasure II - The Fallen Empire",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Devious Minds",
+      "wikiPage": "Devious Minds",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Doric's Quest",
+      "wikiPage": "Doric's Quest",
+      "kind": "quest",
+      "members": false
+    },
+    {
+      "name": "Dragon Slayer I",
+      "wikiPage": "Dragon Slayer I",
+      "kind": "quest",
+      "members": false
+    },
+    {
+      "name": "Dragon Slayer II",
+      "wikiPage": "Dragon Slayer II",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Dream Mentor",
+      "wikiPage": "Dream Mentor",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Druidic Ritual",
+      "wikiPage": "Druidic Ritual",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Dwarf Cannon",
+      "wikiPage": "Dwarf Cannon",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Eadgar's Ruse",
+      "wikiPage": "Eadgar's Ruse",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Eagles' Peak",
+      "wikiPage": "Eagles' Peak",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Elemental Workshop I",
+      "wikiPage": "Elemental Workshop I",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Elemental Workshop II",
+      "wikiPage": "Elemental Workshop II",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Enakhra's Lament",
+      "wikiPage": "Enakhra's Lament",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Enlightened Journey",
+      "wikiPage": "Enlightened Journey",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Enter the Abyss",
+      "wikiPage": "Enter the Abyss",
+      "kind": "miniquest",
+      "members": true
+    },
+    {
+      "name": "Ernest the Chicken",
+      "wikiPage": "Ernest the Chicken",
+      "kind": "quest",
+      "members": false
+    },
+    {
+      "name": "Ethically Acquired Antiquities",
+      "wikiPage": "Ethically Acquired Antiquities",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Fairytale I - Growing Pains",
+      "wikiPage": "Fairytale I - Growing Pains",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Fairytale II - Cure a Queen",
+      "wikiPage": "Fairytale II - Cure a Queen",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Fallen From Grace",
+      "wikiPage": "Fallen From Grace",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Family Crest",
+      "wikiPage": "Family Crest",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Family Pest",
+      "wikiPage": "Family Pest",
+      "kind": "miniquest",
+      "members": true
+    },
+    {
+      "name": "Fight Arena",
+      "wikiPage": "Fight Arena",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Fishing Contest",
+      "wikiPage": "Fishing Contest",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Forgettable Tale...",
+      "wikiPage": "Forgettable Tale...",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Garden of Tranquillity",
+      "wikiPage": "Garden of Tranquillity",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Gertrude's Cat",
+      "wikiPage": "Gertrude's Cat",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Getting Ahead",
+      "wikiPage": "Getting Ahead",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Ghosts Ahoy",
+      "wikiPage": "Ghosts Ahoy",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Goblin Diplomacy",
+      "wikiPage": "Goblin Diplomacy",
+      "kind": "quest",
+      "members": false
+    },
+    {
+      "name": "Grim Tales",
+      "wikiPage": "Grim Tales",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Haunted Mine",
+      "wikiPage": "Haunted Mine",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Hazeel Cult",
+      "wikiPage": "Hazeel Cult",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Heroes' Quest",
+      "wikiPage": "Heroes' Quest",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "His Faithful Servants",
+      "wikiPage": "His Faithful Servants",
+      "kind": "miniquest",
+      "members": true
+    },
+    {
+      "name": "Holy Grail",
+      "wikiPage": "Holy Grail",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Hopespear's Will",
+      "wikiPage": "Hopespear's Will",
+      "kind": "miniquest",
+      "members": true
+    },
+    {
+      "name": "Horror from the Deep",
+      "wikiPage": "Horror from the Deep",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Icthlarin's Little Helper",
+      "wikiPage": "Icthlarin's Little Helper",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Imp Catcher",
+      "wikiPage": "Imp Catcher",
+      "kind": "quest",
+      "members": false
+    },
+    {
+      "name": "In Aid of the Myreque",
+      "wikiPage": "In Aid of the Myreque",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "In Search of Knowledge",
+      "wikiPage": "In Search of Knowledge",
+      "kind": "miniquest",
+      "members": true
+    },
+    {
+      "name": "In Search of the Myreque",
+      "wikiPage": "In Search of the Myreque",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Into the Tombs",
+      "wikiPage": "Into the Tombs",
+      "kind": "miniquest",
+      "members": true
+    },
+    {
+      "name": "Jungle Potion",
+      "wikiPage": "Jungle Potion",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "King's Ransom",
+      "wikiPage": "King's Ransom",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Lair of Tarn Razorlor",
+      "wikiPage": "Lair of Tarn Razorlor",
+      "kind": "miniquest",
+      "members": true
+    },
+    {
+      "name": "Land of the Goblins",
+      "wikiPage": "Land of the Goblins",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Learning the Ropes",
+      "wikiPage": "Learning the Ropes",
+      "kind": "quest",
+      "members": false
+    },
+    {
+      "name": "Legends' Quest",
+      "wikiPage": "Legends' Quest",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Lost City",
+      "wikiPage": "Lost City",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Lunar Diplomacy",
+      "wikiPage": "Lunar Diplomacy",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Mage Arena I",
+      "wikiPage": "Mage Arena I",
+      "kind": "miniquest",
+      "members": true
+    },
+    {
+      "name": "Mage Arena II",
+      "wikiPage": "Mage Arena II",
+      "kind": "miniquest",
+      "members": true
+    },
+    {
+      "name": "Making Friends with My Arm",
+      "wikiPage": "Making Friends with My Arm",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Making History",
+      "wikiPage": "Making History",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Meat and Greet",
+      "wikiPage": "Meat and Greet",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Merlin's Crystal",
+      "wikiPage": "Merlin's Crystal",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Misthalin Mystery",
+      "wikiPage": "Misthalin Mystery",
+      "kind": "quest",
+      "members": false
+    },
+    {
+      "name": "Monk's Friend",
+      "wikiPage": "Monk's Friend",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Monkey Madness I",
+      "wikiPage": "Monkey Madness I",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Monkey Madness II",
+      "wikiPage": "Monkey Madness II",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Mountain Daughter",
+      "wikiPage": "Mountain Daughter",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Mourning's End Part I",
+      "wikiPage": "Mourning's End Part I",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Mourning's End Part II",
+      "wikiPage": "Mourning's End Part II",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Murder Mystery",
+      "wikiPage": "Murder Mystery",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "My Arm's Big Adventure",
+      "wikiPage": "My Arm's Big Adventure",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Nature Spirit",
+      "wikiPage": "Nature Spirit",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Observatory Quest",
+      "wikiPage": "Observatory Quest",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Olaf's Quest",
+      "wikiPage": "Olaf's Quest",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "One Small Favour",
+      "wikiPage": "One Small Favour",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Pandemonium",
+      "wikiPage": "Pandemonium",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Perilous Moons",
+      "wikiPage": "Perilous Moons",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Pirate's Treasure",
+      "wikiPage": "Pirate's Treasure",
+      "kind": "quest",
+      "members": false
+    },
+    {
+      "name": "Plague City",
+      "wikiPage": "Plague City",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Priest in Peril",
+      "wikiPage": "Priest in Peril",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Prince Ali Rescue",
+      "wikiPage": "Prince Ali Rescue",
+      "kind": "quest",
+      "members": false
+    },
+    {
+      "name": "Prying Times",
+      "wikiPage": "Prying Times",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Rag and Bone Man I",
+      "wikiPage": "Rag and Bone Man I",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Rag and Bone Man II",
+      "wikiPage": "Rag and Bone Man II",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Ratcatchers",
+      "wikiPage": "Ratcatchers",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Recipe for Disaster",
+      "wikiPage": "Recipe for Disaster",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Recruitment Drive",
+      "wikiPage": "Recruitment Drive",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Regicide",
+      "wikiPage": "Regicide",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Romeo & Juliet",
+      "wikiPage": "Romeo & Juliet",
+      "kind": "quest",
+      "members": false
+    },
+    {
+      "name": "Roving Elves",
+      "wikiPage": "Roving Elves",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Royal Trouble",
+      "wikiPage": "Royal Trouble",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Rum Deal",
+      "wikiPage": "Rum Deal",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Rune Mysteries",
+      "wikiPage": "Rune Mysteries",
+      "kind": "quest",
+      "members": false
+    },
+    {
+      "name": "Scorpion Catcher",
+      "wikiPage": "Scorpion Catcher",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Scrambled!",
+      "wikiPage": "Scrambled!",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Sea Slug",
+      "wikiPage": "Sea Slug",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Secrets of the North",
+      "wikiPage": "Secrets of the North",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Shades of Mort'ton",
+      "wikiPage": "Shades of Mort'ton",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Shadow of the Storm",
+      "wikiPage": "Shadow of the Storm",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Shadows of Custodia",
+      "wikiPage": "Shadows of Custodia",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Sheep Herder",
+      "wikiPage": "Sheep Herder",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Sheep Shearer",
+      "wikiPage": "Sheep Shearer",
+      "kind": "quest",
+      "members": false
+    },
+    {
+      "name": "Shield of Arrav",
+      "wikiPage": "Shield of Arrav",
+      "kind": "quest",
+      "members": false
+    },
+    {
+      "name": "Shilo Village",
+      "wikiPage": "Shilo Village",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Sins of the Father",
+      "wikiPage": "Sins of the Father",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Skippy and the Mogres",
+      "wikiPage": "Skippy and the Mogres",
+      "kind": "miniquest",
+      "members": true
+    },
+    {
+      "name": "Sleeping Giants",
+      "wikiPage": "Sleeping Giants",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Song of the Elves",
+      "wikiPage": "Song of the Elves",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Spirits of the Elid",
+      "wikiPage": "Spirits of the Elid",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Swan Song",
+      "wikiPage": "Swan Song",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Tai Bwo Wannai Trio",
+      "wikiPage": "Tai Bwo Wannai Trio",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Tale of the Righteous",
+      "wikiPage": "Tale of the Righteous",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Tears of Guthix",
+      "wikiPage": "Tears of Guthix",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Temple of Ikov",
+      "wikiPage": "Temple of Ikov",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Temple of the Eye",
+      "wikiPage": "Temple of the Eye",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "The Ascent of Arceuus",
+      "wikiPage": "The Ascent of Arceuus",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "The Blood Moon Rises",
+      "wikiPage": "The Blood Moon Rises",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "The Corsair Curse",
+      "wikiPage": "The Corsair Curse",
+      "kind": "quest",
+      "members": false
+    },
+    {
+      "name": "The Curse of Arrav",
+      "wikiPage": "The Curse of Arrav",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "The Depths of Despair",
+      "wikiPage": "The Depths of Despair",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "The Dig Site",
+      "wikiPage": "The Dig Site",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "The Enchanted Key",
+      "wikiPage": "The Enchanted Key",
+      "kind": "miniquest",
+      "members": true
+    },
+    {
+      "name": "The Eyes of Glouphrie",
+      "wikiPage": "The Eyes of Glouphrie",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "The Feud",
+      "wikiPage": "The Feud",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "The Final Dawn",
+      "wikiPage": "The Final Dawn",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "The Forsaken Tower",
+      "wikiPage": "The Forsaken Tower",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "The Fremennik Exiles",
+      "wikiPage": "The Fremennik Exiles",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "The Fremennik Isles",
+      "wikiPage": "The Fremennik Isles",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "The Fremennik Trials",
+      "wikiPage": "The Fremennik Trials",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "The Frozen Door",
+      "wikiPage": "The Frozen Door",
+      "kind": "miniquest",
+      "members": true
+    },
+    {
+      "name": "The Garden of Death",
+      "wikiPage": "The Garden of Death",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "The General's Shadow",
+      "wikiPage": "The General's Shadow",
+      "kind": "miniquest",
+      "members": true
+    },
+    {
+      "name": "The Giant Dwarf",
+      "wikiPage": "The Giant Dwarf",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "The Golem",
+      "wikiPage": "The Golem",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "The Grand Tree",
+      "wikiPage": "The Grand Tree",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "The Great Brain Robbery",
+      "wikiPage": "The Great Brain Robbery",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "The Hand in the Sand",
+      "wikiPage": "The Hand in the Sand",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "The Heart of Darkness",
+      "wikiPage": "The Heart of Darkness",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "The Ides of Milk",
+      "wikiPage": "The Ides of Milk",
+      "kind": "quest",
+      "members": false
+    },
+    {
+      "name": "The Knight's Sword",
+      "wikiPage": "The Knight's Sword",
+      "kind": "quest",
+      "members": false
+    },
+    {
+      "name": "The Lost Tribe",
+      "wikiPage": "The Lost Tribe",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "The Path of Glouphrie",
+      "wikiPage": "The Path of Glouphrie",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "The Queen of Thieves",
+      "wikiPage": "The Queen of Thieves",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "The Red Reef",
+      "wikiPage": "The Red Reef",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "The Restless Ghost",
+      "wikiPage": "The Restless Ghost",
+      "kind": "quest",
+      "members": false
+    },
+    {
+      "name": "The Ribbiting Tale of a Lily Pad Labour Dispute",
+      "wikiPage": "The Ribbiting Tale of a Lily Pad Labour Dispute",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "The Slug Menace",
+      "wikiPage": "The Slug Menace",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "The Tourist Trap",
+      "wikiPage": "The Tourist Trap",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Throne of Miscellania",
+      "wikiPage": "Throne of Miscellania",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Tower of Life",
+      "wikiPage": "Tower of Life",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Tree Gnome Village",
+      "wikiPage": "Tree Gnome Village",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Tribal Totem",
+      "wikiPage": "Tribal Totem",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Troll Romance",
+      "wikiPage": "Troll Romance",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Troll Stronghold",
+      "wikiPage": "Troll Stronghold",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Troubled Tortugans",
+      "wikiPage": "Troubled Tortugans",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Twilight's Promise",
+      "wikiPage": "Twilight's Promise",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Underground Pass",
+      "wikiPage": "Underground Pass",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Vale Totems",
+      "wikiPage": "Vale Totems (miniquest)",
+      "kind": "miniquest",
+      "members": true
+    },
+    {
+      "name": "Vampyre Slayer",
+      "wikiPage": "Vampyre Slayer",
+      "kind": "quest",
+      "members": false
+    },
+    {
+      "name": "Wanted!",
+      "wikiPage": "Wanted!",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Watchtower",
+      "wikiPage": "Watchtower",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Waterfall Quest",
+      "wikiPage": "Waterfall Quest",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "What Lies Below",
+      "wikiPage": "What Lies Below",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "While Guthix Sleeps",
+      "wikiPage": "While Guthix Sleeps",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Witch's House",
+      "wikiPage": "Witch's House",
+      "kind": "quest",
+      "members": true
+    },
+    {
+      "name": "Witch's Potion",
+      "wikiPage": "Witch's Potion",
+      "kind": "quest",
+      "members": false
+    },
+    {
+      "name": "X Marks the Spot",
+      "wikiPage": "X Marks the Spot",
+      "kind": "quest",
+      "members": false
+    },
+    {
+      "name": "Zogre Flesh Eaters",
+      "wikiPage": "Zogre Flesh Eaters",
+      "kind": "quest",
+      "members": true
+    }
+  ]
+}

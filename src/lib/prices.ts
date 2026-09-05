@@ -1,5 +1,6 @@
 import { httpError } from './errors.js';
 import { fetchWithUserAgent, makeCacheSlot } from './http.js';
+import { geTax as computeGeTax } from '../shared/getax.js';
 import type {
   MappingItem, LatestPrices, DayPrices, DayEntry, TimeseriesPoint,
   PriceRange, JoinedPriceItem, MoversOptions, MoversResult,
@@ -19,9 +20,6 @@ const FLIPS_TTL_MS = 5 * 60 * 1000;
 const LATEST_TTL_MS = 5 * 60 * 1000;
 const DAY_TTL_MS = 5 * 60 * 1000;
 
-// Used for GE Tax Calculations. Jagex floors the 2%, then caps at 5m gp.
-const GE_TAX_RATE = 0.02;
-const GE_TAX_CAP = 5_000_000;
 // FIFO cap so the range picker (id:range keys) can't grow without bound
 const ITEM_CACHE_MAX = 300;
 // Nature rune is item 561; used to compute high-alch profit.
@@ -69,21 +67,20 @@ const itemDetailCache = new Map<string, { at: number; data: ItemDetail }>();
 
 // Charged/dosed mapping names look like "Energy potion(4)" - strip the (N)
 // and check the base name against the exempt set.
-function isTaxExempt(itemName?: string | null): boolean {
+export function isTaxExempt(itemName?: string | null): boolean {
   if (!itemName) return false;
   if (TAX_EXEMPT_NAMES.has(itemName)) return true;
   const charged = itemName.match(/^(.*)\(\d+\)$/);
   return Boolean(charged && TAX_EXEMPT_NAMES.has(charged[1]!));
 }
 
-// 2% of sale price, floored, capped at 5m. Exempt items and anything that
-// floors to 0 (sales under 50 gp) pay nothing.
-function geTax(price: number | null | undefined, itemName?: string | null): number {
-  if (!price || isTaxExempt(itemName)) return 0;
-  return Math.min(Math.floor(price * GE_TAX_RATE), GE_TAX_CAP);
+// Resolve the exempt flag from the item name, then defer to the shared math
+// (src/shared/getax.ts) so the client's geTax stays byte-for-byte identical.
+export function geTax(price: number | null | undefined, itemName?: string | null): number {
+  return computeGeTax(price, isTaxExempt(itemName));
 }
 
-// Unknown/bogus range values fall back to 1 week so we never request a bad timestep.
+// Unknown/bogus range values fall back to 1 week, so a bad timestep is never requested.
 export function normalizeRange(range: unknown): PriceRange {
   return typeof range === 'string' && range in RANGES ? (range as PriceRange) : '1w';
 }
@@ -101,8 +98,28 @@ function iconUrl(icon: string): string {
   return `https://oldschool.runescape.wiki/images/${encodeURIComponent(icon.replace(/ /g, '_'))}`;
 }
 
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
+}
+
+// Realistic gp/hour: after-tax margin scaled by the slower of the 4h buy-limit
+// fill rate and the item's share of daily market flow. The divisors are the
+// windows those two rates are quoted over - 4 hours for a GE buy limit, 24 for
+// daily volume - so both terms come out per hour. For liquid items the
+// buy limit dominates (so this tracks profitPerLimit / 4); its real job is
+// demoting items whose profitPerLimit looks good but whose thin volume means
+// the limit could never actually fill. Divisors are the tuning knobs.
+function gpPerHourFrom(
+  marginAfterTax: number | null,
+  buyLimit: number | null,
+  volume24h: number
+): number | null {
+  if (marginAfterTax == null || marginAfterTax <= 0 || !buyLimit) return null;
+  return Math.round(Math.min(buyLimit / 4, volume24h / 24) * marginAfterTax);
+}
+
 // Flips buy at low (insta-sell), sell at high (insta-buy), and pay tax on high.
-function spreadFromHighLow(
+export function spreadFromHighLow(
   high: number | null,
   low: number | null,
   buyLimit: number | null,
@@ -119,7 +136,7 @@ function passesMembersFilter(members: boolean, filter: MembersFilter): boolean {
   return filter === 'all' || (filter === 'members' ? members : !members);
 }
 
-function dayVolumes(dayEntry: DayEntry | undefined): {
+export function dayVolumes(dayEntry: DayEntry | undefined): {
   buyVolume24h: number;
   sellVolume24h: number;
   volume24h: number;
@@ -165,10 +182,11 @@ function cacheItemDetail(key: string, data: ItemDetail): void {
   itemDetailCache.set(key, { at: Date.now(), data });
 }
 
-// Wiki keys are strings; mapping ids are numbers. Accept either.
+// Wiki responses are keyed by string id; callers hold either a number or the
+// original string key. Property access coerces a number to its string form, so
+// one lookup covers both - the guard here is the nullable object, not the key.
 function entry<T>(obj: Record<string, T> | undefined | null, id: number | string): T | undefined {
-  if (!obj) return undefined;
-  return obj[id as string] ?? obj[String(id)];
+  return obj ? obj[String(id)] : undefined;
 }
 
 function stdev(values: number[]): number | null {
@@ -178,8 +196,87 @@ function stdev(values: number[]): number | null {
   return Math.sqrt(variance);
 }
 
-// Builds the shared GE view cache. Hourly snapshots support Staircase;
-// /24h supplies true daily volume.
+/**
+ * One item's slice of mapping + /latest + /24h, plus every value both the GE
+ * and Flip views derive from it.
+ *
+ * The two row builders below are separate on purpose - they filter differently
+ * (movers need a 24h-ago price and either side of the book; flips need both
+ * sides) and carry different columns, and folding them into one row would mean
+ * computing confidence and scores for the GE grid that never shows them. What
+ * they genuinely shared was this join and the five derived values hanging off
+ * it, which each used to spell out in its own slightly different order.
+ */
+interface PricedItem {
+  /** The raw /latest key, for the sibling blobs that are keyed the same way. */
+  key: string;
+  id: number;
+  name: string;
+  members: boolean;
+  icon: string;
+  /** Insta-buy price: what a flip sells into. */
+  high: number | null;
+  /** Insta-sell price: what a flip buys at. */
+  low: number | null;
+  highTime: number | null;
+  lowTime: number | null;
+  buyLimit: number | null;
+  dayEntry: DayEntry | undefined;
+  buyVolume24h: number;
+  sellVolume24h: number;
+  volume24h: number;
+  taxExempt: boolean;
+  tax: number | null;
+  marginAfterTax: number | null;
+  roi: number | null;
+  profitPerLimit: number | null;
+  gpPerHour: number | null;
+  /** Seconds since the more recent of the two trade timestamps. */
+  age: number | null;
+}
+
+function* pricedItems(
+  byId: Map<number, MappingItem>,
+  latest: LatestPrices,
+  day: DayPrices,
+  nowSec: number
+): Generator<PricedItem> {
+  for (const [key, cur] of Object.entries(latest)) {
+    const id = Number(key);
+    const item = byId.get(id);
+    if (!item) continue;
+
+    const high = cur.high ?? null;
+    const low = cur.low ?? null;
+    const buyLimit = item.limit ?? null;
+    const dayEntry = entry(day, key);
+    const volumes = dayVolumes(dayEntry);
+    const spread = spreadFromHighLow(high, low, buyLimit, item.name);
+    const lastTrade = Math.max(cur.highTime ?? 0, cur.lowTime ?? 0);
+
+    yield {
+      key,
+      id,
+      name: item.name,
+      members: item.members,
+      icon: iconUrl(item.icon),
+      high,
+      low,
+      highTime: cur.highTime ?? null,
+      lowTime: cur.lowTime ?? null,
+      buyLimit,
+      dayEntry,
+      ...volumes,
+      taxExempt: isTaxExempt(item.name),
+      ...spread,
+      gpPerHour: gpPerHourFrom(spread.marginAfterTax, buyLimit, volumes.volume24h),
+      age: lastTrade ? nowSec - lastTrade : null,
+    };
+  }
+}
+
+// Builds the shared GE view cache. Hourly snapshots drive the 1h/6h % change
+// columns; /24h supplies true daily volume.
 async function getJoinedPriceData(): Promise<JoinedPriceItem[]> {
   const cached = moversCache.get();
   if (cached) return cached;
@@ -198,49 +295,41 @@ async function getJoinedPriceData(): Promise<JoinedPriceItem[]> {
     get24h()
   ]);
 
+  const nowSec = Math.floor(Date.now() / 1000);
   const joined: JoinedPriceItem[] = [];
-  for (const [idStr, cur] of Object.entries(latest)) {
-    const id = Number(idStr);
-    const item = byId.get(id);
-    const past24hEntry = past24h.data[idStr];
-    if (!item || !past24hEntry) continue;
+  for (const p of pricedItems(byId, latest, day, nowSec)) {
+    // A mover needs something to have moved from: no 24h-ago price, no row.
+    const past24hEntry = past24h.data[p.key];
+    if (!past24hEntry) continue;
 
-    const currentPrice = cur.high ?? cur.low;
+    const currentPrice = p.high ?? p.low;
     const pastPrice = past24hEntry.avgHighPrice ?? past24hEntry.avgLowPrice;
     if (!currentPrice || !pastPrice) continue;
 
-    const past1hPrice = past1h.data[idStr]?.avgHighPrice ?? past1h.data[idStr]?.avgLowPrice ?? null;
-    const past6hPrice = past6h.data[idStr]?.avgHighPrice ?? past6h.data[idStr]?.avgLowPrice ?? null;
-    const dayEntry = entry(day, idStr);
-    const { volume24h } = dayVolumes(dayEntry);
-    const pctChange = ((currentPrice - pastPrice) / pastPrice) * 100;
-    const pctChange1h = past1hPrice ? ((currentPrice - past1hPrice) / past1hPrice) * 100 : null;
-    const pctChange6h = past6hPrice ? ((currentPrice - past6hPrice) / past6hPrice) * 100 : null;
-    const high = cur.high ?? null;
-    const low = cur.low ?? null;
-    const buyLimit = item.limit ?? null;
-    const { tax, marginAfterTax, roi, profitPerLimit } = spreadFromHighLow(high, low, buyLimit, item.name);
+    const past1hPrice = past1h.data[p.key]?.avgHighPrice ?? past1h.data[p.key]?.avgLowPrice ?? null;
+    const past6hPrice = past6h.data[p.key]?.avgHighPrice ?? past6h.data[p.key]?.avgLowPrice ?? null;
 
     joined.push({
-      id,
-      name: item.name,
-      members: item.members,
-      icon: iconUrl(item.icon),
+      id: p.id,
+      name: p.name,
+      members: p.members,
+      icon: p.icon,
       currentPrice,
       pastPrice,
-      volume: volume24h, // alias so the existing minVolume filter still works
-      volume24h,
-      pctChange,
-      pctChange1h,
-      pctChange6h,
-      high,
-      low,
-      buyLimit,
-      marginAfterTax,
-      roi,
-      profitPerLimit,
-      highTime: cur.highTime ?? null,
-      lowTime: cur.lowTime ?? null
+      volume: p.volume24h, // alias so the existing minVolume filter still works
+      volume24h: p.volume24h,
+      pctChange: ((currentPrice - pastPrice) / pastPrice) * 100,
+      pctChange1h: past1hPrice ? ((currentPrice - past1hPrice) / past1hPrice) * 100 : null,
+      pctChange6h: past6hPrice ? ((currentPrice - past6hPrice) / past6hPrice) * 100 : null,
+      high: p.high,
+      low: p.low,
+      buyLimit: p.buyLimit,
+      marginAfterTax: p.marginAfterTax,
+      roi: p.roi,
+      profitPerLimit: p.profitPerLimit,
+      gpPerHour: p.gpPerHour,
+      highTime: p.highTime,
+      lowTime: p.lowTime
     });
   }
 
@@ -251,21 +340,32 @@ async function getJoinedPriceData(): Promise<JoinedPriceItem[]> {
 // Filters the joined list and returns rising / falling pages.
 // Rising/Dropping still split on the sign of pctChange, then that subset is
 // sorted by the requested key so volume/margin sorts the whole set, not just the page.
+// High Volume is the same filter+sort over the unsplit list (the client defaults the
+// Sort field to volume). Random owns its own seeded ranking, so Sort is inert there
+// and the client disables the field to say so.
+// sortDir flips the whole comparison rather than being baked into sortValue, so
+// every key gets both directions - the same shape as getFlipCandidates. The
+// client sends 'asc' for Dropping-by-%-change, which is what makes that view
+// lead with the biggest fallers.
+// Profit-ranked scans (Penny Arcade / Spread / GP-per-Hour) live on the Flip Helper.
 export async function getMovers({
   minVolume = 500,
   minPrice = 50,
   maxPrice = Infinity,
   minMargin = 0,
   minRoi = 0,
+  maxAgeMinutes = Infinity,
   hideStale = false,
   membersOnly = 'all',
   sort = 'pctChange',
+  sortDir = 'desc',
   limit = 25,
   view = 'risers',
   seed = ''
 }: MoversOptions = {}): Promise<MoversResult> {
   const joined = await getJoinedPriceData();
   const nowSec = Math.floor(Date.now() / 1000);
+  const maxAgeSeconds = Number.isFinite(maxAgeMinutes) ? maxAgeMinutes * 60 : Infinity;
 
   const filtered = joined.filter((item) => {
     if (item.volume < minVolume) return false;
@@ -273,9 +373,10 @@ export async function getMovers({
     if (Number.isFinite(maxPrice) && item.currentPrice > maxPrice) return false;
     if (minMargin && (item.marginAfterTax == null || item.marginAfterTax < minMargin)) return false;
     if (minRoi && (item.roi == null || item.roi < minRoi)) return false;
-    if (hideStale) {
+    if (hideStale || Number.isFinite(maxAgeSeconds)) {
       const last = Math.max(item.highTime ?? 0, item.lowTime ?? 0);
-      if (!last || nowSec - last > STALE_SECONDS) return false;
+      const cutoff = Math.min(hideStale ? STALE_SECONDS : Infinity, maxAgeSeconds);
+      if (!last || nowSec - last > cutoff) return false;
     }
     if (!passesMembersFilter(item.members, membersOnly)) return false;
     return true;
@@ -291,28 +392,24 @@ export async function getMovers({
     }
   }
 
-  function bySort(dir: 'risers' | 'fallers'): (a: JoinedPriceItem, b: JoinedPriceItem) => number {
-    return (a: JoinedPriceItem, b: JoinedPriceItem) => {
-      const av = sortValue(a);
-      const bv = sortValue(b);
-      if (sort === 'pctChange' && dir === 'fallers') return av - bv;
-      return bv - av;
+  const bySort = (a: JoinedPriceItem, b: JoinedPriceItem): number => {
+    const cmp = sortValue(a) - sortValue(b);
+    return sortDir === 'desc' ? -cmp : cmp;
+  };
+
+  // Rising and Dropping are two halves of one split, so both are built together
+  // - the client shows one and the pair costs no more than the sorts it already
+  // needs. High Volume and Random rank the unsplit list instead and never read
+  // them, so they aren't built (or sent) for those views.
+  if (view === 'risers' || view === 'fallers') {
+    return {
+      risers: filtered.filter((i) => i.pctChange >= 0).sort(bySort).slice(0, limit),
+      fallers: filtered.filter((i) => i.pctChange < 0).sort(bySort).slice(0, limit),
+      consideredCount: filtered.length,
     };
   }
 
-  const risers = filtered.filter((i) => i.pctChange >= 0).sort(bySort('risers')).slice(0, limit);
-  const fallers = filtered.filter((i) => i.pctChange < 0).sort(bySort('fallers')).slice(0, limit);
-
-  if (view === 'risers' || view === 'fallers') {
-    return { risers, fallers, consideredCount: filtered.length };
-  }
-
-  // Special views deliberately own their ranking; the regular Sort field
-  // still controls Rising and Dropping.
-  const freshOnBothSides = (item: JoinedPriceItem): boolean => {
-    if (item.high == null || item.low == null || item.highTime == null || item.lowTime == null) return false;
-    return nowSec - Math.min(item.highTime, item.lowTime) <= STALE_SECONDS;
-  };
+  // Random owns its ranking; High Volume defers to the Sort field like Rising/Dropping.
   const hashForSeed = (item: JoinedPriceItem): number => {
     let hash = 2166136261;
     for (const char of `${seed}:${item.id}`) {
@@ -324,42 +421,26 @@ export async function getMovers({
 
   let candidates: JoinedPriceItem[];
   switch (view) {
-    case 'penny':
-      candidates = filtered
-        .filter((item) => item.currentPrice <= 1_000 && item.volume24h >= 100_000)
-        .sort((a, b) => b.volume24h - a.volume24h);
+    case 'volume':
+      candidates = filtered.slice().sort(bySort);
       break;
     case 'random':
       candidates = filtered
-        .filter((item) => item.volume24h >= 1_000 && freshOnBothSides(item))
+        .filter((item) => {
+          if (item.high == null || item.low == null || item.highTime == null || item.lowTime == null) return false;
+          if (item.volume24h < 1_000) return false;
+          return nowSec - Math.min(item.highTime, item.lowTime) <= STALE_SECONDS;
+        })
         .sort((a, b) => hashForSeed(a) - hashForSeed(b) || a.id - b.id);
-      break;
-    case 'spread':
-      candidates = filtered
-        .filter((item) => item.volume24h >= 1_000 && freshOnBothSides(item) && (item.marginAfterTax ?? 0) > 0)
-        .sort((a, b) => (b.marginAfterTax ?? 0) - (a.marginAfterTax ?? 0));
-      break;
-    case 'staircase':
-      candidates = filtered
-        .filter((item) =>
-          item.volume24h >= 1_000
-          && (item.pctChange1h ?? 0) > 0
-          && (item.pctChange6h ?? 0) > 0
-          && item.pctChange > 0
-        )
-        .sort((a, b) =>
-          (b.pctChange1h ?? 0) + (b.pctChange6h ?? 0) + b.pctChange
-          - ((a.pctChange1h ?? 0) + (a.pctChange6h ?? 0) + a.pctChange)
-        );
       break;
   }
 
-  return { risers, fallers, items: candidates.slice(0, limit), consideredCount: candidates.length };
+  return { items: candidates.slice(0, limit), consideredCount: candidates.length };
 }
 
 // High/low/avg/position/volatility over the selected history window.
 // Gaps (null wiki prices) break the point-to-point chain rather than interpolating.
-function rangeStats(history: TimeseriesPoint[], current: number | null): RangeStats {
+export function rangeStats(history: TimeseriesPoint[], current: number | null): RangeStats {
   const prices: number[] = [];
   for (const p of history) {
     const v = p.avgHighPrice ?? p.avgLowPrice;
@@ -403,9 +484,10 @@ function rangeStats(history: TimeseriesPoint[], current: number | null): RangeSt
 
 // Builds the item details for the individual item pages, including the
 // selected timeseries range and flip/alch stats derived from data already in hand.
-export async function getItemDetail(id: number, range: string = '1w'): Promise<ItemDetail> {
-  const resolved = normalizeRange(range);
-  const cacheKey = `${id}:${resolved}`;
+// `range` is normalised by the caller (normalizeRange at the route edge), so
+// an unknown value can never reach the timestep lookup below.
+export async function getItemDetail(id: number, range: PriceRange = '1w'): Promise<ItemDetail> {
+  const cacheKey = `${id}:${range}`;
   const cached = itemDetailCache.get(cacheKey);
   if (cached && Date.now() - cached.at < ITEM_DETAIL_TTL_MS) {
     return cached.data;
@@ -417,7 +499,7 @@ export async function getItemDetail(id: number, range: string = '1w'): Promise<I
     throw httpError('Unknown item id', 404);
   }
 
-  const { timestep, keep } = RANGES[resolved];
+  const { timestep, keep } = RANGES[range];
   const [latest, series, day] = await Promise.all([
     getLatest(),
     get<{ data: TimeseriesPoint[] }>(`/timeseries?id=${id}&timestep=${timestep}`),
@@ -496,7 +578,7 @@ export async function getItemDetail(id: number, range: string = '1w'): Promise<I
     lowAge,
     stale,
     alchProfit,
-    range: resolved,
+    range: range,
     ...stats,
     history
   };
@@ -507,7 +589,7 @@ export async function getItemDetail(id: number, range: string = '1w'): Promise<I
 
 // Exact name beats prefix beats substring. Used so scanning mapping order
 // and stopping at 25 doesn't starve exact matches.
-function matchScore(name: string, q: string): number {
+export function matchScore(name: string, q: string): number {
   const n = name.toLowerCase();
   if (n === q) return 0;
   if (n.startsWith(q)) return 1;
@@ -525,7 +607,7 @@ export async function searchItems(query: string): Promise<SearchResult[]> {
 
   const [joined, latest] = await Promise.all([
     getJoinedPriceData().catch(() => [] as JoinedPriceItem[]),
-    getLatest().catch(() => ({}) as LatestPrices)
+    getLatest().catch((): LatestPrices => ({}))
   ]);
   const priceById = new Map(joined.map((j) => [j.id, j]));
 
@@ -557,25 +639,62 @@ export async function searchItems(query: string): Promise<SearchResult[]> {
 // convention every other flip sort key already follows.
 const CONFIDENCE_RANK: Record<Confidence, number> = { high: 2, medium: 1, low: 0 };
 
+const CONFIDENCE_VOLUME_HIGH = 10_000;
+const CONFIDENCE_VOLUME_MEDIUM = 1_000;
+const CONFIDENCE_AGE_HIGH_SEC = 10 * 60;
+const CONFIDENCE_AGE_MEDIUM_SEC = 30 * 60;
+// Multiples of the item's own 24h average spread, not percentages: a
+// marginVsAvg of 3 means the spread is three times its usual width, which is
+// where a price starts looking stale or manipulated rather than tradable.
+const CONFIDENCE_MARGIN_HIGH_RATIO = 3;
+const CONFIDENCE_MARGIN_MEDIUM_RATIO = 5;
+
 // Plain rule, not an opaque score: high = liquid + fresh + typical margin.
 // Tooltip text lists whichever checks failed so the table can explain the dot.
-function describeConfidence(volume: number, age: number | null, marginVsAvg: number | null): ConfidenceInfo {
+export function describeConfidence(volume: number, age: number | null, marginVsAvg: number | null): ConfidenceInfo {
   const reasons: string[] = [];
-  if (volume < 10000) reasons.push(volume < 1000 ? 'low volume' : `volume ${volume.toLocaleString('en-US')}`);
+  if (volume < CONFIDENCE_VOLUME_HIGH) reasons.push(volume < CONFIDENCE_VOLUME_MEDIUM ? 'low volume' : `volume ${volume.toLocaleString('en-US')}`);
   if (age == null) reasons.push('no recent trade');
-  else if (age > 10 * 60) {
+  else if (age > CONFIDENCE_AGE_HIGH_SEC) {
     const mins = Math.floor(age / 60);
     reasons.push(mins >= 60 ? `price ${Math.floor(mins / 60)}h old` : `price ${mins}m old`);
   }
-  if (marginVsAvg != null && marginVsAvg > 3) reasons.push('margin unusually wide vs 24h avg');
+  if (marginVsAvg != null && marginVsAvg > CONFIDENCE_MARGIN_HIGH_RATIO) reasons.push('margin unusually wide vs 24h avg');
 
-  if (volume >= 10000 && age != null && age <= 10 * 60 && (marginVsAvg == null || marginVsAvg <= 3)) {
+  if (volume >= CONFIDENCE_VOLUME_HIGH && age != null && age <= CONFIDENCE_AGE_HIGH_SEC && (marginVsAvg == null || marginVsAvg <= CONFIDENCE_MARGIN_HIGH_RATIO)) {
     return { confidence: 'high', confidenceWhy: 'volume ≥ 10k · fresh · typical margin' };
   }
-  if (volume >= 1000 && age != null && age <= 30 * 60 && (marginVsAvg == null || marginVsAvg <= 5)) {
+  if (volume >= CONFIDENCE_VOLUME_MEDIUM && age != null && age <= CONFIDENCE_AGE_MEDIUM_SEC && (marginVsAvg == null || marginVsAvg <= CONFIDENCE_MARGIN_MEDIUM_RATIO)) {
     return { confidence: 'medium', confidenceWhy: reasons.length ? reasons.join(' · ') : 'ok volume · reasonably fresh' };
   }
   return { confidence: 'low', confidenceWhy: reasons.length ? reasons.join(' · ') : 'thin or stale' };
+}
+
+// A single 0-100 "how good is this flip overall" number, blending the axes a
+// flipper eyeballs anyway: return %, gp throughput, liquidity, freshness and
+// how trustworthy the current spread looks. Weights sum to 1; they and the
+// normalisation ceilings are the tuning knobs for the "Best Overall" preset.
+const SCORE_CONFIDENCE: Record<Confidence, number> = { high: 1, medium: 0.5, low: 0.15 };
+
+function flipScore(
+  roi: number | null,
+  profitPerLimit: number | null,
+  volume24h: number,
+  age: number | null,
+  confidence: Confidence
+): number {
+  const roiScore = clamp((roi ?? 0) / 10, 0, 1); // 10% ROI = full marks
+  const throughputScore = clamp(Math.log10(Math.max(profitPerLimit ?? 1, 1)) / 7, 0, 1); // ~10m/limit
+  const volumeScore = clamp(Math.log10(Math.max(volume24h, 1)) / 6, 0, 1); // ~1m/day
+  const freshScore = age == null ? 0 : clamp(1 - age / 3600, 0, 1); // fresh within the hour
+  const confScore = SCORE_CONFIDENCE[confidence];
+  return Math.round(100 * (
+    0.28 * roiScore
+    + 0.22 * throughputScore
+    + 0.20 * volumeScore
+    + 0.15 * freshScore
+    + 0.15 * confScore
+  ));
 }
 
 // One join of mapping + latest + /24h, cached 5 min. Filtering/sorting happens per request.
@@ -587,55 +706,46 @@ async function getFlipRows(): Promise<FlipRow[]> {
   const nowSec = Math.floor(Date.now() / 1000);
   const rows: FlipRow[] = [];
 
-  for (const [idStr, cur] of Object.entries(latest)) {
-    const id = Number(idStr);
-    const item = byId.get(id);
-    // Flipping: buy at the insta-sell price (low), sell at the insta-buy price (high).
-    const buy = cur.low ?? null;
-    const sell = cur.high ?? null;
-    if (!item || !buy || !sell) continue;
+  for (const p of pricedItems(byId, latest, day, nowSec)) {
+    // Flipping: buy at the insta-sell price (low), sell at the insta-buy price
+    // (high). A one-sided book is not a flip, so both have to be present.
+    const buy = p.low;
+    const sell = p.high;
+    if (!buy || !sell || p.tax === null || p.marginAfterTax === null) continue;
 
-    const limit = item.limit ?? null;
     const margin = sell - buy;
-    const spread = spreadFromHighLow(sell, buy, limit, item.name);
-    if (spread.tax === null || spread.marginAfterTax === null) continue;
-    const tax = spread.tax;
-    const profit = spread.marginAfterTax;
-    const { roi, profitPerLimit } = spread;
-    const capital = limit ? buy * limit : null;
-    const dayEntry = entry(day, idStr);
-    const { sellVolume24h, volume24h } = dayVolumes(dayEntry);
-    const buyPressure = volume24h ? sellVolume24h / volume24h : null;
-    const lastTrade = Math.max(cur.highTime ?? 0, cur.lowTime ?? 0);
-    const age = lastTrade ? nowSec - lastTrade : null;
-    const avgHigh = dayEntry?.avgHighPrice ?? null;
-    const avgLow = dayEntry?.avgLowPrice ?? null;
+    const capital = p.buyLimit ? buy * p.buyLimit : null;
+    const buyPressure = p.volume24h ? p.sellVolume24h / p.volume24h : null;
+    const avgHigh = p.dayEntry?.avgHighPrice ?? null;
+    const avgLow = p.dayEntry?.avgLowPrice ?? null;
     const avgMargin = avgHigh != null && avgLow != null ? avgHigh - avgLow : null;
     // >>1 means the current spread is much wider than a typical day — often stale/manipulated.
     const marginVsAvg = avgMargin && avgMargin > 0 ? margin / avgMargin : null;
-    const { confidence, confidenceWhy } = describeConfidence(volume24h, age, marginVsAvg);
+    const { confidence, confidenceWhy } = describeConfidence(p.volume24h, p.age, marginVsAvg);
 
     rows.push({
-      id,
-      name: item.name,
-      members: item.members,
-      icon: iconUrl(item.icon),
+      id: p.id,
+      name: p.name,
+      members: p.members,
+      icon: p.icon,
       buy,
       sell,
       margin,
-      tax,
-      taxExempt: isTaxExempt(item.name),
-      profit,
-      roi,
-      limit,
-      profitPerLimit,
+      tax: p.tax,
+      taxExempt: p.taxExempt,
+      profit: p.marginAfterTax,
+      roi: p.roi,
+      limit: p.buyLimit,
+      profitPerLimit: p.profitPerLimit,
       capital,
-      volume24h,
+      volume24h: p.volume24h,
       buyPressure,
-      age,
-      highTime: cur.highTime ?? null,
-      lowTime: cur.lowTime ?? null,
+      age: p.age,
+      highTime: p.highTime,
+      lowTime: p.lowTime,
       marginVsAvg,
+      gpPerHour: p.gpPerHour,
+      score: flipScore(p.roi, p.profitPerLimit, p.volume24h, p.age, confidence),
       confidence,
       confidenceWhy
     });
@@ -643,6 +753,24 @@ async function getFlipRows(): Promise<FlipRow[]> {
 
   flipsRawCache.set(rows);
   return rows;
+}
+
+// How many units the bankroll actually buys, capped by the 4h buy limit.
+// Null when no bankroll is set, which is what makes the sort fall back to
+// profit-per-limit rather than treating "unknown" as zero.
+function affordableUnits(row: FlipRow, bankroll: number | null): number | null {
+  if (!bankroll || bankroll <= 0 || !row.buy) return null;
+  return Math.min(row.limit ?? 0, Math.floor(bankroll / row.buy));
+}
+
+function realisticProfit(row: FlipRow, bankroll: number | null): number | null {
+  const units = affordableUnits(row, bankroll);
+  return units === null ? null : row.profit * units;
+}
+
+function withBankrollColumns(row: FlipRow, bankroll: number | null): FlipItem {
+  const units = affordableUnits(row, bankroll);
+  return units === null ? { ...row } : { ...row, affordableUnits: units, realisticProfit: row.profit * units };
 }
 
 // Ranked flip scanner. `ids` (watchlist / deep-link) bypasses the filters so
@@ -653,6 +781,7 @@ export async function getFlipCandidates({
   maxPrice = Infinity,
   minMargin = 0,
   minRoi = 0,
+  minMarginVsAvg = 0,
   maxAgeMinutes = Infinity,
   membersOnly = 'all',
   bankroll = null,
@@ -680,6 +809,7 @@ export async function getFlipCandidates({
       // The UI's minimum profit is after-tax profit per unit, not raw spread.
       if (r.profit < minMargin) return false;
       if (minRoi && (r.roi == null || r.roi < minRoi)) return false;
+      if (minMarginVsAvg && (r.marginVsAvg == null || r.marginVsAvg < minMarginVsAvg)) return false;
       if (Number.isFinite(maxAgeMinutes) && (r.age == null || r.age > maxAgeMinutes * 60)) return false;
       if (!passesMembersFilter(r.members, membersOnly)) return false;
       if (maxCapital != null && Number.isFinite(maxCapital) && (r.capital == null || r.capital > maxCapital)) return false;
@@ -688,13 +818,7 @@ export async function getFlipCandidates({
     });
   }
 
-  const withBankroll: FlipItem[] = filtered.map((r) => {
-    if (!bankroll || bankroll <= 0 || !r.buy) return { ...r };
-    const affordableUnits = Math.min(r.limit ?? 0, Math.floor(bankroll / r.buy));
-    return { ...r, affordableUnits, realisticProfit: r.profit * affordableUnits };
-  });
-
-  function sortValue(item: FlipItem): number {
+  function sortValue(item: FlipRow): number {
     switch (sort) {
       case 'buy': return item.buy;
       case 'sell': return item.sell;
@@ -705,8 +829,11 @@ export async function getFlipCandidates({
       case 'profit': return item.profit ?? -Infinity;
       case 'roi': return item.roi ?? -Infinity;
       case 'volume': return item.volume24h ?? 0;
-      case 'realisticProfit': return item.realisticProfit ?? item.profitPerLimit ?? -Infinity;
+      case 'realisticProfit': return realisticProfit(item, bankroll) ?? item.profitPerLimit ?? -Infinity;
       case 'margin': return item.margin ?? -Infinity;
+      case 'marginVsAvg': return item.marginVsAvg ?? -Infinity;
+      case 'score': return item.score ?? -Infinity;
+      case 'gpPerHour': return item.gpPerHour ?? -Infinity;
       case 'confidence': return CONFIDENCE_RANK[item.confidence];
       default: return item.profitPerLimit ?? -Infinity;
     }
@@ -715,7 +842,13 @@ export async function getFlipCandidates({
   // 'name' sorts alphabetically (locale-aware); everything else is numeric.
   // sortDir flips the whole comparison rather than being baked into sortValue,
   // so every key gets both directions for free.
-  withBankroll.sort((a, b) => {
+  //
+  // Sorted in place, over the rows themselves: `filtered` is already a fresh
+  // array from .filter(), and sorting references costs nothing per item. The
+  // bankroll columns are derived onto the one page that is actually returned
+  // rather than onto every candidate - a wide scan is a few thousand rows, and
+  // all but fifty of those copies were thrown away.
+  filtered.sort((a, b) => {
     const cmp = sort === 'name' ? a.name.localeCompare(b.name) : sortValue(a) - sortValue(b);
     return sortDir === 'desc' ? -cmp : cmp;
   });
@@ -727,7 +860,7 @@ export async function getFlipCandidates({
   const offset = (clampedPage - 1) * pageSize;
 
   return {
-    items: withBankroll.slice(offset, offset + pageSize),
+    items: filtered.slice(offset, offset + pageSize).map((row) => withBankrollColumns(row, bankroll)),
     consideredCount: filtered.length,
     page: clampedPage,
     pageSize,

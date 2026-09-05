@@ -8,29 +8,40 @@
 </head>
 <body>
   <header>
-    <h1>OSRS Tracker</h1>
-    <nav>
-      <a href="character.html">Character</a>
-      <a href="collectionlog.html">Collection Log</a>
-      <a href="ge.html">Grand Exchange</a>
-      <a href="flip.html" class="active">Flip Helper</a>
-    </nav>
+    <h1><a href="index.html">OSRS Tracker</a></h1>
+    <nav></nav>
     <div id="sessionBar" class="session-bar"></div>
   </header>
   <main>
-    <p class="status">The API reports completed trades, not live offers — margins are indicative. <strong class="warn">Always check the real GE offer box before committing.</strong></p>
-    <div class="submenu" id="presetStrip">
-      <button type="button" data-preset="volume">High Volume</button>
-      <button type="button" data-preset="margin">High Margin</button>
-      <button type="button" data-preset="roi">Best ROI</button>
-      <button type="button" data-preset="f2p">F2P</button>
-      <button type="button" data-preset="cheap">Cheap Flips</button>
-      <button type="button" data-preset="bankroll">Fits My Bankroll</button>
-      <button type="button" data-preset="watchlist">★ Watchlist</button>
+    <div class="search-row">
+      <input id="flipSearch" type="text" placeholder="Filter results by item name..." aria-label="Filter results by item name" autocomplete="off" />
+    </div>
+
+    <div class="page-toolbar" id="presetToolbar">
+      <div class="submenu" id="presetStrip">
+        <button type="button" data-preset="penny" title="Cheap, heavily traded items under 1,000 gp - low capital per flip, profit comes from turnover.">Penny Arcade</button>
+        <button type="button" data-preset="margin" title="Biggest profit after tax on a single item.">High Margin</button>
+        <button type="button" data-preset="roi" title="Best profit as a percentage of what you tie up.">Best ROI</button>
+        <button type="button" data-preset="gpPerHour" title="Profit after tax scaled by how fast the buy limit could realistically fill.">GP / Hour</button>
+        <button type="button" data-preset="composite" title="Best all-round score: ROI, throughput, volume, freshness and confidence combined.">Best Overall</button>
+        <button type="button" data-preset="bankroll" title="Ranked by what you would actually make with the bankroll set below.">Fits My Bankroll</button>
+      </div>
+      <div class="page-toolbar-end">
+        <button type="button" data-preset="watchlist" class="page-toolbar-tab">★ Watchlist</button>
+        <button type="button" id="f2pFilterBtn" class="page-toolbar-tab f2p-toggle" title="Show free-to-play items only. Click again to show all items." aria-pressed="false">F2P</button>
+        <label class="page-size">Per page
+          <select id="pageSize">
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50" selected>50</option>
+          </select>
+        </label>
+      </div>
     </div>
 
     <div class="filters">
-      <details class="filter-drawer" open>
+      <details class="filter-drawer">
         <summary>Filters</summary>
         <div class="filter-fields">
           <label>Bankroll (gp) <input id="bankroll" type="number" min="0" step="1000" placeholder="0" /></label>
@@ -39,6 +50,7 @@
           <label>Max. price <input id="maxPrice" type="number" min="0" step="10" placeholder="none" /></label>
           <label>Min. profit <input id="minMargin" type="number" min="0" step="100" value="0" /></label>
           <label>Min. ROI % <input id="minRoi" type="number" min="0" step="0.5" value="0" /></label>
+          <label title="Current margin divided by this item's own average 24h margin. 1.8 = spread is 80% wider than usual.">Min. margin vs avg <input id="minMarginVsAvg" type="number" min="0" step="0.1" placeholder="any" /></label>
           <label>Max age (min) <input id="maxAgeMinutes" type="number" min="0" step="1" placeholder="none" /></label>
           <label>Members
             <select id="membersOnly">
@@ -47,60 +59,29 @@
               <option value="f2p">F2P</option>
             </select>
           </label>
-          <button type="button" id="scanBtn">Scan</button>
         </div>
       </details>
+      <div class="filter-actions">
+        <button type="button" id="resetBtn" class="btn-outline" title="Restore the default filters.">Reset</button>
+        <button type="button" id="scanBtn">Scan</button>
+      </div>
     </div>
 
     <div id="status" class="status"></div>
+    <h2 id="resultsTitle">All flips</h2>
     <div id="flipResults">
       <label class="flip-sort">Sort
         <select id="flipSort">
           <option value="name">Item (A-Z)</option>
-          <option value="buy">Buy</option>
-          <option value="sell">Sell</option>
-          <option value="margin">Margin</option>
-          <option value="tax">Tax</option>
-          <option value="profit">Profit</option>
-          <option value="roi">ROI%</option>
-          <option value="limit">Limit</option>
-          <option value="profitPerLimit">Profit/limit</option>
-          <option value="capital">Capital</option>
-          <option value="volume">Vol/day</option>
-          <option value="age">Age</option>
-          <option value="confidence">Confidence</option>
-          <option value="realisticProfit">Realistic</option>
         </select>
         <button type="button" id="sortDirBtn" class="btn-outline" title="Toggle sort direction">↓ High to low</button>
       </label>
-      <label class="flip-page-size">Per page
-        <select id="pageSize">
-          <option value="5">5</option>
-          <option value="10">10</option>
-          <option value="25">25</option>
-          <option value="50" selected>50</option>
-        </select>
-      </label>
       <div class="flip-toolbar">
-        <input id="flipSearch" type="text" placeholder="Search item name..." aria-label="Search item name" autocomplete="off" />
         <button type="button" id="columnsBtn" class="btn-outline">Select Columns</button>
       </div>
+      <!-- Checkbox rows, table headers and sort options are generated from
+           COLUMNS in src/client/flipColumns.ts. -->
       <div id="columnsPanel" class="columns-panel" hidden>
-        <label title="Price to buy at - the insta-sell (low) price."><input type="checkbox" data-col="buy" checked /> Buy</label>
-        <label title="Price to sell at - the insta-buy (high) price."><input type="checkbox" data-col="sell" checked /> Sell</label>
-        <label title="Sell minus Buy, before GE tax."><input type="checkbox" data-col="margin" checked /> Margin</label>
-        <label title="GE tax on the sale: 2% of the sell price, floored, capped at 5,000,000 gp. Some items are tax-exempt."><input type="checkbox" data-col="tax" /> Tax</label>
-        <label title="Margin minus GE tax - profit per single item flipped."><input type="checkbox" data-col="profit" checked /> Profit</label>
-        <label title="Profit as a percentage of the buy price."><input type="checkbox" data-col="roi" checked /> ROI</label>
-        <label title="GE buy limit: the most you can buy of this item per 4-hour window."><input type="checkbox" data-col="limit" /> Limit</label>
-        <label title="Profit if you buy and sell up to the buy limit (Profit x Limit)."><input type="checkbox" data-col="profitPerLimit" /> Profit/limit</label>
-        <label title="gp needed to buy up to the buy limit (Buy x Limit)."><input type="checkbox" data-col="capital" /> Capital</label>
-        <label title="Total traded volume (buy + sell) over the last 24 hours."><input type="checkbox" data-col="volume" checked /> Volume</label>
-        <label title="Time since the last recorded trade at this price."><input type="checkbox" data-col="age" /> Age</label>
-        <label title="High/medium/low, based on volume, how fresh the price is, and margin vs. the 24h average."><input type="checkbox" data-col="confidence" /> Confidence</label>
-        <label title="Profit if you spend your bankroll on this item: buys as many units as you can afford, capped by the item's buy limit, then multiplies by profit per unit. Only calculated once a bankroll is set above.">
-          <input type="checkbox" data-col="realisticProfit" /> Realistic Profit (bankroll) ⓘ
-        </label>
         <div class="columns-panel-actions">
           <button type="button" id="setDefaultBtn" class="btn-outline" title="Save the columns currently checked above as what loads every time you open this page.">Set as Default</button>
           <button type="button" id="resetDefaultBtn" class="btn-outline" title="Forget any saved default and go back to the built-in starting columns.">Reset to Factory Default</button>
@@ -113,19 +94,6 @@
             <tr>
               <th title="Star to watchlist, or send buy/sell into the calculator below."></th>
               <th data-sort="name" title="Item name - click through to its item page for the full price chart.">Item</th>
-              <th data-col="buy" data-sort="buy" title="Price to buy at - the insta-sell (low) price.">Buy</th>
-              <th data-col="sell" data-sort="sell" title="Price to sell at - the insta-buy (high) price.">Sell</th>
-              <th data-col="margin" data-sort="margin" title="Sell minus Buy, before GE tax.">Margin</th>
-              <th data-col="tax" data-sort="tax" title="GE tax on the sale: 2% of the sell price, floored, capped at 5,000,000 gp. Some items are tax-exempt.">Tax</th>
-              <th data-col="profit" data-sort="profit" title="Margin minus GE tax - profit per single item flipped.">Profit</th>
-              <th data-col="roi" data-sort="roi" title="Profit as a percentage of the buy price.">ROI%</th>
-              <th data-col="limit" data-sort="limit" title="GE buy limit: the most you can buy of this item per 4-hour window.">Limit</th>
-              <th data-col="profitPerLimit" data-sort="profitPerLimit" title="Profit if you buy and sell up to the buy limit (Profit x Limit).">Profit/limit</th>
-              <th data-col="capital" data-sort="capital" title="gp needed to buy up to the buy limit (Buy x Limit).">Capital</th>
-              <th data-col="volume" data-sort="volume" title="Total traded volume (buy + sell) over the last 24 hours.">Vol/day</th>
-              <th data-col="age" data-sort="age" title="Time since the last recorded trade at this price.">Age</th>
-              <th data-col="confidence" data-sort="confidence" title="High/medium/low, based on volume, how fresh the price is, and margin vs. the 24h average. Hover a row's dot for the specific reason.">Confidence</th>
-              <th data-col="realisticProfit" data-sort="realisticProfit" title="Profit if you spend your bankroll on this item: buys as many units as you can afford, capped by the item's buy limit, then multiplies by profit per unit.">Realistic</th>
             </tr>
           </thead>
           <tbody id="flipBody"></tbody>
@@ -141,7 +109,10 @@
 
     <h2 class="cl-grid-title calc-heading" id="calcHeading">
       <span>Flip calculator<span id="calcSelectedLabel"></span></span>
-      <button type="button" id="returnToItemBtn" class="btn-outline calc-return" hidden>Return to item</button>
+      <span class="calc-actions">
+        <button type="button" id="returnToItemBtn" class="btn-outline calc-return" hidden>Return to item</button>
+        <a href="ge.html" id="backToGe" class="btn-outline calc-return calc-link" hidden>&larr; Back to Grand Exchange</a>
+      </span>
     </h2>
     <div class="filters calc-row">
       <label>Buy <input id="calcBuy" type="number" min="0" /></label>
@@ -155,6 +126,6 @@
       <div><strong id="calcCapital">n/a</strong><span>Capital</span></div>
     </div>
   </main>
-  <script type="module" src="flip.js"></script>
+  <script type="module" src="client/flip.js"></script>
 </body>
 </html>

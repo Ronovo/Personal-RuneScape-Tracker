@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Leagues Tasks - OSRS Tracker</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1><a href="index.html">OSRS Tracker</a></h1>
+    <nav></nav>
+    <div id="sessionBar" class="session-bar"></div>
+  </header>
+  <main>
+    <div class="search-row">
+      <input id="username" type="text" placeholder="OSRS username" autocomplete="off" />
+      <button id="refreshBtn">Update</button>
+    </div>
+    <p class="status">This plugin allows you to manage your league tasks in RuneLite. Use it to play Leagues on your main, or a fresh account. Sync from the plugin, then click <strong>Update</strong> here to load the latest snapshot. <strong class="warn">Note: task metadata is imported per Leagues season - don't rely on this for a new season until it's been refreshed, or task names, regions, and difficulties may not match.</strong></p>
+    <div id="status" class="status"></div>
+    <div id="syncHelp" class="sync-help" hidden></div>
+
+    <div id="result" hidden>
+      <div class="summary">
+        <div><strong id="completedCount">-</strong><span>Completed tasks</span></div>
+        <div><strong id="lastSynced">-</strong><span>Last synced</span></div>
+      </div>
+      <div class="filter-groups">
+        <div class="submenu filter-tabs" id="taskFilterTabs"></div>
+        <div class="filter-options">
+          <div class="submenu" id="taskRegionFilters"></div>
+          <div class="submenu" id="taskDifficultyFilters" hidden></div>
+          <div class="submenu" id="taskActivityTypeFilters" hidden></div>
+        </div>
+      </div>
+      <h2 class="cl-grid-title">Completed tasks</h2>
+      <ul id="taskList" class="leagues-task-list"></ul>
+    </div>
+  </main>
+  <script type="module" src="client/leagues.js"></script>
+</body>
+</html>

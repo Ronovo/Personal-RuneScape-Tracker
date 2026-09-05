@@ -3,3 +3,13 @@ npm-debug.log
 .git
 .gitignore
 *.log
+
+# Runtime state - lives in the volume, never in an image layer.
+data/
+
+# Local build output and review notes.
+dist
+public/client
+docs
+*.md
+!README.md

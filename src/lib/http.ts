@@ -1,8 +1,12 @@
 // Shared upstream-fetch plumbing: the User-Agent header every outbound call
-// needs, and the two TTL-cache shapes (`hiscores.ts`, `collectionlog.ts`, and
-// `prices.ts` each re-implemented their own copy of both before this existed).
+// needs, and a small TTL-cache helper used by hiscores.ts and prices.ts.
 
-const USER_AGENT = 'osrs-tracker (personal LAN project)';
+// The OSRS Wiki API etiquette asks callers to identify the app with a contact
+// method. Defaults to the project repo; a deployer can point it at their own
+// contact via WIKI_API_CONTACT.
+const CONTACT = process.env.WIKI_API_CONTACT?.trim()
+  || 'https://github.com/Ronovo/Personal-RuneScape-Tracker';
+const USER_AGENT = `osrs-tracker (+${CONTACT})`;
 
 export function fetchWithUserAgent(url: string): Promise<Response> {
   return fetch(url, { headers: { 'User-Agent': USER_AGENT } });

@@ -1,0 +1,17 @@
+{
+  // Client unit tests, compiled here and run with `node --test` - kept out of
+  // the browser bundle (tsconfig.client.json) so public/ never ships test
+  // code. Compiles the client + shared source alongside the tests so their
+  // relative imports (./format.js, ./leaguesFilters.js) resolve, into a
+  // throwaway dir separate from the server build's dist/.
+  "extends": "./tsconfig.client.json",
+  "compilerOptions": {
+    "outDir": "dist/client-tests",
+    // Overrides the browser bundle's ES2020 so a test can use top-level await
+    // to install DOM stubs before the module under test is imported. Only this
+    // throwaway output is affected; public/ is still built as ES2020.
+    "module": "es2022"
+  },
+  "include": ["src/client/**/*.ts", "src/shared/**/*.ts"],
+  "exclude": []
+}

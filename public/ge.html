@@ -8,36 +8,42 @@
 </head>
 <body>
   <header>
-    <h1>OSRS Tracker</h1>
-    <nav>
-      <a href="character.html">Character</a>
-      <a href="collectionlog.html">Collection Log</a>
-      <a href="ge.html" class="active">Grand Exchange</a>
-      <a href="flip.html">Flip Helper</a>
-    </nav>
+    <h1><a href="index.html">OSRS Tracker</a></h1>
+    <nav></nav>
     <div id="sessionBar" class="session-bar"></div>
   </header>
   <main>
     <div class="search-row">
-      <input id="itemSearch" type="text" placeholder="Search an item... (leave empty for top movers)" autocomplete="off" />
+      <input id="itemSearch" type="text" placeholder="Filter results by item name..." aria-label="Filter results by item name" autocomplete="off" />
+    </div>
+
+    <div class="page-toolbar">
+      <div class="submenu" id="directionToggle">
+        <button type="button" data-view="risers" class="active" title="Biggest gainers over the last 24 hours.">Rising</button>
+        <button type="button" data-view="fallers" title="Biggest losers over the last 24 hours.">Dropping</button>
+        <button type="button" data-view="volume" title="The most heavily traded items - the liquid end of the market.">High Volume</button>
+        <button type="button" data-view="random" title="A random set of fresh, actively traded items. Click again to reroll.">Random</button>
+      </div>
+      <div class="page-toolbar-end">
+        <button type="button" id="f2pFilterBtn" class="page-toolbar-tab f2p-toggle" title="Show free-to-play items only. Click again to show all items." aria-pressed="false">F2P</button>
+        <label class="page-size"># of Items
+          <select id="gridSize">
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="25" selected>25</option>
+            <option value="50">50</option>
+          </select>
+        </label>
+      </div>
     </div>
 
     <div class="filters">
-      <details class="filter-drawer" open>
+      <details class="filter-drawer">
         <summary>Filters</summary>
         <div class="filter-fields">
           <label>Min. daily volume <input id="minVolume" type="number" value="500" min="0" step="100" /></label>
           <label>Min. price (gp) <input id="minPrice" type="number" value="50" min="0" step="10" /></label>
           <label>Max. price (gp) <input id="maxPrice" type="number" min="0" step="10" placeholder="none" /></label>
-          <label>Sort
-            <select id="sortBy">
-              <option value="pctChange">% change</option>
-              <option value="volume">Daily volume</option>
-              <option value="price">Price</option>
-              <option value="marginAfterTax">Margin after tax</option>
-              <option value="profitPerLimit">Profit at buy limit</option>
-            </select>
-          </label>
           <label>Members
             <select id="membersOnly">
               <option value="all">All</option>
@@ -45,35 +51,30 @@
               <option value="f2p">F2P</option>
             </select>
           </label>
+          <label>Max age (min) <input id="maxAgeMinutes" type="number" min="0" step="5" placeholder="any" /></label>
           <label class="filter-check"><input id="hideStale" type="checkbox" /> Hide stale (&gt;30m)</label>
         </div>
       </details>
-      <button id="refreshBtn">Refresh</button>
-    </div>
-
-    <div class="ge-toolbar">
-      <div class="submenu" id="directionToggle">
-        <button type="button" data-view="risers" class="active">Rising</button>
-        <button type="button" data-view="fallers">Dropping</button>
-        <button type="button" data-view="penny" title="Cheap, heavily traded items under 1,000 gp." aria-label="Penny Arcade: Cheap, heavily traded items under 1,000 gp.">Penny Arcade</button>
-        <button type="button" data-view="random" title="A random set of fresh, actively traded items. Click again to reroll." aria-label="Random: A random set of fresh, actively traded items. Click again to reroll.">Random</button>
-        <button type="button" data-view="spread" title="Fresh, liquid items with the largest positive margin after GE tax." aria-label="Spread: Fresh, liquid items with the largest positive margin after GE tax.">Spread</button>
-        <button type="button" data-view="staircase" title="Items rising across the 1-hour, 6-hour, and 24-hour views." aria-label="Staircase: Items rising across the 1-hour, 6-hour, and 24-hour views.">Staircase</button>
+      <div class="filter-actions">
+        <button type="button" id="resetBtn" class="btn-outline" title="Restore the default filters.">Reset</button>
+        <button type="button" id="refreshBtn">Refresh</button>
       </div>
-      <label class="ge-page-size"># of Items
-        <select id="gridSize">
-          <option value="5">5</option>
-          <option value="10">10</option>
-          <option value="25" selected>25</option>
-          <option value="50">50</option>
-        </select>
-      </label>
     </div>
 
     <div id="status" class="status"></div>
     <h2 id="gridTitle">Rising (24h)</h2>
+    <label class="sort-row">Sort
+      <select id="sortBy">
+        <option value="pctChange">% change</option>
+        <option value="volume">Daily volume</option>
+        <option value="price">Price</option>
+        <option value="marginAfterTax">Margin after tax</option>
+        <option value="profitPerLimit">Profit at buy limit</option>
+      </select>
+      <button type="button" id="sortDirBtn" class="btn-outline" title="Toggle sort direction">&darr; High to low</button>
+    </label>
     <div id="grid" class="ge-grid"></div>
   </main>
-  <script type="module" src="ge.js"></script>
+  <script type="module" src="client/ge.js"></script>
 </body>
 </html>

@@ -1,8 +1,8 @@
 // Shared null-safe formatters, imported by every page script so character,
-// collection log, GE, item, and Flip Helper all render numbers the same way.
+// GE, item, and Flip Helper all render numbers the same way.
 
-const GE_TAX_RATE = 0.02;
-const GE_TAX_CAP = 5_000_000;
+// GE tax math lives in src/shared so client and server can't drift.
+export { geTax } from '../shared/getax.js';
 
 type Num = number | null | undefined;
 
@@ -50,22 +50,40 @@ export function fmtTime(unixSec: Num): string {
   return new Date(unixSec * 1000).toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' });
 }
 
+// Same date formatting as fmtTime, but for the ISO syncedAt string the sync
+// endpoints return (Character's Quests/Collection Log tabs and Leagues both
+// show "last synced").
+export function fmtSyncedAt(iso: string): string {
+  if (!iso) return 'n/a';
+  const date = new Date(iso);
+  return Number.isNaN(date.getTime())
+    ? iso
+    : date.toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' });
+}
+
 function ageSeconds(unixSec: Num): number | null {
   if (!unixSec) return null;
   return Math.max(0, Math.floor(Date.now() / 1000) - unixSec);
 }
 
-// Accepts either a unix timestamp or an already-computed age in seconds
-// (flip rows send age; item tiles send highTime/lowTime).
-export function fmtAgo(unixSec: Num): string {
-  const sec = typeof unixSec === 'number' && unixSec < 1e10
-    ? (unixSec > 1e8 ? ageSeconds(unixSec) : unixSec)
-    : ageSeconds(unixSec);
-  if (sec === null || Number.isNaN(sec)) return 'n/a';
+// "7m ago", from a duration already measured in seconds - what flip rows carry.
+//
+// This used to accept a timestamp too, guessing which the caller meant from
+// two magic thresholds: anything over 1e8 was read as a timestamp, so a
+// duration of 3.2 years or more silently became a date. Call sites always know
+// which one they hold, so they say.
+export function fmtAgo(seconds: Num): string {
+  if (seconds === null || seconds === undefined || Number.isNaN(seconds)) return 'n/a';
+  const sec = Math.max(0, Math.floor(seconds));
   if (sec < 60) return `${sec}s ago`;
   if (sec < 3600) return `${Math.floor(sec / 60)}m ago`;
   if (sec < 86400) return `${Math.floor(sec / 3600)}h ago`;
   return `${Math.floor(sec / 86400)}d ago`;
+}
+
+// Same label, from a unix timestamp - what the item page's trade tiles carry.
+export function fmtAgoSince(unixSec: Num): string {
+  return fmtAgo(ageSeconds(unixSec));
 }
 
 // Green / amber / red for last-traded age tiles (fresh ≤10m, stale >30m).
@@ -88,22 +106,69 @@ export function escapeHtml(s: unknown): string {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
-// Mirrors src/lib/prices.ts geTax, without item-name exemptions — the
-// calculator only has buy/sell numbers, not an item.
-export function geTax(price: Num): number {
-  if (!price) return 0;
-  return Math.min(Math.floor(price * GE_TAX_RATE), GE_TAX_CAP);
+// Web storage is not always available or writable: a locked-down or private
+// browsing context can throw on the very first access, and setItem throws
+// QuotaExceededError once a store is full. Both are recoverable - a lost
+// preference is not worth taking a page down for - but only if every access
+// goes through here. Reads fall back, writes report whether they landed.
+export function storageGet(store: Storage, key: string): string | null {
+  try {
+    return store.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+export function storageSet(store: Storage, key: string, value: string): boolean {
+  try {
+    store.setItem(key, value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function storageRemove(store: Storage, key: string): void {
+  try {
+    store.removeItem(key);
+  } catch {
+    // Nothing to recover: the value is already unreadable to us.
+  }
+}
+
+export const API_TOKEN_KEY = 'osrs_api_token';
+export const UNAUTHORIZED_HINT =
+  'Unauthorized. Sign in on this site, or open the tracker on your LAN host to pick up its API token.';
+
+export function apiAuthHeaders(extra?: Record<string, string>): Record<string, string> {
+  const headers: Record<string, string> = { ...extra };
+  const token = storageGet(localStorage, API_TOKEN_KEY)?.trim();
+  if (token) headers.Authorization = `Bearer ${token}`;
+  return headers;
 }
 
 // Fetch + parse, leaving the ok/error decision to the caller - some pages
 // (collection log) treat a particular status code as a non-error case rather
 // than throwing, so this can't own that decision itself.
-export async function fetchJson<T>(url: string): Promise<{ ok: boolean; status: number; data: T }> {
-  const res = await fetch(url);
+export async function fetchJson<T>(url: string, init?: RequestInit): Promise<{ ok: boolean; status: number; data: T }> {
+  const res = await fetch(url, {
+    ...init,
+    headers: { ...apiAuthHeaders(), ...(init?.headers as Record<string, string> | undefined) },
+  });
+  const contentType = res.headers.get('content-type') ?? '';
+  if (!contentType.includes('application/json')) {
+    throw new Error(
+      'Server returned HTML instead of JSON. Stop the running tracker, run npm start again, then retry.',
+    );
+  }
   const data = (await res.json()) as T;
+  if (res.status === 401) {
+    return { ok: false, status: 401, data: { ...(data as object), error: UNAUTHORIZED_HINT } as T };
+  }
   return { ok: res.ok, status: res.status, data };
 }
 
@@ -128,10 +193,80 @@ export function el<T extends HTMLElement = HTMLElement>(id: string): T {
 }
 
 // "Press Enter in the field, or click the button" - the same pair of
-// listeners character.html and collectionlog.html's search boxes both wire up.
+// listeners every page's search box wires up.
 export function onEnterOrClick(input: HTMLInputElement, button: HTMLElement, action: () => void): void {
   button.addEventListener('click', action);
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') action();
   });
+}
+
+export interface FilterOption<T extends string> {
+  key: T;
+  label: string;
+}
+
+export interface FilterGroup<T extends string> {
+  /** Marks a key active, applies it, and refreshes. */
+  select: (key: T) => void;
+  /** Replaces the buttons - for rows whose options come from server data. */
+  setOptions: (options: FilterOption<T>[]) => void;
+}
+
+// A row of filter buttons: renders them, tracks which one is active, and runs
+// the caller's apply + refresh callbacks on every click.
+//
+// Used for every filter row in the app - the Quests tab's per-dimension
+// options, both pages' top-level "which dimension" strip, and the Leagues
+// page's region/difficulty/activityType rows. The last of those are rebuilt
+// from each response rather than fixed, which is why setOptions exists; that
+// case used to be a near-identical private copy of this function in leagues.ts,
+// with a comment on each side explaining why there were two.
+export function wireFilterGroup<T extends string>(
+  el: HTMLElement,
+  options: FilterOption<T>[],
+  apply: (key: T) => void,
+  onSelect: () => void
+): FilterGroup<T> {
+  const select = (key: T): void => {
+    apply(key);
+    el.querySelectorAll<HTMLButtonElement>('button').forEach((b) => {
+      b.classList.toggle('active', b.dataset.filter === key);
+    });
+    onSelect();
+  };
+
+  const setOptions = (next: FilterOption<T>[]): void => {
+    el.innerHTML = next
+      .map((o) => `<button data-filter="${escapeHtml(o.key)}">${escapeHtml(o.label)}</button>`)
+      .join('');
+  };
+
+  // Delegated, so rebuilt buttons stay live without re-wiring.
+  el.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('button');
+    if (btn?.dataset.filter) select(btn.dataset.filter as T);
+  });
+
+  setOptions(options);
+  return { select, setOptions };
+}
+
+// Gold dot on a top-tier filter-dimension tab whose child filter isn't at
+// its default value, so a narrowed row that's currently hidden behind
+// another tab doesn't look like the list is just unfiltered.
+export function markNarrowedDimensions<K extends string>(tabsEl: HTMLElement, isNarrowed: (key: K) => boolean): void {
+  tabsEl.querySelectorAll<HTMLButtonElement>('button').forEach((b) => {
+    b.classList.toggle('has-filter', isNarrowed(b.dataset.filter as K));
+  });
+}
+
+// The "set up plugin sync" steps shared by sync-help blocks on Character and
+// Leagues pages - identical everywhere except what the Sync URL points at.
+export function syncSetupStepsHtml(syncButtonLabel = 'Sync Everything'): string {
+  return `
+    <li>In RuneLite, open the <strong>Leagues Tasks</strong> sidebar and go to <strong>Sync Settings</strong>.</li>
+    <li>Set <strong>Server URL</strong> to this tracker&apos;s base URL (for example <code>http://localhost:4123</code>, or HTTPS / your LAN address).</li>
+    <li>Set <strong>API Token</strong> to the value from <strong>Copy plugin token</strong> in the tracker header (LAN hosts fill the browser in automatically; public hosts show it after sign-in).</li>
+    <li>Under <strong>Sync to Website</strong>, click <strong>${syncButtonLabel}</strong> while logged in on that character.</li>`;
 }
