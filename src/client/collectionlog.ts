@@ -177,4 +177,4 @@ async function search(): Promise<void> {
   }
 }
 
-onEnterOrClick(usernameInput, searchBtn, search);
+onEnterOrClick(usernameInput, searchBtn, () => void search());
