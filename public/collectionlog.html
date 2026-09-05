@@ -22,7 +22,7 @@
       <input id="username" type="text" placeholder="OSRS username" autocomplete="off" />
       <button id="searchBtn">Search</button>
     </div>
-    <p class="status">Data comes from <a href="https://templeosrs.com" target="_blank" rel="noopener">TempleOSRS</a>, which only has a log for players who've synced one via its RuneLite plugin. Jagex doesn't expose collection log contents through any official API.</p>
+    <p class="status">Jagex doesn&apos;t expose collection log contents through any official API, so this reads the snapshot the <strong>Leagues Tasks</strong> RuneLite plugin uploads to this tracker. Only players who&apos;ve synced their log at least once will have data here.</p>
     <div id="status" class="status"></div>
     <div id="syncHelp" class="sync-help" hidden></div>
 
@@ -30,7 +30,7 @@
       <div class="summary">
         <div><strong id="itemsObtained">-</strong><span>Items logged</span></div>
         <div><strong id="categoriesFinished">-</strong><span>Categories complete</span></div>
-        <div><strong id="hiscoresRank">-</strong><span>Collections hiscores rank</span></div>
+        <div><strong id="lastSynced">-</strong><span>Last synced</span></div>
       </div>
       <h2 id="gridTitle" class="cl-grid-title">Pick a category below to see its items</h2>
       <div id="itemGrid" class="cl-item-grid"></div>

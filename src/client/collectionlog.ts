@@ -1,7 +1,8 @@
-// Collection log browser. Data comes from TempleOSRS, not Jagex — a 404
+// Collection log browser. Jagex exposes no log contents, so this reads the
+// snapshot the Leagues Tasks RuneLite plugin uploads to this tracker — a 404
 // means the player hasn't synced, which we show as help rather than an error.
 
-import { fmt, fetchJson, errorMessage, onEnterOrClick, escapeHtml } from './format.js';
+import { fmt, fetchJson, errorMessage, onEnterOrClick, escapeHtml, fmtSyncedAt, syncSetupStepsHtml } from './format.js';
 import { prefillUsername } from './session.js';
 import type { CollectionLogData, CollectionGroup, CollectionCategory, ApiErrorBody } from './types.js';
 
@@ -18,13 +19,10 @@ const itemGridEl = document.getElementById('itemGrid')!;
 prefillUsername(usernameInput);
 
 const SYNC_HELP_HTML = `
-  <p><strong>No synced collection log found for this name.</strong> TempleOSRS only has data for players who've synced their log at least once. To fix that:</p>
-  <ol>
-    <li>In RuneLite, open <strong>Configuration</strong> (wrench icon) &rarr; <strong>Plugin Hub</strong>, search "<strong>TempleOSRS</strong>", and install the plugin.</li>
-    <li>Open your in-game <strong>Collection Log</strong> interface and click the sync button in its top-right corner.</li>
-    <li>Make sure you have a profile on <a href="https://templeosrs.com" target="_blank" rel="noopener">templeosrs.com</a> for your name (search your name there and press Update if it says none exists).</li>
+  <p><strong>No synced collection log found for this name.</strong> Unlike quests and tasks, the log can only be read while its interface is open:</p>
+  <ol>${syncSetupStepsHtml('the in-game Collection Log Sync button (open the log first &mdash; there is no sidebar Collection Log button)')}
   </ol>
-  <p>Once you've synced, search for your name again here, or just reload this page and search again.</p>`;
+  <p>Once you&apos;ve synced, search for your name again here, or just reload this page and search again.</p>`;
 
 let groupsData: CollectionGroup[] = [];
 let categoriesByKey = new Map<string, CollectionCategory>();
@@ -152,7 +150,7 @@ async function search(): Promise<void> {
   try {
     const { ok, status, data } = await fetchJson<CollectionLogData & ApiErrorBody>(`/api/collectionlog/${encodeURIComponent(username)}`);
 
-    // Not synced on TempleOSRS — show the how-to instead of a red error.
+    // Never synced — show the how-to instead of a red error.
     if (status === 404) {
       statusEl.textContent = '';
       syncHelpEl.innerHTML = SYNC_HELP_HTML;
@@ -163,7 +161,7 @@ async function search(): Promise<void> {
 
     document.getElementById('itemsObtained')!.textContent = `${fmt(data.itemsObtained)} / ${fmt(data.itemsAvailable)}`;
     document.getElementById('categoriesFinished')!.textContent = `${fmt(data.categoriesFinished)} / ${fmt(data.categoriesAvailable)}`;
-    document.getElementById('hiscoresRank')!.textContent = data.hiscoresRank ? fmt(data.hiscoresRank) : 'Unranked';
+    document.getElementById('lastSynced')!.textContent = fmtSyncedAt(data.syncedAt);
 
     setGroups(data.groups);
 
