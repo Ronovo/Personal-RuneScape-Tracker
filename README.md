@@ -22,61 +22,26 @@ The **Quests**, **Diaries**, **Combat Achievements**, and **Collection Log**
 tabs are the exception: Jagex's hiscores don't expose any of them, so all four
 read the state the RuneLite plugin syncs instead.
 
-- **Quests** - completed, in progress, or not completed, from the plugin's
-  synced quest state, plus Completion Status, Type (Quest/Miniquest), and
-  Membership (F2P/Members) filters and matching summary counts. Each quest's
-  type and membership come from a wiki scrape
-  (`src/lib/quest-metadata.json`, see `scripts/scrape-quest-metadata.mjs`); a
-  quest too new for that scrape defaults to a visible members quest rather
-  than disappearing.
-- **Diaries** - achievement diary tier completion (Easy/Medium/Hard/Elite
-  per area) from the plugin's varbit reads, grouped by diary region with
-  per-area tier pills and overall tier counts. Karamja Easy/Medium/Hard are
-  not tracked by the game as tier-complete booleans, so only tiers the plugin
-  actually synced appear.
-- **Combat Achievements** - total CA points, completed task count, and a
-  filterable task list grouped by boss/activity. Task names come from a wiki
-  scrape (`src/lib/combat-achievement-metadata.json`, see
-  `npm run scrape:combatachievements`); a task too new for that scrape falls
-  back to a title-cased varbit slug.
-- **Collection Log** - overall items obtained, categories completed, and
-  when it was last synced; categories grouped into Bosses, Raids, Clues,
-  Minigames, and more; filters for unstarted, started, and completed
-  categories; obtained/missing item grids. Every slot reads as obtained or
-  missing - the game reports which slots are filled but not duplicate
-  quantities. Item icons resolve through
-  `src/lib/image_name_conversion.json`, overrides for the handful of items
-  whose wiki image filename doesn't match the item name.
+- **Hiscores**
+- **Boss Kills
+- **Quests** 
+- **Achievement Diaries** 
+- **Combat Achievements** 
+- **Collection Log**
 
 See [Plugin sync](#plugin-sync) if any of those tabs have no data.
 
 ### Leagues Tasks
 
-Browse a player's completed Leagues Task Randomizer tasks, synced the same
+Browse a player's completed tasks from the Leagues Task Plugin (Coming Soon), synced the same
 way as Quests and the Collection Log above:
 
-- Filters for Region, Difficulty, and Activity Type - the same three
-  dimensions the plugin itself filters by, each independent and defaulting
-  to "All". Activity types include **Combat Achievements** (CA system
-  tasks, separate from **Combat/Magic** skill combat tasks) once the
-  metadata import matches the plugin's task list
-- Task names, regions, difficulties, and activity types come from the
-  plugin's own task list, imported offline into
-  `src/lib/leagues-task-metadata.json` (see
-  `scripts/import-leagues-task-metadata.mjs`) and joined onto the synced
-  task id
-- A task id the plugin has since renamed or pruned (rare - the plugin's
-  scraper occasionally deduplicates two leagues' wording for the same
-  achievement) shows as "Unknown" on the row rather than disappearing;
-  Unknown is not offered as a filter option
-
+The Leagues Task Plugin is a fun way to spice up your OSRS journey by completing tasks from a list compiled from all the previous OSRS Leagues events. 
 See [Plugin sync](#plugin-sync) if the page has no data.
 
 ### Grand Exchange
 
-Browse and filter Wiki market data. This is the market-query side of the app:
-what things cost, what is moving, and what is actually being traded. Anything
-ranked by the profit you would make lives in the Flip Helper.
+Browse and filter Wiki market data. 
 
 - 24-hour risers and fallers with clearly labeled price changes
 - High Volume and Random quick views
@@ -90,15 +55,14 @@ capital requirements, and alchemy values.
 
 ### Flip Helper
 
-Scan the market for buy-low/sell-high opportunities. Every scan method here
+Scan the market for buy-low/sell-high opportunities. Mark items on a wishlist that you want to Every scan method here
 ranks by profit, so this is where the more specific searching happens:
 
 - After-tax profit, ROI, buy-limit profit, GP/hr, capital, volume, age, and confidence
 - Penny Arcade, High Margin, Best ROI, GP / Hour, Best Overall, Fits My Bankroll, and Watchlist presets
-- F2P toggle on the preset toolbar, and a collapsible filter drawer (bankroll, price, volume, profit, ROI, margin vs. 24h average, trade age, membership)
-- Selectable desktop columns with saved defaults and a dedicated mobile card view
+- F2P toggle on the preset toolbar, and a collapsible filter drawer
+  - Bankroll, pPice, Volume, Profit, ROI, Margin Vs. 24h Average, Trade Age, Membership)
 - A calculator that can load any result and return to its original page
-- GE and item-page "Flip" links that automatically load the linked item into the calculator
 
 GE tax is 2% of the sale price, floored and capped at 5,000,000 gp. Known
 tax-exempt items and charged/dosed variants are handled server-side.
@@ -108,8 +72,6 @@ is compared with its 24-hour average.
 
 > The Wiki API reports completed trades, not live offers. Always verify the
 > actual in-game GE offer box before committing money.
-
-
 
 ## Plugin sync
 
