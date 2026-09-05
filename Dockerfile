@@ -32,7 +32,7 @@ RUN mkdir -p /app/data/sync /app/data/watchlist && chown -R node:node /app/data
 VOLUME /app/data
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s \
-  CMD wget -qO- "http://localhost:${PORT:-4123}/api/health" || exit 1
+  CMD wget -qO- "http://127.0.0.1:${PORT:-4123}/api/health" || exit 1
 
 USER node
 
