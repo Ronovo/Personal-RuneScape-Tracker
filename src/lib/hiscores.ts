@@ -1,43 +1,14 @@
-// Order below is verified directly against real hiscore data: fetched
-// index_lite.ws for a live account, then cross-checked individual values
-// (rank, score) against secure.runescape.com's own per-category personal
-// pages (.../hiscorepersonal?user1=X&category_type=1&table=N) as of
-// 2026-08-19. That confirmed CSV activity line index N (0-based, first
-// activity line = index 0) holds the SAME data as category_type=1&table=N —
-// i.e. table number equals CSV index directly, not table-1 as the table
-// links alone would suggest. Index 0 has no known table= page (table=0 is
-// invalid) and reliably comes back unranked/zero, so it's an unidentified
-// legacy column that gets skipped rather than mis-attributed to a real
-// activity. Table=91 ("Grid Points") also is NOT yet present in the CSV
-// feed even though its category page exists, and Sailing genuinely is skill
-// index 24 (verified: real accounts report nonzero Sailing XP there).
+// CSV activity line index N (0-based) maps directly to hiscores table=N -
+// not table-1, as the table links alone would suggest. Index 0 has no valid
+// table= page and always comes back zero, so it's skipped as an
+// unidentified legacy column rather than mis-attributed to a real activity.
+// Table=91 ("Grid Points") isn't in the CSV feed yet either. Verified
+// against a live account's per-category pages as of 2026-08-19.
 
 import { httpError } from './errors.js';
 import { fetchWithUserAgent, cachedByKey } from './http.js';
-
-interface SkillEntry {
-  name: string;
-  rank: number | null;
-  level: number;
-  xp: number;
-}
-
-interface ScoredEntry {
-  name: string;
-  rank: number | null;
-  score: number;
-}
-
-interface HiscoresData {
-  username: string;
-  combatLevel: number;
-  totalLevel: number;
-  totalXp: number;
-  skills: SkillEntry[];
-  bosses: ScoredEntry[];
-  minigames: ScoredEntry[];
-  others: ScoredEntry[];
-}
+import { storageKey } from './sync.js';
+import type { HiscoresData, ScoredEntry, SkillEntry } from '../shared/api.js';
 
 type ActivityCategory = 'unknown' | 'others' | 'minigames' | 'bosses';
 
@@ -98,7 +69,9 @@ const ACTIVITY_ORDER: ActivityOrderEntry[] = [
   { name: 'Soul Wars Zeal', category: 'minigames' },
   { name: 'Rifts closed', category: 'minigames' },
   { name: 'Colosseum Glory', category: 'minigames' },
-  { name: 'Collections Logged', category: 'others' },
+  // Collections Logged: a single aggregate count, redundant with the
+  // dedicated Collection Log tab, so it's parsed positionally but not surfaced.
+  { name: 'Collections Logged', category: 'unknown' },
   ...BOSSES.map((name): ActivityOrderEntry => ({ name, category: 'bosses' }))
 ];
 
@@ -107,7 +80,7 @@ const cache = new Map<string, { data: HiscoresData; at: number }>();
 
 // Jagex formula — combat level is not in the CSV. Uses the max(melee, range, mage) branch.
 // https://oldschool.runescape.wiki/w/Combat_level#Calculating_combat_level
-function combatLevel(skills: SkillEntry[]): number {
+export function combatLevel(skills: SkillEntry[]): number {
   const lvl = (name: string) => skills.find((s) => s.name === name)?.level ?? 1;
 
   const base = 0.25 * (lvl('Defence') + lvl('Hitpoints') + Math.floor(lvl('Prayer') / 2));
@@ -120,18 +93,16 @@ function combatLevel(skills: SkillEntry[]): number {
 
 // Lines 0–24: skills. Remaining lines follow ACTIVITY_ORDER (others / minigames / bosses interleaved).
 // Unmapped trailing lines are ignored.
-function parseCsv(text: string, username: string): HiscoresData {
+export function parseHiscoresCsv(text: string, username: string): HiscoresData {
   const lines = text.trim().split('\n').map((l) => l.trim());
   if (lines.length < SKILLS.length) {
     throw new Error('Unexpected hiscores response format');
   }
 
   const skills: SkillEntry[] = SKILLS.map((name, i) => {
-    // ?? NaN: a malformed/short CSV line leaves later destructured values
-    // undefined even though .map(Number) types the whole line as number[] -
-    // NaN keeps every comparison below false (same as today) without a `!`
-    // that would otherwise be asserting something the line didn't guarantee.
-    const [rank, level, xp] = lines[i].split(',').map(Number);
+    // A short or malformed CSV line leaves these undefined; NaN keeps every
+    // comparison below false, so the row falls back to rank null / level 1.
+    const [rank, level, xp] = (lines[i] ?? '').split(',').map(Number);
     const r = rank ?? NaN;
     const l = level ?? NaN;
     const x = xp ?? NaN;
@@ -183,9 +154,9 @@ function parseCsv(text: string, username: string): HiscoresData {
 
 // Jagex index_lite.ws CSV; 60s keyed cache; 404 = unknown player.
 export async function fetchHiscores(username: string): Promise<HiscoresData> {
-  const key = username.toLowerCase();
+  const key = storageKey(username);
   return cachedByKey(cache, key, CACHE_TTL_MS, async () => {
-    const url = `https://secure.runescape.com/m=hiscore_oldschool/index_lite.ws?player=${encodeURIComponent(username)}`;
+    const url = `https://secure.runescape.com/m=hiscore_oldschool/index_lite.ws?player=${encodeURIComponent(key)}`;
     const res = await fetchWithUserAgent(url);
 
     if (res.status === 404) {
@@ -195,6 +166,9 @@ export async function fetchHiscores(username: string): Promise<HiscoresData> {
       throw httpError('Hiscores lookup failed', 502);
     }
 
-    return parseCsv(await res.text(), username);
+    // The storage key, not the caller's casing: this record is shared by every
+    // caller for the next 60s, and returning the normalised name is what every
+    // other player endpoint does.
+    return parseHiscoresCsv(await res.text(), key);
   });
 }

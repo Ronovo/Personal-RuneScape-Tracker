@@ -8,13 +8,8 @@
 </head>
 <body>
   <header>
-    <h1>OSRS Tracker</h1>
-    <nav>
-      <a href="character.html" class="active">Character</a>
-      <a href="collectionlog.html">Collection Log</a>
-      <a href="ge.html">Grand Exchange</a>
-      <a href="flip.html">Flip Helper</a>
-    </nav>
+    <h1><a href="index.html">OSRS Tracker</a></h1>
+    <nav></nav>
     <div id="sessionBar" class="session-bar"></div>
   </header>
   <main>
@@ -31,19 +26,86 @@
         <div><strong id="totalXp">-</strong><span>Total XP</span></div>
       </div>
 
-      <div class="submenu">
+      <div class="submenu" id="mainTabs">
         <button data-tab="skills" class="active">Skills</button>
         <button data-tab="bosses">Bosses</button>
         <button data-tab="minigames">Minigames</button>
-        <button data-tab="others">Others</button>
+        <button data-tab="quests">Quests</button>
+        <button data-tab="diaries">Diaries</button>
+        <button data-tab="combatachievements">Combat Achievements</button>
+        <button data-tab="collectionlog">Collection Log</button>
+        <button data-tab="clues">Clues</button>
       </div>
 
       <div id="tab-skills" class="tab-panel"></div>
       <div id="tab-bosses" class="tab-panel" hidden></div>
       <div id="tab-minigames" class="tab-panel" hidden></div>
-      <div id="tab-others" class="tab-panel" hidden></div>
+      <div id="tab-clues" class="tab-panel" hidden></div>
+      <div id="tab-quests" class="tab-panel" hidden>
+        <div id="questSyncHelp" class="sync-help" hidden></div>
+        <div id="questResult" hidden>
+          <div class="summary">
+            <div><strong id="questsComplete">-</strong><span>Completed</span></div>
+            <div><strong id="questsInProgress">-</strong><span>In progress</span></div>
+            <div><strong id="questsNotStarted">-</strong><span>Not completed</span></div>
+          </div>
+          <div class="filter-groups">
+            <div class="submenu filter-tabs" id="questFilterTabs"></div>
+            <div class="filter-options">
+              <div class="submenu" id="questStateFilters"></div>
+              <div class="submenu" id="questTypeFilters" hidden></div>
+              <div class="submenu" id="questMemberFilters" hidden></div>
+            </div>
+          </div>
+          <ul id="questList" class="leagues-task-list"></ul>
+        </div>
+      </div>
+      <div id="tab-diaries" class="tab-panel" hidden>
+        <p class="status">Tier completion comes from the Leagues Tasks plugin, which reads in-game varbits when you sync. Karamja is the one exception: Jagex only exposes an Elite tier-complete flag for that diary — Easy, Medium, and Hard are tracked as individual task counts with no tier-complete boolean, so those tiers are not included in the sync.</p>
+        <div id="diarySyncHelp" class="sync-help" hidden></div>
+        <div id="diaryResult" hidden>
+          <div class="summary">
+            <div><strong id="diariesComplete">-</strong><span>Tiers complete</span></div>
+            <div><strong id="diariesTotal">-</strong><span>Tiers tracked</span></div>
+            <div><strong id="diariesLastSynced">-</strong><span>Last synced</span></div>
+          </div>
+          <div id="diaryAreas" class="diary-grid"></div>
+        </div>
+      </div>
+      <div id="tab-combatachievements" class="tab-panel" hidden>
+        <div id="caSyncHelp" class="sync-help" hidden></div>
+        <div id="caResult" hidden>
+          <div class="summary">
+            <div><strong id="caPoints">-</strong><span>CA points</span></div>
+            <div><strong id="caComplete">-</strong><span>Tasks complete</span></div>
+            <div><strong id="caTotal">-</strong><span>Tasks tracked</span></div>
+          </div>
+          <button type="button" id="caGroupToggle" class="ca-group-toggle">Filter by Boss</button>
+          <div id="caGroupPanel" class="ca-group-panel" hidden>
+            <div id="caGroupPills" class="ca-group-grid"></div>
+          </div>
+          <div class="submenu" id="caCompletionFilters"></div>
+          <ul id="caTaskList" class="leagues-task-list"></ul>
+        </div>
+      </div>
+      <div id="tab-collectionlog" class="tab-panel" hidden>
+        <div id="clSyncHelp" class="sync-help" hidden></div>
+        <div id="clResult" hidden>
+          <div class="summary">
+            <div><strong id="itemsObtained">-</strong><span>Items logged</span></div>
+            <div><strong id="categoriesFinished">-</strong><span>Categories complete</span></div>
+            <div><strong id="lastSynced">-</strong><span>Last synced</span></div>
+          </div>
+          <h2 id="gridTitle" class="cl-grid-title">Pick a category below to see its items</h2>
+          <div id="itemGrid" class="cl-item-grid"></div>
+
+          <h2 class="cl-grid-title">Categories</h2>
+          <div class="submenu" id="groupTabs"></div>
+          <div id="groups"></div>
+        </div>
+      </div>
     </div>
   </main>
-  <script type="module" src="character.js"></script>
+  <script type="module" src="client/character.js"></script>
 </body>
 </html>

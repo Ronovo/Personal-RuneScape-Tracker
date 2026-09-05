@@ -1,68 +1,31 @@
-// Shapes of the JSON this app's own /api/* endpoints return, as consumed by
-// the browser. Mirrors (but is intentionally separate from) src/lib/types.ts
-// on the server side — the client build has no dependency on server source.
+// The shapes of the JSON this app's own /api/* endpoints return.
+//
+// The response types themselves live in src/shared/api.ts and are re-exported
+// here, so the server modules that build them and the page scripts that render
+// them are typed by the same declarations. src/shared/types.ts holds the
+// prices-side unions the two sides also share. What is left below is genuinely
+// browser-only: the movers/search/item-detail view shapes the GE and Flip pages
+// consume.
 
-// ---- Hiscores ----
+import type { MembersFilter, PriceRange, Confidence, SortDir, FlipSort, FlipItem } from '../shared/types.js';
+import { FLIP_SORTS } from '../shared/types.js';
 
-export interface SkillEntry {
-  name: string;
-  rank: number | null;
-  level: number;
-  xp: number;
-}
+export type { MembersFilter, PriceRange, Confidence, SortDir, FlipSort, FlipItem };
+export { FLIP_SORTS };
 
-export interface ScoredEntry {
-  name: string;
-  rank: number | null;
-  score: number;
-}
-
-export interface HiscoresData {
-  username: string;
-  combatLevel: number;
-  totalLevel: number;
-  totalXp: number;
-  skills: SkillEntry[];
-  bosses: ScoredEntry[];
-  minigames: ScoredEntry[];
-  others: ScoredEntry[];
-}
-
-// ---- Collection log ----
-
-export interface CollectionItem {
-  name: string;
-  count: number;
-  icon: string;
-}
-
-export interface CollectionCategory {
-  key: string;
-  name: string;
-  obtained: number;
-  total: number;
-  items: CollectionItem[];
-}
-
-export interface CollectionGroup {
-  group: string;
-  categories: CollectionCategory[];
-}
-
-export interface CollectionLogData {
-  username: string;
-  lastChecked: string | null;
-  itemsObtained: number;
-  itemsAvailable: number;
-  categoriesFinished: number;
-  categoriesAvailable: number;
-  hiscoresRank: number | null;
-  groups: CollectionGroup[];
-}
+export type {
+  SkillEntry, ScoredEntry, HiscoresData,
+  QuestState, QuestKind, QuestWithMeta, QuestSummary, QuestProgressData,
+  CollectionItem, CollectionCategory, CollectionGroup, CollectionLogData,
+  DiaryTier, DiaryTierProgress, DiaryAreaProgress, DiarySummary, DiaryProgressData,
+  CombatAchievementTaskView, CombatAchievementGroup, CombatAchievementSummary, CombatAchievementData,
+  CompletedTaskWithMeta, TaskFilterOptions, LeaguesTasksData,
+  ApiErrorBody,
+} from '../shared/api.js';
 
 // ---- Grand Exchange: movers + search ----
 
-export type GeView = 'risers' | 'fallers' | 'penny' | 'random' | 'spread' | 'staircase';
+export type GeView = 'risers' | 'fallers' | 'volume' | 'random';
 
 export interface MoverItem {
   id: number;
@@ -82,13 +45,16 @@ export interface MoverItem {
   marginAfterTax: number | null;
   roi: number | null;
   profitPerLimit: number | null;
+  gpPerHour: number | null;
   highTime: number | null;
   lowTime: number | null;
 }
 
 export interface MoversResponse {
-  risers: MoverItem[];
-  fallers: MoverItem[];
+  // Only the Rising/Dropping views carry these; High Volume and Random rank the
+  // unsplit list and return `items` instead.
+  risers?: MoverItem[];
+  fallers?: MoverItem[];
   items?: MoverItem[];
   consideredCount: number;
 }
@@ -105,8 +71,6 @@ export interface SearchResult {
 }
 
 // ---- Item detail + chart ----
-
-export type PriceRange = '1d' | '1w' | '1m' | '3m' | '1y';
 
 export interface TimeseriesPoint {
   timestamp: number;
@@ -159,49 +123,6 @@ export interface ItemDetail {
 }
 
 // ---- Flip Helper ----
-// FlipSort / SortDir / MembersFilter mirror src/lib/types.ts — keep in sync by hand.
-
-export type FlipSort =
-  | 'profitPerLimit' | 'profit' | 'roi' | 'volume' | 'realisticProfit' | 'margin' | 'confidence'
-  | 'name' | 'buy' | 'sell' | 'tax' | 'limit' | 'capital' | 'age';
-
-export const FLIP_SORTS = [
-  'profitPerLimit', 'profit', 'roi', 'volume', 'realisticProfit', 'margin', 'confidence',
-  'name', 'buy', 'sell', 'tax', 'limit', 'capital', 'age'
-] as const satisfies readonly FlipSort[];
-
-export type SortDir = 'asc' | 'desc';
-
-export type MembersFilter = 'all' | 'members' | 'f2p';
-
-export type Confidence = 'high' | 'medium' | 'low';
-
-export interface FlipItem {
-  id: number;
-  name: string;
-  members: boolean;
-  icon: string;
-  buy: number;
-  sell: number;
-  margin: number;
-  tax: number;
-  taxExempt: boolean;
-  profit: number;
-  roi: number | null;
-  limit: number | null;
-  profitPerLimit: number | null;
-  capital: number | null;
-  volume24h: number;
-  buyPressure: number | null;
-  age: number | null;
-  highTime: number | null;
-  lowTime: number | null;
-  marginVsAvg: number | null;
-  confidence: Confidence;
-  confidenceWhy: string;
-  affordableUnits?: number;
-  realisticProfit?: number;
-}
 
 export interface FlipsResponse {
   items: FlipItem[];
@@ -211,8 +132,3 @@ export interface FlipsResponse {
   totalPages: number;
 }
 
-// ---- Errors ----
-
-export interface ApiErrorBody {
-  error?: string;
-}

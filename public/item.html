@@ -8,17 +8,15 @@
 </head>
 <body>
   <header>
-    <h1>OSRS Tracker</h1>
-    <nav>
-      <a href="character.html">Character</a>
-      <a href="collectionlog.html">Collection Log</a>
-      <a href="ge.html" class="active">Grand Exchange</a>
-      <a href="flip.html">Flip Helper</a>
-    </nav>
+    <h1><a href="index.html">OSRS Tracker</a></h1>
+    <nav></nav>
     <div id="sessionBar" class="session-bar"></div>
   </header>
   <main>
-    <a href="ge.html" class="back-link">&larr; Back to Grand Exchange</a>
+    <div class="page-links">
+      <a href="ge.html" class="back-link">&larr; Back to Grand Exchange</a>
+      <a href="flip.html" class="back-link" id="flipLink" hidden>Flip this item &rarr;</a>
+    </div>
     <div id="status" class="status"></div>
     <div id="result" hidden></div>
 
@@ -31,14 +29,14 @@
         <button type="button" data-range="1y">1Y</button>
       </div>
       <div class="filters" id="seriesToggles">
-        <label><input type="checkbox" data-series="high" checked /> Insta-buy</label>
-        <label><input type="checkbox" data-series="low" checked /> Insta-sell</label>
-        <label><input type="checkbox" data-series="volume" /> Volume bars</label>
+        <label><input type="checkbox" data-series="high" checked /> Insta-Buy</label>
+        <label><input type="checkbox" data-series="low" checked /> Insta-Sell</label>
+        <label><input type="checkbox" data-series="volume" checked /> Volume Bars</label>
         <label><input type="checkbox" data-series="smooth" /> Smooth</label>
       </div>
       <div id="chart" class="chart"></div>
     </div>
   </main>
-  <script type="module" src="item.js"></script>
+  <script type="module" src="client/item.js"></script>
 </body>
 </html>

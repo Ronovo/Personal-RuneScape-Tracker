@@ -1,0 +1,2705 @@
+{
+  "source": "https://oldschool.runescape.wiki/api.php (bucket combat_achievement)",
+  "scrapedAt": "2026-08-26T17:33:21.637Z",
+  "tasks": [
+    {
+      "slug": "ABBERANT_SPECTRE_KILLCOUNT_1",
+      "name": "Noxious Foe",
+      "monster": "Aberrant Spectre",
+      "tier": "Easy",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "ABYSSALSIRE_KILLCOUNT_1",
+      "name": "Abyssal Adept",
+      "monster": "Abyssal Sire",
+      "tier": "Hard",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "ABYSSALSIRE_KILLCOUNT_2",
+      "name": "Abyssal Veteran",
+      "monster": "Abyssal Sire",
+      "tier": "Elite",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "ABYSSALSIRE_MECHANICAL_1",
+      "name": "They Grow Up Too Fast",
+      "monster": "Abyssal Sire",
+      "tier": "Hard",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "ABYSSALSIRE_MECHANICAL_2",
+      "name": "Respiratory Runner",
+      "monster": "Abyssal Sire",
+      "tier": "Elite",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "ABYSSALSIRE_MECHANICAL_3",
+      "name": "Don't Whip Me",
+      "monster": "Abyssal Sire",
+      "tier": "Hard",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "ABYSSALSIRE_MECHANICAL_4",
+      "name": "Demonic Rebound",
+      "monster": "Abyssal Sire",
+      "tier": "Elite",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "ABYSSALSIRE_PERFECTION_1",
+      "name": "Don't Stop Moving",
+      "monster": "Abyssal Sire",
+      "tier": "Hard",
+      "type": "Perfection"
+    },
+    {
+      "slug": "ABYSSALSIRE_PERFECTION_2",
+      "name": "Perfect Sire",
+      "monster": "Abyssal Sire",
+      "tier": "Elite",
+      "type": "Perfection"
+    },
+    {
+      "slug": "ARMADYL_KILLCOUNT_1",
+      "name": "Kree'arra Adept",
+      "monster": "Kree'arra",
+      "tier": "Hard",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "ARMADYL_KILLCOUNT_2",
+      "name": "Kree'arra Veteran",
+      "monster": "Kree'arra",
+      "tier": "Elite",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "ARMADYL_MECHANICAL_1",
+      "name": "Collateral Damage",
+      "monster": "Kree'arra",
+      "tier": "Master",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "ARMADYL_MECHANICAL_2",
+      "name": "Airborne Showdown",
+      "monster": "Kree'arra",
+      "tier": "Hard",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "ARMADYL_PERFECTION_1",
+      "name": "Swoop No More",
+      "monster": "Kree'arra",
+      "tier": "Master",
+      "type": "Perfection"
+    },
+    {
+      "slug": "ARMADYL_RESTRICTION_1",
+      "name": "The Worst Ranged Weapon",
+      "monster": "Kree'arra",
+      "tier": "Grandmaster",
+      "type": "Restriction"
+    },
+    {
+      "slug": "ARMADYL_STAMINA_1",
+      "name": "Feather Hunter",
+      "monster": "Kree'arra",
+      "tier": "Grandmaster",
+      "type": "Stamina"
+    },
+    {
+      "slug": "BANDOS_KILLCOUNT_1",
+      "name": "General Graardor Adept",
+      "monster": "General Graardor",
+      "tier": "Hard",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "BANDOS_KILLCOUNT_2",
+      "name": "General Graardor Veteran",
+      "monster": "General Graardor",
+      "tier": "Elite",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "BANDOS_MECHANICAL_1",
+      "name": "Ourg Freezer",
+      "monster": "General Graardor",
+      "tier": "Hard",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "BANDOS_MECHANICAL_2",
+      "name": "Ourg Freezer II",
+      "monster": "General Graardor",
+      "tier": "Elite",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "BANDOS_MECHANICAL_3",
+      "name": "General Showdown",
+      "monster": "General Graardor",
+      "tier": "Hard",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "BANDOS_PERFECTION_1",
+      "name": "Defence Matters",
+      "monster": "General Graardor",
+      "tier": "Grandmaster",
+      "type": "Perfection"
+    },
+    {
+      "slug": "BANDOS_PERFECTION_2",
+      "name": "Keep Away",
+      "monster": "General Graardor",
+      "tier": "Grandmaster",
+      "type": "Perfection"
+    },
+    {
+      "slug": "BANDOS_STAMINA_1",
+      "name": "Ourg Killer",
+      "monster": "General Graardor",
+      "tier": "Grandmaster",
+      "type": "Stamina"
+    },
+    {
+      "slug": "BARROWS_KILLCOUNT_1",
+      "name": "Barrows Novice",
+      "monster": "Barrows",
+      "tier": "Easy",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "BARROWS_KILLCOUNT_2",
+      "name": "Barrows Champion",
+      "monster": "Barrows",
+      "tier": "Medium",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "BARROWS_MECHANICAL_1",
+      "name": "Can't Touch Me",
+      "monster": "Barrows",
+      "tier": "Medium",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "BARROWS_PERFECTION_1",
+      "name": "Pray for Success",
+      "monster": "Barrows",
+      "tier": "Medium",
+      "type": "Perfection"
+    },
+    {
+      "slug": "BARROWS_RESTRICTION_1",
+      "name": "Defence? What Defence?",
+      "monster": "Barrows",
+      "tier": "Easy",
+      "type": "Restriction"
+    },
+    {
+      "slug": "BARROWS_RESTRICTION_2",
+      "name": "Just Like That",
+      "monster": "Barrows",
+      "tier": "Hard",
+      "type": "Restriction"
+    },
+    {
+      "slug": "BARROWS_RESTRICTION_3",
+      "name": "Faithless Crypt Run",
+      "monster": "Barrows",
+      "tier": "Hard",
+      "type": "Restriction"
+    },
+    {
+      "slug": "BASILISK_KNIGHT_KILLCOUNT_1",
+      "name": "Reflecting on This Encounter",
+      "monster": "Basilisk Knight",
+      "tier": "Elite",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "BLACK_DRAGON_KILLCOUNT_1",
+      "name": "Big, Black and Fiery",
+      "monster": "Black Dragon",
+      "tier": "Easy",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "BLOODVELD_KILLCOUNT_1",
+      "name": "The Demonic Punching Bag",
+      "monster": "Bloodveld",
+      "tier": "Easy",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "BRUTAL_BLACK_DRAGON_KILLCOUNT_1",
+      "name": "Brutal, Big, Black and Firey",
+      "monster": "Brutal Black Dragon",
+      "tier": "Medium",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "BRYOPHYTA_KILLCOUNT_1",
+      "name": "Bryophyta Novice",
+      "monster": "Bryophyta",
+      "tier": "Easy",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "BRYOPHYTA_KILLCOUNT_2",
+      "name": "Bryophyta Champion",
+      "monster": "Bryophyta",
+      "tier": "Medium",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "BRYOPHYTA_MECHANICAL_1",
+      "name": "Protection from Moss",
+      "monster": "Bryophyta",
+      "tier": "Easy",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "BRYOPHYTA_MECHANICAL_2",
+      "name": "Quick Cutter",
+      "monster": "Bryophyta",
+      "tier": "Medium",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "BRYOPHYTA_PERFECTION_1",
+      "name": "Preparation Is Key",
+      "monster": "Bryophyta",
+      "tier": "Easy",
+      "type": "Perfection"
+    },
+    {
+      "slug": "BRYOPHYTA_RESTRICTION_1",
+      "name": "A Slow Death",
+      "monster": "Bryophyta",
+      "tier": "Easy",
+      "type": "Restriction"
+    },
+    {
+      "slug": "BRYOPHYTA_RESTRICTION_2",
+      "name": "Fighting as Intended II",
+      "monster": "Bryophyta",
+      "tier": "Easy",
+      "type": "Restriction"
+    },
+    {
+      "slug": "CALLISTO_KILLCOUNT_1",
+      "name": "Callisto Adept",
+      "monster": "Callisto",
+      "tier": "Hard",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "CALLISTO_KILLCOUNT_2",
+      "name": "Callisto Veteran",
+      "monster": "Callisto",
+      "tier": "Elite",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "CATA_BOSS_KILLCOUNT_1",
+      "name": "Cerberus Veteran",
+      "monster": "Cerberus",
+      "tier": "Elite",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "CATA_BOSS_KILLCOUNT_2",
+      "name": "Cerberus Master",
+      "monster": "Cerberus",
+      "tier": "Master",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "CATA_BOSS_MECHANICAL_1",
+      "name": "Arooo No More",
+      "monster": "Cerberus",
+      "tier": "Master",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "CATA_BOSS_PERFECTION_1",
+      "name": "Unrequired Antifire",
+      "monster": "Cerberus",
+      "tier": "Elite",
+      "type": "Perfection"
+    },
+    {
+      "slug": "CERBERUS_KILLCOUNT_1",
+      "name": "Cerberus Veteran",
+      "monster": "Cerberus",
+      "tier": "Elite",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "CERBERUS_KILLCOUNT_2",
+      "name": "Cerberus Master",
+      "monster": "Cerberus",
+      "tier": "Master",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "CERBERUS_MECHANICAL_1",
+      "name": "Arooo No More",
+      "monster": "Cerberus",
+      "tier": "Master",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "CERBERUS_MECHANICAL_2",
+      "name": "Ghost Buster",
+      "monster": "Cerberus",
+      "tier": "Elite",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "CERBERUS_PERFECTION_1",
+      "name": "Unrequired Antifire",
+      "monster": "Cerberus",
+      "tier": "Elite",
+      "type": "Perfection"
+    },
+    {
+      "slug": "CERBERUS_PERFECTION_2",
+      "name": "Anti-Bite Mechanics",
+      "monster": "Cerberus",
+      "tier": "Elite",
+      "type": "Perfection"
+    },
+    {
+      "slug": "CHAOSELE_KILLCOUNT_1",
+      "name": "Chaos Elemental Adept",
+      "monster": "Chaos Elemental",
+      "tier": "Hard",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "CHAOSELE_KILLCOUNT_2",
+      "name": "Chaos Elemental Veteran",
+      "monster": "Chaos Elemental",
+      "tier": "Elite",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "CHAOSELE_MECHANICAL_1",
+      "name": "Hoarder",
+      "monster": "Chaos Elemental",
+      "tier": "Hard",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "CHAOSELE_PERFECTION_1",
+      "name": "The Flincher",
+      "monster": "Chaos Elemental",
+      "tier": "Hard",
+      "type": "Perfection"
+    },
+    {
+      "slug": "CHAOSFANATIC_KILLCOUNT_1",
+      "name": "Chaos Fanatic Champion",
+      "monster": "Chaos Fanatic",
+      "tier": "Medium",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "CHAOSFANATIC_KILLCOUNT_2",
+      "name": "Chaos Fanatic Adept",
+      "monster": "Chaos Fanatic",
+      "tier": "Hard",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "CHAOSFANATIC_PERFECTION_1",
+      "name": "Sorry, What Was That?",
+      "monster": "Chaos Fanatic",
+      "tier": "Medium",
+      "type": "Perfection"
+    },
+    {
+      "slug": "CHAOSFANATIC_RESTRICTION_1",
+      "name": "Praying to the Gods",
+      "monster": "Chaos Fanatic",
+      "tier": "Hard",
+      "type": "Restriction"
+    },
+    {
+      "slug": "CORP_KILLCOUNT_1",
+      "name": "Corporeal Beast Veteran",
+      "monster": "Corporeal Beast",
+      "tier": "Elite",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "CORP_KILLCOUNT_2",
+      "name": "Corporeal Beast Master",
+      "monster": "Corporeal Beast",
+      "tier": "Master",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "CORP_PERFECTION_1",
+      "name": "Hot on Your Feet",
+      "monster": "Corporeal Beast",
+      "tier": "Elite",
+      "type": "Perfection"
+    },
+    {
+      "slug": "CORP_RESTRICTION_1",
+      "name": "Finding the Weak Spot",
+      "monster": "Corporeal Beast",
+      "tier": "Elite",
+      "type": "Restriction"
+    },
+    {
+      "slug": "CORP_RESTRICTION_2",
+      "name": "Chicken Killer",
+      "monster": "Corporeal Beast",
+      "tier": "Elite",
+      "type": "Restriction"
+    },
+    {
+      "slug": "CRAZYARCHAEOLOGIST_KILLCOUNT_1",
+      "name": "Crazy Archaeologist Champion",
+      "monster": "Crazy Archaeologist",
+      "tier": "Medium",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "CRAZYARCHAEOLOGIST_KILLCOUNT_2",
+      "name": "Crazy Archaeologist Adept",
+      "monster": "Crazy Archaeologist",
+      "tier": "Hard",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "CRAZYARCHAEOLOGIST_MECHANICAL_1",
+      "name": "Mage of the Ruins",
+      "monster": "Crazy Archaeologist",
+      "tier": "Medium",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "CRAZYARCHAEOLOGIST_PERFECTION_1",
+      "name": "I'd Rather Not Learn",
+      "monster": "Crazy Archaeologist",
+      "tier": "Medium",
+      "type": "Perfection"
+    },
+    {
+      "slug": "DEMONIC_GORILLA_KILLCOUNT_1",
+      "name": "If Gorillas Could Fly",
+      "monster": "Demonic Gorilla",
+      "tier": "Elite",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "DEMONIC_GORILLA_RESTRICTION_1",
+      "name": "Hitting Them Where It Hurts",
+      "monster": "Demonic Gorilla",
+      "tier": "Elite",
+      "type": "Restriction"
+    },
+    {
+      "slug": "DERANGEDARCHAEOLOGIST_KILLCOUNT_1",
+      "name": "Deranged Archaeologist Novice",
+      "monster": "Deranged Archaeologist",
+      "tier": "Easy",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "DERANGEDARCHAEOLOGIST_KILLCOUNT_2",
+      "name": "Deranged Archaeologist Champion",
+      "monster": "Deranged Archaeologist",
+      "tier": "Medium",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "DERANGEDARCHAEOLOGIST_MECHANICAL_1",
+      "name": "Mage of the Swamp",
+      "monster": "Deranged Archaeologist",
+      "tier": "Medium",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "DERANGEDARCHAEOLOGIST_PERFECTION_1",
+      "name": "I'd Rather Be Illiterate",
+      "monster": "Deranged Archaeologist",
+      "tier": "Medium",
+      "type": "Perfection"
+    },
+    {
+      "slug": "FIRE_GIANT_KILLCOUNT_1",
+      "name": "The Walking Volcano",
+      "monster": "Fire Giant",
+      "tier": "Easy",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "GALVEK_SPEED_1",
+      "name": "Galvek Speed-Trialist",
+      "monster": "Galvek",
+      "tier": "Elite",
+      "type": "Speed"
+    },
+    {
+      "slug": "GARGBOSS_KILLCOUNT_1",
+      "name": "Grotesque Guardians Adept",
+      "monster": "Grotesque Guardians",
+      "tier": "Hard",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "GARGBOSS_KILLCOUNT_2",
+      "name": "Grotesque Guardians Veteran",
+      "monster": "Grotesque Guardians",
+      "tier": "Elite",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "GARGBOSS_MECHANICAL_1",
+      "name": "Don't Look at the Eclipse",
+      "monster": "Grotesque Guardians",
+      "tier": "Hard",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "GARGBOSS_MECHANICAL_2",
+      "name": "Prison Break",
+      "monster": "Grotesque Guardians",
+      "tier": "Hard",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "GARGBOSS_MECHANICAL_3",
+      "name": "Granite Footwork",
+      "monster": "Grotesque Guardians",
+      "tier": "Hard",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "GARGBOSS_MECHANICAL_4",
+      "name": "Heal No More",
+      "monster": "Grotesque Guardians",
+      "tier": "Hard",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "GARGBOSS_MECHANICAL_5",
+      "name": "Static Awareness",
+      "monster": "Grotesque Guardians",
+      "tier": "Hard",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "GARGBOSS_MECHANICAL_6",
+      "name": "Done before Dusk",
+      "monster": "Grotesque Guardians",
+      "tier": "Elite",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "GARGBOSS_PERFECTION_1",
+      "name": "Perfect Grotesque Guardians",
+      "monster": "Grotesque Guardians",
+      "tier": "Elite",
+      "type": "Perfection"
+    },
+    {
+      "slug": "GARGBOSS_PERFECTION_2",
+      "name": "Perfect Grotesque Guardians II",
+      "monster": "Grotesque Guardians",
+      "tier": "Master",
+      "type": "Perfection"
+    },
+    {
+      "slug": "GARGBOSS_SPEED_1",
+      "name": "Grotesque Guardians Speed-Trialist",
+      "monster": "Grotesque Guardians",
+      "tier": "Elite",
+      "type": "Speed"
+    },
+    {
+      "slug": "GARGBOSS_SPEED_2",
+      "name": "Grotesque Guardians Speed-Chaser",
+      "monster": "Grotesque Guardians",
+      "tier": "Master",
+      "type": "Speed"
+    },
+    {
+      "slug": "GARGBOSS_SPEED_3",
+      "name": "Grotesque Guardians Speed-Runner",
+      "monster": "Grotesque Guardians",
+      "tier": "Grandmaster",
+      "type": "Speed"
+    },
+    {
+      "slug": "GARGBOSS_STAMINA_1",
+      "name": "From Dusk...",
+      "monster": "Grotesque Guardians",
+      "tier": "Elite",
+      "type": "Stamina"
+    },
+    {
+      "slug": "GARGBOSS_STAMINA_2",
+      "name": "... 'til Dawn",
+      "monster": "Grotesque Guardians",
+      "tier": "Master",
+      "type": "Stamina"
+    },
+    {
+      "slug": "GARGOYLE_KILLCOUNT_1",
+      "name": "A Smashing Time",
+      "monster": "Gargoyle",
+      "tier": "Medium",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "GAUNTLET_HM_KILLCOUNT_1",
+      "name": "Corrupted Gauntlet Veteran",
+      "monster": "Corrupted Hunllef",
+      "tier": "Elite",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "GAUNTLET_HM_KILLCOUNT_2",
+      "name": "Corrupted Gauntlet Master",
+      "monster": "Corrupted Hunllef",
+      "tier": "Master",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "GAUNTLET_HM_KILLCOUNT_3",
+      "name": "Corrupted Gauntlet Grandmaster",
+      "monster": "Corrupted Hunllef",
+      "tier": "Grandmaster",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "GAUNTLET_HM_PERFECTION_1",
+      "name": "3, 2, 1 - Mage",
+      "monster": "Corrupted Hunllef",
+      "tier": "Elite",
+      "type": "Perfection"
+    },
+    {
+      "slug": "GAUNTLET_HM_PERFECTION_2",
+      "name": "Perfect Corrupted Hunllef",
+      "monster": "Corrupted Hunllef",
+      "tier": "Master",
+      "type": "Perfection"
+    },
+    {
+      "slug": "GAUNTLET_HM_RESTRICTION_1",
+      "name": "Defence Doesn't Matter II",
+      "monster": "Corrupted Hunllef",
+      "tier": "Master",
+      "type": "Restriction"
+    },
+    {
+      "slug": "GAUNTLET_HM_RESTRICTION_2",
+      "name": "Egniol Diet II",
+      "monster": "Corrupted Hunllef",
+      "tier": "Grandmaster",
+      "type": "Restriction"
+    },
+    {
+      "slug": "GAUNTLET_HM_RESTRICTION_3",
+      "name": "Corrupted Warrior",
+      "monster": "Corrupted Hunllef",
+      "tier": "Master",
+      "type": "Restriction"
+    },
+    {
+      "slug": "GAUNTLET_HM_RESTRICTION_4",
+      "name": "Wolf Puncher II",
+      "monster": "Corrupted Hunllef",
+      "tier": "Grandmaster",
+      "type": "Restriction"
+    },
+    {
+      "slug": "GAUNTLET_HM_SPEED_1",
+      "name": "Corrupted Gauntlet Speed-Chaser",
+      "monster": "Corrupted Hunllef",
+      "tier": "Master",
+      "type": "Speed"
+    },
+    {
+      "slug": "GAUNTLET_HM_SPEED_2",
+      "name": "Corrupted Gauntlet Speed-Runner",
+      "monster": "Corrupted Hunllef",
+      "tier": "Grandmaster",
+      "type": "Speed"
+    },
+    {
+      "slug": "GAUNTLET_KILLCOUNT_1",
+      "name": "Gauntlet Veteran",
+      "monster": "Crystalline Hunllef",
+      "tier": "Elite",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "GAUNTLET_KILLCOUNT_2",
+      "name": "Gauntlet Master",
+      "monster": "Crystalline Hunllef",
+      "tier": "Master",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "GAUNTLET_PERFECTION_1",
+      "name": "3, 2, 1 - Range",
+      "monster": "Crystalline Hunllef",
+      "tier": "Elite",
+      "type": "Perfection"
+    },
+    {
+      "slug": "GAUNTLET_PERFECTION_2",
+      "name": "Perfect Crystalline Hunllef",
+      "monster": "Crystalline Hunllef",
+      "tier": "Master",
+      "type": "Perfection"
+    },
+    {
+      "slug": "GAUNTLET_RESTRICTION_1",
+      "name": "Defence Doesn't Matter",
+      "monster": "Crystalline Hunllef",
+      "tier": "Master",
+      "type": "Restriction"
+    },
+    {
+      "slug": "GAUNTLET_RESTRICTION_2",
+      "name": "Egniol Diet",
+      "monster": "Crystalline Hunllef",
+      "tier": "Elite",
+      "type": "Restriction"
+    },
+    {
+      "slug": "GAUNTLET_RESTRICTION_3",
+      "name": "Crystalline Warrior",
+      "monster": "Crystalline Hunllef",
+      "tier": "Elite",
+      "type": "Restriction"
+    },
+    {
+      "slug": "GAUNTLET_RESTRICTION_4",
+      "name": "Wolf Puncher",
+      "monster": "Crystalline Hunllef",
+      "tier": "Elite",
+      "type": "Restriction"
+    },
+    {
+      "slug": "GAUNTLET_SPEED_1",
+      "name": "Gauntlet Speed-Chaser",
+      "monster": "Crystalline Hunllef",
+      "tier": "Master",
+      "type": "Speed"
+    },
+    {
+      "slug": "GAUNTLET_SPEED_2",
+      "name": "Gauntlet Speed-Runner",
+      "monster": "Crystalline Hunllef",
+      "tier": "Grandmaster",
+      "type": "Speed"
+    },
+    {
+      "slug": "GIANT_KILLCOUNT_1",
+      "name": "Into the Den of Giants",
+      "monster": "Giants",
+      "tier": "Easy",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "GLOUGH_SPEED_1",
+      "name": "Glough Speed-Trialist",
+      "monster": "Glough",
+      "tier": "Elite",
+      "type": "Speed"
+    },
+    {
+      "slug": "GREATER_DEMON_KILLCOUNT_1",
+      "name": "A Greater Foe",
+      "monster": "Greater Demon",
+      "tier": "Easy",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "GREATER_DEMON_RESTRICTION_1",
+      "name": "Not So Great After All",
+      "monster": "Greater Demon",
+      "tier": "Easy",
+      "type": "Restriction"
+    },
+    {
+      "slug": "HELLHOUND_KILLCOUNT_1",
+      "name": "A Demon's Best Friend",
+      "monster": "Hellhound",
+      "tier": "Easy",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "HESPORI_KILLCOUNT_1",
+      "name": "Hespori Adept",
+      "monster": "Hespori",
+      "tier": "Hard",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "HESPORI_MECHANICAL_1",
+      "name": "Hesporisn't",
+      "monster": "Hespori",
+      "tier": "Hard",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "HESPORI_MECHANICAL_2",
+      "name": "Weed Whacker",
+      "monster": "Hespori",
+      "tier": "Hard",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "HESPORI_RESTRICTION_1",
+      "name": "Plant-Based Diet",
+      "monster": "Hespori",
+      "tier": "Elite",
+      "type": "Restriction"
+    },
+    {
+      "slug": "HESPORI_SPEED_1",
+      "name": "Hespori Speed-Trialist",
+      "monster": "Hespori",
+      "tier": "Elite",
+      "type": "Speed"
+    },
+    {
+      "slug": "HESPORI_SPEED_2",
+      "name": "Hespori Speed-Chaser",
+      "monster": "Hespori",
+      "tier": "Master",
+      "type": "Speed"
+    },
+    {
+      "slug": "HILLGIANT_BOSS_KILLCOUNT_1",
+      "name": "Into the Den of Giants",
+      "monster": "Giants",
+      "tier": "Easy",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "HYDRABOSS_KILLCOUNT_1",
+      "name": "Alchemical Veteran",
+      "monster": "Alchemical Hydra",
+      "tier": "Elite",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "HYDRABOSS_KILLCOUNT_2",
+      "name": "Alchemical Master",
+      "monster": "Alchemical Hydra",
+      "tier": "Master",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "HYDRABOSS_MECHANICAL_1",
+      "name": "Unrequired Antipoisons",
+      "monster": "Alchemical Hydra",
+      "tier": "Master",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "HYDRABOSS_MECHANICAL_2",
+      "name": "Lightning Lure",
+      "monster": "Alchemical Hydra",
+      "tier": "Master",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "HYDRABOSS_MECHANICAL_3",
+      "name": "Don't Flame Me",
+      "monster": "Alchemical Hydra",
+      "tier": "Master",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "HYDRABOSS_MECHANICAL_4",
+      "name": "Mixing Correctly",
+      "monster": "Alchemical Hydra",
+      "tier": "Master",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "HYDRABOSS_MECHANICAL_5",
+      "name": "The Flame Skipper",
+      "monster": "Alchemical Hydra",
+      "tier": "Master",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "HYDRABOSS_PERFECTION_1",
+      "name": "Alcleanical Hydra",
+      "monster": "Alchemical Hydra",
+      "tier": "Master",
+      "type": "Perfection"
+    },
+    {
+      "slug": "HYDRABOSS_RESTRICTION_1",
+      "name": "No Pressure",
+      "monster": "Alchemical Hydra",
+      "tier": "Grandmaster",
+      "type": "Restriction"
+    },
+    {
+      "slug": "HYDRABOSS_SPEED_1",
+      "name": "Alchemical Speed-Chaser",
+      "monster": "Alchemical Hydra",
+      "tier": "Master",
+      "type": "Speed"
+    },
+    {
+      "slug": "HYDRABOSS_SPEED_2",
+      "name": "Alchemical Speed-Runner",
+      "monster": "Alchemical Hydra",
+      "tier": "Grandmaster",
+      "type": "Speed"
+    },
+    {
+      "slug": "HYDRABOSS_STAMINA_1",
+      "name": "Working Overtime",
+      "monster": "Alchemical Hydra",
+      "tier": "Master",
+      "type": "Stamina"
+    },
+    {
+      "slug": "JAD_KILLCOUNT_1",
+      "name": "Fight Caves Veteran",
+      "monster": "TzTok-Jad",
+      "tier": "Elite",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "JAD_KILLCOUNT_2",
+      "name": "Fight Caves Master",
+      "monster": "TzTok-Jad",
+      "tier": "Master",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "JAD_MECHANICAL_1",
+      "name": "A Near Miss!",
+      "monster": "TzTok-Jad",
+      "tier": "Elite",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "JAD_MECHANICAL_2",
+      "name": "Denying the Healers",
+      "monster": "TzTok-Jad",
+      "tier": "Master",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "JAD_MECHANICAL_3",
+      "name": "Denying the Healers II",
+      "monster": "TzTok-Jad",
+      "tier": "Grandmaster",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "JAD_MECHANICAL_4",
+      "name": "You Didn't Say Anything About a Bat",
+      "monster": "TzTok-Jad",
+      "tier": "Master",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "JAD_RESTRICTION_1",
+      "name": "Facing Jad Head-on",
+      "monster": "TzTok-Jad",
+      "tier": "Elite",
+      "type": "Restriction"
+    },
+    {
+      "slug": "JAD_RESTRICTION_2",
+      "name": "No Time for a Drink",
+      "monster": "TzTok-Jad",
+      "tier": "Grandmaster",
+      "type": "Restriction"
+    },
+    {
+      "slug": "JAD_SPEED_1",
+      "name": "Fight Caves Speed-Chaser",
+      "monster": "TzTok-Jad",
+      "tier": "Master",
+      "type": "Speed"
+    },
+    {
+      "slug": "JAD_SPEED_2",
+      "name": "Fight Caves Speed-Runner",
+      "monster": "TzTok-Jad",
+      "tier": "Grandmaster",
+      "type": "Speed"
+    },
+    {
+      "slug": "KALPHITE_KILLCOUNT_1",
+      "name": "Kalphite Queen Adept",
+      "monster": "Kalphite Queen",
+      "tier": "Hard",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "KALPHITE_KILLCOUNT_2",
+      "name": "Kalphite Queen Veteran",
+      "monster": "Kalphite Queen",
+      "tier": "Elite",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "KALPHITE_MECHANICAL_1",
+      "name": "Chitin Penetrator",
+      "monster": "Kalphite Queen",
+      "tier": "Hard",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "KALPHITE_MECHANICAL_2",
+      "name": "Insect Deflection",
+      "monster": "Kalphite Queen",
+      "tier": "Elite",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "KALPHITE_RESTRICTION_1",
+      "name": "Prayer Smasher",
+      "monster": "Kalphite Queen",
+      "tier": "Elite",
+      "type": "Restriction"
+    },
+    {
+      "slug": "KBD_KILLCOUNT_1",
+      "name": "King Black Dragon Novice",
+      "monster": "King Black Dragon",
+      "tier": "Easy",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "KBD_KILLCOUNT_2",
+      "name": "King Black Dragon Champion",
+      "monster": "King Black Dragon",
+      "tier": "Medium",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "KBD_MECHANICAL_1",
+      "name": "Claw Clipper",
+      "monster": "King Black Dragon",
+      "tier": "Medium",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "KBD_RESTRICTION_1",
+      "name": "Hide Penetration",
+      "monster": "King Black Dragon",
+      "tier": "Medium",
+      "type": "Restriction"
+    },
+    {
+      "slug": "KBD_RESTRICTION_2",
+      "name": "Antifire Protection",
+      "monster": "King Black Dragon",
+      "tier": "Medium",
+      "type": "Restriction"
+    },
+    {
+      "slug": "KBD_STAMINA_1",
+      "name": "Who Is the King Now?",
+      "monster": "King Black Dragon",
+      "tier": "Hard",
+      "type": "Stamina"
+    },
+    {
+      "slug": "KRAKEN_BOSS_KILLCOUNT_1",
+      "name": "Kraken Adept",
+      "monster": "Kraken",
+      "tier": "Hard",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "KRAKEN_BOSS_MECHANICAL_1",
+      "name": "Unnecessary Optimisation",
+      "monster": "Kraken",
+      "tier": "Hard",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "KRAKEN_BOSS_STAMINA_1",
+      "name": "Krakan't Hurt Me",
+      "monster": "Kraken",
+      "tier": "Hard",
+      "type": "Stamina"
+    },
+    {
+      "slug": "KURASK_KILLCOUNT_1",
+      "name": "Master of Broad Weaponry",
+      "monster": "Kurask",
+      "tier": "Medium",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "LIZARDMAN_SHAMAN_KILLCOUNT_1",
+      "name": "A Scaley Encounter",
+      "monster": "Lizardman Shaman",
+      "tier": "Easy",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "LIZARDMAN_SHAMAN_PERFECTION_1",
+      "name": "Shayzien Protector",
+      "monster": "Lizardman Shaman",
+      "tier": "Easy",
+      "type": "Perfection"
+    },
+    {
+      "slug": "MIMIC_KILLCOUNT_1",
+      "name": "Mimic Veteran",
+      "monster": "The Mimic",
+      "tier": "Elite",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "MOLE_KILLCOUNT_1",
+      "name": "Giant Mole Novice",
+      "monster": "Giant Mole",
+      "tier": "Easy",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "MOLE_KILLCOUNT_2",
+      "name": "Giant Mole Champion",
+      "monster": "Giant Mole",
+      "tier": "Medium",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "MOLE_MECHANICAL_1",
+      "name": "Why Are You Running?",
+      "monster": "Giant Mole",
+      "tier": "Hard",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "MOLE_MECHANICAL_2",
+      "name": "Hard Hitter",
+      "monster": "Giant Mole",
+      "tier": "Elite",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "MOLE_MECHANICAL_3",
+      "name": "Whack-a-Mole",
+      "monster": "Giant Mole",
+      "tier": "Hard",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "MOLE_PERFECTION_1",
+      "name": "Avoiding Those Little Arms",
+      "monster": "Giant Mole",
+      "tier": "Medium",
+      "type": "Perfection"
+    },
+    {
+      "slug": "NIGHTMARE_KILLCOUNT_1",
+      "name": "Nightmare Adept",
+      "monster": "The Nightmare",
+      "tier": "Hard",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "NIGHTMARE_KILLCOUNT_2",
+      "name": "Nightmare Veteran",
+      "monster": "The Nightmare",
+      "tier": "Elite",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "NIGHTMARE_KILLCOUNT_3",
+      "name": "Nightmare Master",
+      "monster": "The Nightmare",
+      "tier": "Master",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "NIGHTMARE_MECHANICAL_1",
+      "name": "Terrible Parent",
+      "monster": "The Nightmare",
+      "tier": "Grandmaster",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "NIGHTMARE_MECHANICAL_2",
+      "name": "Explosion!",
+      "monster": "The Nightmare",
+      "tier": "Elite",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "NIGHTMARE_PERFECTION_1",
+      "name": "Perfect Nightmare",
+      "monster": "The Nightmare",
+      "tier": "Master",
+      "type": "Perfection"
+    },
+    {
+      "slug": "NIGHTMARE_RESTRICTION_1",
+      "name": "Sleep Tight",
+      "monster": "The Nightmare",
+      "tier": "Elite",
+      "type": "Restriction"
+    },
+    {
+      "slug": "NIGHTMARE_RESTRICTION_2",
+      "name": "A Long Trip",
+      "monster": "The Nightmare",
+      "tier": "Grandmaster",
+      "type": "Restriction"
+    },
+    {
+      "slug": "NIGHTMARE_SPEED_1",
+      "name": "Nightmare (Solo) Speed-Trialist",
+      "monster": "The Nightmare",
+      "tier": "Elite",
+      "type": "Speed"
+    },
+    {
+      "slug": "NIGHTMARE_SPEED_2",
+      "name": "Nightmare (Solo) Speed-Chaser",
+      "monster": "The Nightmare",
+      "tier": "Master",
+      "type": "Speed"
+    },
+    {
+      "slug": "NIGHTMARE_SPEED_3",
+      "name": "Nightmare (Solo) Speed-Runner",
+      "monster": "The Nightmare",
+      "tier": "Grandmaster",
+      "type": "Speed"
+    },
+    {
+      "slug": "NIGHTMARE_SPEED_4",
+      "name": "Nightmare (5-Scale) Speed-Trialist",
+      "monster": "The Nightmare",
+      "tier": "Elite",
+      "type": "Speed"
+    },
+    {
+      "slug": "NIGHTMARE_SPEED_5",
+      "name": "Nightmare (5-Scale) Speed-Chaser",
+      "monster": "The Nightmare",
+      "tier": "Master",
+      "type": "Speed"
+    },
+    {
+      "slug": "NIGHTMARE_SPEED_6",
+      "name": "Nightmare (5-Scale) Speed-Runner",
+      "monster": "The Nightmare",
+      "tier": "Grandmaster",
+      "type": "Speed"
+    },
+    {
+      "slug": "PRIME_KILLCOUNT_1",
+      "name": "Dagannoth Prime Champion",
+      "monster": "Dagannoth Prime",
+      "tier": "Medium",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "PRIME_KILLCOUNT_2",
+      "name": "Dagannoth Prime Adept",
+      "monster": "Dagannoth Prime",
+      "tier": "Hard",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "PRIME_MECHANICAL_1",
+      "name": "Death to the Seer King",
+      "monster": "Dagannoth Prime",
+      "tier": "Elite",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "PRIME_MECHANICAL_2",
+      "name": "From One King to Another",
+      "monster": "Dagannoth Prime",
+      "tier": "Elite",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "REX_KILLCOUNT_1",
+      "name": "Dagannoth Rex Champion",
+      "monster": "Dagannoth Rex",
+      "tier": "Medium",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "REX_KILLCOUNT_2",
+      "name": "Dagannoth Rex Adept",
+      "monster": "Dagannoth Rex",
+      "tier": "Hard",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "REX_MECHANICAL_1",
+      "name": "Death to the Warrior King",
+      "monster": "Dagannoth Rex",
+      "tier": "Elite",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "REX_MECHANICAL_2",
+      "name": "A Frozen King",
+      "monster": "Dagannoth Rex",
+      "tier": "Medium",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "REX_MECHANICAL_3",
+      "name": "Toppling the Diarchy",
+      "monster": "Dagannoth Rex",
+      "tier": "Elite",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "SARACHNIS_KILLCOUNT_1",
+      "name": "Sarachnis Novice",
+      "monster": "Sarachnis",
+      "tier": "Easy",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "SARACHNIS_KILLCOUNT_2",
+      "name": "Sarachnis Champion",
+      "monster": "Sarachnis",
+      "tier": "Medium",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "SARACHNIS_MECHANICAL_1",
+      "name": "Ready to Pounce",
+      "monster": "Sarachnis",
+      "tier": "Hard",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "SARACHNIS_PERFECTION_1",
+      "name": "Inspect Repellent",
+      "monster": "Sarachnis",
+      "tier": "Hard",
+      "type": "Perfection"
+    },
+    {
+      "slug": "SARACHNIS_RESTRICTION_1",
+      "name": "Newspaper Enthusiast",
+      "monster": "Sarachnis",
+      "tier": "Medium",
+      "type": "Restriction"
+    },
+    {
+      "slug": "SARADOMIN_KILLCOUNT_1",
+      "name": "Commander Zilyana Adept",
+      "monster": "Commander Zilyana",
+      "tier": "Hard",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "SARADOMIN_KILLCOUNT_2",
+      "name": "Commander Zilyana Veteran",
+      "monster": "Commander Zilyana",
+      "tier": "Elite",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "SARADOMIN_MECHANICAL_1",
+      "name": "Commander Showdown",
+      "monster": "Commander Zilyana",
+      "tier": "Hard",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "SARADOMIN_PERFECTION_1",
+      "name": "Animal Whisperer",
+      "monster": "Commander Zilyana",
+      "tier": "Grandmaster",
+      "type": "Perfection"
+    },
+    {
+      "slug": "SARADOMIN_RESTRICTION_1",
+      "name": "Moving Collateral",
+      "monster": "Commander Zilyana",
+      "tier": "Master",
+      "type": "Restriction"
+    },
+    {
+      "slug": "SARADOMIN_RESTRICTION_2",
+      "name": "Reminisce",
+      "monster": "Commander Zilyana",
+      "tier": "Elite",
+      "type": "Restriction"
+    },
+    {
+      "slug": "SARADOMIN_STAMINA_1",
+      "name": "Peach Conjurer",
+      "monster": "Commander Zilyana",
+      "tier": "Grandmaster",
+      "type": "Stamina"
+    },
+    {
+      "slug": "SCORPIA_KILLCOUNT_1",
+      "name": "Scorpia Adept",
+      "monster": "Scorpia",
+      "tier": "Hard",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "SCORPIA_KILLCOUNT_2",
+      "name": "Scorpia Veteran",
+      "monster": "Scorpia",
+      "tier": "Elite",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "SCORPIA_PERFECTION_1",
+      "name": "I Can't Reach That",
+      "monster": "Scorpia",
+      "tier": "Hard",
+      "type": "Perfection"
+    },
+    {
+      "slug": "SCORPIA_RESTRICTION_1",
+      "name": "Guardians No More",
+      "monster": "Scorpia",
+      "tier": "Hard",
+      "type": "Restriction"
+    },
+    {
+      "slug": "SEREN_SPEED_1",
+      "name": "Fragment of Seren Speed-Trialist",
+      "monster": "Fragment of Seren",
+      "tier": "Elite",
+      "type": "Speed"
+    },
+    {
+      "slug": "SKELETAL_WYVERN_KILLCOUNT_1",
+      "name": "A Frozen Foe from the Past",
+      "monster": "Skeletal Wyvern",
+      "tier": "Medium",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "SNAKEBOSS_KILLCOUNT_1",
+      "name": "Zulrah Adept",
+      "monster": "Zulrah",
+      "tier": "Hard",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "SNAKEBOSS_KILLCOUNT_2",
+      "name": "Zulrah Veteran",
+      "monster": "Zulrah",
+      "tier": "Elite",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "SNAKEBOSS_KILLCOUNT_3",
+      "name": "Zulrah Master",
+      "monster": "Zulrah",
+      "tier": "Master",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "SNAKEBOSS_MECHANICAL_1",
+      "name": "Snake Rebound",
+      "monster": "Zulrah",
+      "tier": "Elite",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "SNAKEBOSS_MECHANICAL_2",
+      "name": "Snake. Snake!? Snaaaaaake!",
+      "monster": "Zulrah",
+      "tier": "Elite",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "SNAKEBOSS_PERFECTION_1",
+      "name": "Perfect Zulrah",
+      "monster": "Zulrah",
+      "tier": "Master",
+      "type": "Perfection"
+    },
+    {
+      "slug": "SNAKEBOSS_SPEED_1",
+      "name": "Zulrah Speed-Trialist",
+      "monster": "Zulrah",
+      "tier": "Elite",
+      "type": "Speed"
+    },
+    {
+      "slug": "SNAKEBOSS_SPEED_2",
+      "name": "Zulrah Speed-Chaser",
+      "monster": "Zulrah",
+      "tier": "Master",
+      "type": "Speed"
+    },
+    {
+      "slug": "SNAKEBOSS_SPEED_3",
+      "name": "Zulrah Speed-Runner",
+      "monster": "Zulrah",
+      "tier": "Grandmaster",
+      "type": "Speed"
+    },
+    {
+      "slug": "SUPREME_KILLCOUNT_1",
+      "name": "Dagannoth Supreme Champion",
+      "monster": "Dagannoth Supreme",
+      "tier": "Medium",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "SUPREME_KILLCOUNT_2",
+      "name": "Dagannoth Supreme Adept",
+      "monster": "Dagannoth Supreme",
+      "tier": "Hard",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "SUPREME_MECHANICAL_1",
+      "name": "Death to the Archer King",
+      "monster": "Dagannoth Supreme",
+      "tier": "Elite",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "SUPREME_MECHANICAL_2",
+      "name": "Rapid Succession",
+      "monster": "Dagannoth Supreme",
+      "tier": "Elite",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "TEMPOROSS_KILLCOUNT_1",
+      "name": "Tempoross Novice",
+      "monster": "Tempoross",
+      "tier": "Easy",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "TEMPOROSS_KILLCOUNT_2",
+      "name": "Tempoross Champion",
+      "monster": "Tempoross",
+      "tier": "Medium",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "TEMPOROSS_MECHANICAL_1",
+      "name": "Master of Buckets",
+      "monster": "Tempoross",
+      "tier": "Easy",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "TEMPOROSS_MECHANICAL_2",
+      "name": "Calm Before the Storm",
+      "monster": "Tempoross",
+      "tier": "Easy",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "TEMPOROSS_MECHANICAL_3",
+      "name": "Why Cook?",
+      "monster": "Tempoross",
+      "tier": "Hard",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "TEMPOROSS_MECHANICAL_4",
+      "name": "Fire in the Hole!",
+      "monster": "Tempoross",
+      "tier": "Easy",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "TEMPOROSS_RESTRICTION_1",
+      "name": "Dress Like You Mean It",
+      "monster": "Tempoross",
+      "tier": "Hard",
+      "type": "Restriction"
+    },
+    {
+      "slug": "THEATREOFBLOOD_HARD_KILLCOUNT_1",
+      "name": "Theatre of Blood: HM Grandmaster",
+      "monster": "Theatre of Blood: Hard Mode",
+      "tier": "Grandmaster",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "THEATREOFBLOOD_HARD_MECHANICAL_1",
+      "name": "Stop Right There!",
+      "monster": "Theatre of Blood: Hard Mode",
+      "tier": "Grandmaster",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "THEATREOFBLOOD_HARD_MECHANICAL_2",
+      "name": "Personal Space",
+      "monster": "Theatre of Blood: Hard Mode",
+      "tier": "Grandmaster",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "THEATREOFBLOOD_HARD_MECHANICAL_3",
+      "name": "Royal Affairs",
+      "monster": "Theatre of Blood: Hard Mode",
+      "tier": "Grandmaster",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "THEATREOFBLOOD_HARD_MECHANICAL_4",
+      "name": "Nylo Sniper",
+      "monster": "Theatre of Blood: Hard Mode",
+      "tier": "Grandmaster",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "THEATREOFBLOOD_HARD_MECHANICAL_5",
+      "name": "Team Work Makes the Dream Work",
+      "monster": "Theatre of Blood: Hard Mode",
+      "tier": "Grandmaster",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "THEATREOFBLOOD_HARD_PERFECTION_1",
+      "name": "Harder Mode I",
+      "monster": "Theatre of Blood: Hard Mode",
+      "tier": "Grandmaster",
+      "type": "Perfection"
+    },
+    {
+      "slug": "THEATREOFBLOOD_HARD_PERFECTION_2",
+      "name": "Harder Mode II",
+      "monster": "Theatre of Blood: Hard Mode",
+      "tier": "Grandmaster",
+      "type": "Perfection"
+    },
+    {
+      "slug": "THEATREOFBLOOD_HARD_RESTRICTION_1",
+      "name": "Harder Mode III",
+      "monster": "Theatre of Blood: Hard Mode",
+      "tier": "Grandmaster",
+      "type": "Restriction"
+    },
+    {
+      "slug": "THEATREOFBLOOD_HARD_RESTRICTION_2",
+      "name": "Pack Like a Yak",
+      "monster": "Theatre of Blood: Hard Mode",
+      "tier": "Grandmaster",
+      "type": "Restriction"
+    },
+    {
+      "slug": "THEATREOFBLOOD_HARD_SPEED_1",
+      "name": "Hard Mode? Completed It",
+      "monster": "Theatre of Blood: Hard Mode",
+      "tier": "Master",
+      "type": "Speed"
+    },
+    {
+      "slug": "THEATREOFBLOOD_HARD_SPEED_2",
+      "name": "Theatre: HM (Trio) Speed-Runner",
+      "monster": "Theatre of Blood: Hard Mode",
+      "tier": "Grandmaster",
+      "type": "Speed"
+    },
+    {
+      "slug": "THEATREOFBLOOD_HARD_SPEED_3",
+      "name": "Theatre: HM (4-Scale) Speed-Runner",
+      "monster": "Theatre of Blood: Hard Mode",
+      "tier": "Grandmaster",
+      "type": "Speed"
+    },
+    {
+      "slug": "THEATREOFBLOOD_HARD_SPEED_4",
+      "name": "Theatre: HM (5-Scale) Speed-Runner",
+      "monster": "Theatre of Blood: Hard Mode",
+      "tier": "Grandmaster",
+      "type": "Speed"
+    },
+    {
+      "slug": "THEATREOFBLOOD_KILLCOUNT_1",
+      "name": "Theatre of Blood Veteran",
+      "monster": "Theatre of Blood",
+      "tier": "Elite",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "THEATREOFBLOOD_KILLCOUNT_2",
+      "name": "Theatre of Blood Master",
+      "monster": "Theatre of Blood",
+      "tier": "Master",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "THEATREOFBLOOD_KILLCOUNT_3",
+      "name": "Theatre of Blood Grandmaster",
+      "monster": "Theatre of Blood",
+      "tier": "Grandmaster",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "THEATREOFBLOOD_MECHANICAL_1",
+      "name": "Two-Down",
+      "monster": "Theatre of Blood",
+      "tier": "Master",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "THEATREOFBLOOD_MECHANICAL_2",
+      "name": "Pop It",
+      "monster": "Theatre of Blood",
+      "tier": "Master",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "THEATREOFBLOOD_MECHANICAL_3",
+      "name": "A Timely Snack",
+      "monster": "Theatre of Blood",
+      "tier": "Master",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "THEATREOFBLOOD_PERFECTION_1",
+      "name": "Perfect Theatre",
+      "monster": "Theatre of Blood",
+      "tier": "Grandmaster",
+      "type": "Perfection"
+    },
+    {
+      "slug": "THEATREOFBLOOD_PERFECTION_2",
+      "name": "Perfect Maiden",
+      "monster": "Theatre of Blood",
+      "tier": "Master",
+      "type": "Perfection"
+    },
+    {
+      "slug": "THEATREOFBLOOD_PERFECTION_3",
+      "name": "Perfect Bloat",
+      "monster": "Theatre of Blood",
+      "tier": "Master",
+      "type": "Perfection"
+    },
+    {
+      "slug": "THEATREOFBLOOD_PERFECTION_4",
+      "name": "Perfect Nylocas",
+      "monster": "Theatre of Blood",
+      "tier": "Master",
+      "type": "Perfection"
+    },
+    {
+      "slug": "THEATREOFBLOOD_PERFECTION_5",
+      "name": "Perfect Sotetseg",
+      "monster": "Theatre of Blood",
+      "tier": "Master",
+      "type": "Perfection"
+    },
+    {
+      "slug": "THEATREOFBLOOD_PERFECTION_6",
+      "name": "Perfect Xarpus",
+      "monster": "Theatre of Blood",
+      "tier": "Master",
+      "type": "Perfection"
+    },
+    {
+      "slug": "THEATREOFBLOOD_PERFECTION_7",
+      "name": "Perfect Verzik",
+      "monster": "Theatre of Blood",
+      "tier": "Master",
+      "type": "Perfection"
+    },
+    {
+      "slug": "THEATREOFBLOOD_RESTRICTION_1",
+      "name": "Can't Drain This",
+      "monster": "Theatre of Blood",
+      "tier": "Master",
+      "type": "Restriction"
+    },
+    {
+      "slug": "THEATREOFBLOOD_RESTRICTION_2",
+      "name": "Can You Dance?",
+      "monster": "Theatre of Blood",
+      "tier": "Master",
+      "type": "Restriction"
+    },
+    {
+      "slug": "THEATREOFBLOOD_RESTRICTION_3",
+      "name": "Morytania Only",
+      "monster": "Theatre of Blood",
+      "tier": "Grandmaster",
+      "type": "Restriction"
+    },
+    {
+      "slug": "THEATREOFBLOOD_RESTRICTION_4",
+      "name": "Back in My Day...",
+      "monster": "Theatre of Blood",
+      "tier": "Master",
+      "type": "Restriction"
+    },
+    {
+      "slug": "THEATREOFBLOOD_SPEED_1",
+      "name": "Theatre (Duo) Speed-Runner",
+      "monster": "Theatre of Blood",
+      "tier": "Grandmaster",
+      "type": "Speed"
+    },
+    {
+      "slug": "THEATREOFBLOOD_SPEED_2",
+      "name": "Theatre (Trio) Speed-Chaser",
+      "monster": "Theatre of Blood",
+      "tier": "Master",
+      "type": "Speed"
+    },
+    {
+      "slug": "THEATREOFBLOOD_SPEED_3",
+      "name": "Theatre (Trio) Speed-Runner",
+      "monster": "Theatre of Blood",
+      "tier": "Grandmaster",
+      "type": "Speed"
+    },
+    {
+      "slug": "THEATREOFBLOOD_SPEED_4",
+      "name": "Theatre (4-Scale) Speed-Chaser",
+      "monster": "Theatre of Blood",
+      "tier": "Master",
+      "type": "Speed"
+    },
+    {
+      "slug": "THEATREOFBLOOD_SPEED_5",
+      "name": "Theatre (4-Scale) Speed-Runner",
+      "monster": "Theatre of Blood",
+      "tier": "Grandmaster",
+      "type": "Speed"
+    },
+    {
+      "slug": "THEATREOFBLOOD_SPEED_6",
+      "name": "Theatre (5-Scale) Speed-Chaser",
+      "monster": "Theatre of Blood",
+      "tier": "Master",
+      "type": "Speed"
+    },
+    {
+      "slug": "THEATREOFBLOOD_SPEED_7",
+      "name": "Theatre (5-Scale) Speed-Runner",
+      "monster": "Theatre of Blood",
+      "tier": "Grandmaster",
+      "type": "Speed"
+    },
+    {
+      "slug": "THEATREOFBLOOD_STORY_KILLCOUNT_1",
+      "name": "Theatre of Blood: SM Adept",
+      "monster": "Theatre of Blood: Entry Mode",
+      "tier": "Hard",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "THEATREOFBLOOD_STORY_MECHANICAL_1",
+      "name": "Anticoagulants",
+      "monster": "Theatre of Blood: Entry Mode",
+      "tier": "Elite",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "THEATREOFBLOOD_STORY_MECHANICAL_10",
+      "name": "Pass It On",
+      "monster": "Theatre of Blood: Entry Mode",
+      "tier": "Elite",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "THEATREOFBLOOD_STORY_MECHANICAL_2",
+      "name": "Appropriate Tools",
+      "monster": "Theatre of Blood: Entry Mode",
+      "tier": "Elite",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "THEATREOFBLOOD_STORY_MECHANICAL_3",
+      "name": "They Won't Expect This",
+      "monster": "Theatre of Blood: Entry Mode",
+      "tier": "Elite",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "THEATREOFBLOOD_STORY_MECHANICAL_4",
+      "name": "Chally Time",
+      "monster": "Theatre of Blood: Entry Mode",
+      "tier": "Elite",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "THEATREOFBLOOD_STORY_MECHANICAL_5",
+      "name": "Nylocas, On the Rocks",
+      "monster": "Theatre of Blood: Entry Mode",
+      "tier": "Elite",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "THEATREOFBLOOD_STORY_MECHANICAL_6",
+      "name": "Just To Be Safe",
+      "monster": "Theatre of Blood: Entry Mode",
+      "tier": "Elite",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "THEATREOFBLOOD_STORY_MECHANICAL_7",
+      "name": "Don't Look at Me!",
+      "monster": "Theatre of Blood: Entry Mode",
+      "tier": "Elite",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "THEATREOFBLOOD_STORY_MECHANICAL_8",
+      "name": "No-Pillar",
+      "monster": "Theatre of Blood: Entry Mode",
+      "tier": "Elite",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "THEATREOFBLOOD_STORY_MECHANICAL_9",
+      "name": "Attack, Step, Wait",
+      "monster": "Theatre of Blood: Entry Mode",
+      "tier": "Elite",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "THEATREOFBLOOD_STORY_SPEED_1",
+      "name": "Theatre of Blood: SM Speed-Chaser",
+      "monster": "Theatre of Blood: Entry Mode",
+      "tier": "Master",
+      "type": "Speed"
+    },
+    {
+      "slug": "THERMY_KILLCOUNT_1",
+      "name": "Thermonuclear Veteran",
+      "monster": "Thermonuclear Smoke Devil",
+      "tier": "Elite",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "THERMY_PERFECTION_1",
+      "name": "Hazard Prevention",
+      "monster": "Thermonuclear Smoke Devil",
+      "tier": "Elite",
+      "type": "Perfection"
+    },
+    {
+      "slug": "THERMY_RESTRICTION_2",
+      "name": "Spec'd Out",
+      "monster": "Thermonuclear Smoke Devil",
+      "tier": "Elite",
+      "type": "Restriction"
+    },
+    {
+      "slug": "TZHAARKETRAK_KILLCOUNT_1",
+      "name": "Half-Way There",
+      "monster": "TzKal-Zuk",
+      "tier": "Elite",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "TZHAARKETRAK_KILLCOUNT_2",
+      "name": "Inferno Grandmaster",
+      "monster": "TzKal-Zuk",
+      "tier": "Grandmaster",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "TZHAARKETRAK_MECHANICAL_1",
+      "name": "The Floor Is Lava",
+      "monster": "TzKal-Zuk",
+      "tier": "Grandmaster",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "TZHAARKETRAK_PERFECTION_1",
+      "name": "No Luck Required",
+      "monster": "TzKal-Zuk",
+      "tier": "Grandmaster",
+      "type": "Perfection"
+    },
+    {
+      "slug": "TZHAARKETRAK_PERFECTION_2",
+      "name": "Nibblers, Begone!",
+      "monster": "TzKal-Zuk",
+      "tier": "Master",
+      "type": "Perfection"
+    },
+    {
+      "slug": "TZHAARKETRAK_RESTRICTION_1",
+      "name": "Wasn't Even Close",
+      "monster": "TzKal-Zuk",
+      "tier": "Grandmaster",
+      "type": "Restriction"
+    },
+    {
+      "slug": "TZHAARKETRAK_RESTRICTION_2",
+      "name": "Budget Setup",
+      "monster": "TzKal-Zuk",
+      "tier": "Grandmaster",
+      "type": "Restriction"
+    },
+    {
+      "slug": "TZHAARKETRAK_SPEED_1",
+      "name": "Inferno Speed-Runner",
+      "monster": "TzKal-Zuk",
+      "tier": "Grandmaster",
+      "type": "Speed"
+    },
+    {
+      "slug": "VENENATIS_KILLCOUNT_1",
+      "name": "Venenatis Adept",
+      "monster": "Venenatis",
+      "tier": "Hard",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "VENENATIS_KILLCOUNT_2",
+      "name": "Venenatis Veteran",
+      "monster": "Venenatis",
+      "tier": "Elite",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "VETION_KILLCOUNT_1",
+      "name": "Vet'ion Adept",
+      "monster": "Vet'ion",
+      "tier": "Hard",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "VETION_KILLCOUNT_2",
+      "name": "Vet'eran",
+      "monster": "Vet'ion",
+      "tier": "Elite",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "VORKATH_KILLCOUNT_1",
+      "name": "Vorkath Veteran",
+      "monster": "Vorkath",
+      "tier": "Elite",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "VORKATH_KILLCOUNT_2",
+      "name": "Vorkath Master",
+      "monster": "Vorkath",
+      "tier": "Master",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "VORKATH_MECHANICAL_1",
+      "name": "The Walk",
+      "monster": "Vorkath",
+      "tier": "Master",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "VORKATH_PERFECTION_1",
+      "name": "Dodging the Dragon",
+      "monster": "Vorkath",
+      "tier": "Master",
+      "type": "Perfection"
+    },
+    {
+      "slug": "VORKATH_RESTRICTION_1",
+      "name": "Zombie Destroyer",
+      "monster": "Vorkath",
+      "tier": "Elite",
+      "type": "Restriction"
+    },
+    {
+      "slug": "VORKATH_RESTRICTION_2",
+      "name": "Stick 'em With the Pointy End",
+      "monster": "Vorkath",
+      "tier": "Elite",
+      "type": "Restriction"
+    },
+    {
+      "slug": "VORKATH_RESTRICTION_3",
+      "name": "Faithless Encounter",
+      "monster": "Vorkath",
+      "tier": "Grandmaster",
+      "type": "Restriction"
+    },
+    {
+      "slug": "VORKATH_SPEED_1",
+      "name": "Vorkath Speed-Chaser",
+      "monster": "Vorkath",
+      "tier": "Master",
+      "type": "Speed"
+    },
+    {
+      "slug": "VORKATH_SPEED_2",
+      "name": "Vorkath Speed-Runner",
+      "monster": "Vorkath",
+      "tier": "Grandmaster",
+      "type": "Speed"
+    },
+    {
+      "slug": "VORKATH_STAMINA_1",
+      "name": "Extended Encounter",
+      "monster": "Vorkath",
+      "tier": "Master",
+      "type": "Stamina"
+    },
+    {
+      "slug": "WINTERTODT_KILLCOUNT_1",
+      "name": "Wintertodt Novice",
+      "monster": "Wintertodt",
+      "tier": "Easy",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "WINTERTODT_KILLCOUNT_2",
+      "name": "Wintertodt Champion",
+      "monster": "Wintertodt",
+      "tier": "Medium",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "WINTERTODT_MECHANICAL_1",
+      "name": "Mummy!",
+      "monster": "Wintertodt",
+      "tier": "Easy",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "WINTERTODT_MECHANICAL_2",
+      "name": "Handyman",
+      "monster": "Wintertodt",
+      "tier": "Easy",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "WINTERTODT_PERFECTION_1",
+      "name": "Can We Fix It?",
+      "monster": "Wintertodt",
+      "tier": "Medium",
+      "type": "Perfection"
+    },
+    {
+      "slug": "WINTERTODT_RESTRICTION_1",
+      "name": "Leaving No One Behind",
+      "monster": "Wintertodt",
+      "tier": "Medium",
+      "type": "Restriction"
+    },
+    {
+      "slug": "WINTERTODT_STAMINA_1",
+      "name": "Why Fletch?",
+      "monster": "Wintertodt",
+      "tier": "Hard",
+      "type": "Stamina"
+    },
+    {
+      "slug": "WYRM_KILLCOUNT_1",
+      "name": "A Slithery Encounter",
+      "monster": "Wyrm",
+      "tier": "Easy",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "XERICCHAMBERS_CHALLENGE_KILLCOUNT_1",
+      "name": "Chambers of Xeric: CM Master",
+      "monster": "Chambers of Xeric: Challenge Mode",
+      "tier": "Master",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "XERICCHAMBERS_CHALLENGE_KILLCOUNT_2",
+      "name": "Chambers of Xeric: CM Grandmaster",
+      "monster": "Chambers of Xeric: Challenge Mode",
+      "tier": "Grandmaster",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "XERICCHAMBERS_CHALLENGE_PERFECTION_1",
+      "name": "Immortal Raid Team",
+      "monster": "Chambers of Xeric: Challenge Mode",
+      "tier": "Master",
+      "type": "Perfection"
+    },
+    {
+      "slug": "XERICCHAMBERS_CHALLENGE_PERFECTION_2",
+      "name": "Immortal Raider",
+      "monster": "Chambers of Xeric: Challenge Mode",
+      "tier": "Master",
+      "type": "Perfection"
+    },
+    {
+      "slug": "XERICCHAMBERS_CHALLENGE_SPEED_1",
+      "name": "Dust Seeker",
+      "monster": "Chambers of Xeric: Challenge Mode",
+      "tier": "Elite",
+      "type": "Speed"
+    },
+    {
+      "slug": "XERICCHAMBERS_CHALLENGE_SPEED_2",
+      "name": "Chambers of Xeric: CM (Solo) Speed-Chaser",
+      "monster": "Chambers of Xeric: Challenge Mode",
+      "tier": "Master",
+      "type": "Speed"
+    },
+    {
+      "slug": "XERICCHAMBERS_CHALLENGE_SPEED_3",
+      "name": "Chambers of Xeric: CM (Solo) Speed-Runner",
+      "monster": "Chambers of Xeric: Challenge Mode",
+      "tier": "Grandmaster",
+      "type": "Speed"
+    },
+    {
+      "slug": "XERICCHAMBERS_CHALLENGE_SPEED_4",
+      "name": "Chambers of Xeric: CM (5-Scale) Speed-Chaser",
+      "monster": "Chambers of Xeric: Challenge Mode",
+      "tier": "Master",
+      "type": "Speed"
+    },
+    {
+      "slug": "XERICCHAMBERS_CHALLENGE_SPEED_5",
+      "name": "Chambers of Xeric: CM (5-Scale) Speed-Runner",
+      "monster": "Chambers of Xeric: Challenge Mode",
+      "tier": "Grandmaster",
+      "type": "Speed"
+    },
+    {
+      "slug": "XERICCHAMBERS_CHALLENGE_SPEED_6",
+      "name": "Chambers of Xeric: CM (Trio) Speed-Chaser",
+      "monster": "Chambers of Xeric: Challenge Mode",
+      "tier": "Master",
+      "type": "Speed"
+    },
+    {
+      "slug": "XERICCHAMBERS_CHALLENGE_SPEED_7",
+      "name": "Chambers of Xeric: CM (Trio) Speed-Runner",
+      "monster": "Chambers of Xeric: Challenge Mode",
+      "tier": "Grandmaster",
+      "type": "Speed"
+    },
+    {
+      "slug": "XERICCHAMBERS_KILLCOUNT_1",
+      "name": "Chambers of Xeric Veteran",
+      "monster": "Chambers of Xeric",
+      "tier": "Elite",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "XERICCHAMBERS_KILLCOUNT_2",
+      "name": "Chambers of Xeric Master",
+      "monster": "Chambers of Xeric",
+      "tier": "Master",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "XERICCHAMBERS_KILLCOUNT_3",
+      "name": "Chambers of Xeric Grandmaster",
+      "monster": "Chambers of Xeric",
+      "tier": "Grandmaster",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "XERICCHAMBERS_MECHANICAL_1",
+      "name": "Perfectly Balanced",
+      "monster": "Chambers of Xeric",
+      "tier": "Elite",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "XERICCHAMBERS_MECHANICAL_2",
+      "name": "Together We'll Fall",
+      "monster": "Chambers of Xeric",
+      "tier": "Elite",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "XERICCHAMBERS_MECHANICAL_3",
+      "name": "No Time for Death",
+      "monster": "Chambers of Xeric",
+      "tier": "Master",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "XERICCHAMBERS_MECHANICAL_4",
+      "name": "Putting It Olm on the Line",
+      "monster": "Chambers of Xeric",
+      "tier": "Master",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "XERICCHAMBERS_MECHANICAL_5",
+      "name": "A Not So Special Lizard",
+      "monster": "Chambers of Xeric",
+      "tier": "Master",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "XERICCHAMBERS_MECHANICAL_6",
+      "name": "Mutta-diet",
+      "monster": "Chambers of Xeric",
+      "tier": "Elite",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "XERICCHAMBERS_MECHANICAL_7",
+      "name": "Redemption Enthusiast",
+      "monster": "Chambers of Xeric",
+      "tier": "Elite",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "XERICCHAMBERS_MECHANICAL_8",
+      "name": "Stop Drop and Roll",
+      "monster": "Chambers of Xeric",
+      "tier": "Master",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "XERICCHAMBERS_MECHANICAL_9",
+      "name": "Anvil No More",
+      "monster": "Chambers of Xeric",
+      "tier": "Master",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "XERICCHAMBERS_PERFECTION_1",
+      "name": "Dancing with Statues",
+      "monster": "Chambers of Xeric",
+      "tier": "Elite",
+      "type": "Perfection"
+    },
+    {
+      "slug": "XERICCHAMBERS_PERFECTION_2",
+      "name": "Undying Raid Team",
+      "monster": "Chambers of Xeric",
+      "tier": "Elite",
+      "type": "Perfection"
+    },
+    {
+      "slug": "XERICCHAMBERS_PERFECTION_3",
+      "name": "Undying Raider",
+      "monster": "Chambers of Xeric",
+      "tier": "Master",
+      "type": "Perfection"
+    },
+    {
+      "slug": "XERICCHAMBERS_PERFECTION_4",
+      "name": "Shayzien Specialist",
+      "monster": "Chambers of Xeric",
+      "tier": "Elite",
+      "type": "Perfection"
+    },
+    {
+      "slug": "XERICCHAMBERS_PERFECTION_5",
+      "name": "Playing with Lasers",
+      "monster": "Chambers of Xeric",
+      "tier": "Master",
+      "type": "Perfection"
+    },
+    {
+      "slug": "XERICCHAMBERS_PERFECTION_6",
+      "name": "Cryo No More",
+      "monster": "Chambers of Xeric",
+      "tier": "Elite",
+      "type": "Perfection"
+    },
+    {
+      "slug": "XERICCHAMBERS_PERFECTION_7",
+      "name": "Perfect Olm (Solo)",
+      "monster": "Chambers of Xeric",
+      "tier": "Master",
+      "type": "Perfection"
+    },
+    {
+      "slug": "XERICCHAMBERS_PERFECTION_8",
+      "name": "Perfect Olm (Trio)",
+      "monster": "Chambers of Xeric",
+      "tier": "Master",
+      "type": "Perfection"
+    },
+    {
+      "slug": "XERICCHAMBERS_PERFECTION_9",
+      "name": "Blind Spot",
+      "monster": "Chambers of Xeric",
+      "tier": "Master",
+      "type": "Perfection"
+    },
+    {
+      "slug": "XERICCHAMBERS_RESTRICTION_1",
+      "name": "Blizzard Dodger",
+      "monster": "Chambers of Xeric",
+      "tier": "Elite",
+      "type": "Restriction"
+    },
+    {
+      "slug": "XERICCHAMBERS_RESTRICTION_2",
+      "name": "Kill It with Fire",
+      "monster": "Chambers of Xeric",
+      "tier": "Elite",
+      "type": "Restriction"
+    },
+    {
+      "slug": "XERICCHAMBERS_SPEED_1",
+      "name": "Chambers of Xeric (Solo) Speed-Chaser",
+      "monster": "Chambers of Xeric",
+      "tier": "Master",
+      "type": "Speed"
+    },
+    {
+      "slug": "XERICCHAMBERS_SPEED_2",
+      "name": "Chambers of Xeric (Solo) Speed-Runner",
+      "monster": "Chambers of Xeric",
+      "tier": "Grandmaster",
+      "type": "Speed"
+    },
+    {
+      "slug": "XERICCHAMBERS_SPEED_3",
+      "name": "Chambers of Xeric (5-Scale) Speed-Chaser",
+      "monster": "Chambers of Xeric",
+      "tier": "Master",
+      "type": "Speed"
+    },
+    {
+      "slug": "XERICCHAMBERS_SPEED_4",
+      "name": "Chambers of Xeric (5-Scale) Speed-Runner",
+      "monster": "Chambers of Xeric",
+      "tier": "Grandmaster",
+      "type": "Speed"
+    },
+    {
+      "slug": "XERICCHAMBERS_SPEED_5",
+      "name": "Chambers of Xeric (Trio) Speed-Chaser",
+      "monster": "Chambers of Xeric",
+      "tier": "Master",
+      "type": "Speed"
+    },
+    {
+      "slug": "XERICCHAMBERS_SPEED_6",
+      "name": "Chambers of Xeric (Trio) Speed-Runner",
+      "monster": "Chambers of Xeric",
+      "tier": "Grandmaster",
+      "type": "Speed"
+    },
+    {
+      "slug": "ZALCANO_KILLCOUNT_1",
+      "name": "Zalcano Veteran",
+      "monster": "Zalcano",
+      "tier": "Elite",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "ZALCANO_MECHANICAL_1",
+      "name": "Team Player",
+      "monster": "Zalcano",
+      "tier": "Elite",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "ZALCANO_MECHANICAL_2",
+      "name": "The Spurned Hero",
+      "monster": "Zalcano",
+      "tier": "Elite",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "ZALCANO_PERFECTION_1",
+      "name": "Perfect Zalcano",
+      "monster": "Zalcano",
+      "tier": "Elite",
+      "type": "Perfection"
+    },
+    {
+      "slug": "ZAMORAK_KILLCOUNT_1",
+      "name": "K'ril Tsutsaroth Adept",
+      "monster": "K'ril Tsutsaroth",
+      "tier": "Hard",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "ZAMORAK_KILLCOUNT_2",
+      "name": "K'ril Tsutsaroth Veteran",
+      "monster": "K'ril Tsutsaroth",
+      "tier": "Elite",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "ZAMORAK_MECHANICAL_1",
+      "name": "Yarr No More",
+      "monster": "K'ril Tsutsaroth",
+      "tier": "Hard",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "ZAMORAK_MECHANICAL_2",
+      "name": "Demonic Showdown",
+      "monster": "K'ril Tsutsaroth",
+      "tier": "Hard",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "ZAMORAK_MECHANICAL_3",
+      "name": "The Bane of Demons",
+      "monster": "K'ril Tsutsaroth",
+      "tier": "Elite",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "ZAMORAK_PERFECTION_1",
+      "name": "Demonic Defence",
+      "monster": "K'ril Tsutsaroth",
+      "tier": "Elite",
+      "type": "Perfection"
+    },
+    {
+      "slug": "ZAMORAK_PERFECTION_2",
+      "name": "Demon Whisperer",
+      "monster": "K'ril Tsutsaroth",
+      "tier": "Grandmaster",
+      "type": "Perfection"
+    },
+    {
+      "slug": "ZAMORAK_RESTRICTION_1",
+      "name": "Demonbane Weaponry II",
+      "monster": "K'ril Tsutsaroth",
+      "tier": "Hard",
+      "type": "Restriction"
+    },
+    {
+      "slug": "ZAMORAK_STAMINA_1",
+      "name": "Ash Collector",
+      "monster": "K'ril Tsutsaroth",
+      "tier": "Grandmaster",
+      "type": "Stamina"
+    },
+    {
+      "slug": "ZUK_KILLCOUNT_1",
+      "name": "Half-Way There",
+      "monster": "TzKal-Zuk",
+      "tier": "Elite",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "ZUK_KILLCOUNT_3",
+      "name": "Inferno Grandmaster",
+      "monster": "TzKal-Zuk",
+      "tier": "Grandmaster",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "ZUK_MECHANICAL_1",
+      "name": "The Floor Is Lava",
+      "monster": "TzKal-Zuk",
+      "tier": "Grandmaster",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "ZUK_MECHANICAL_2",
+      "name": "Playing with Jads",
+      "monster": "TzKal-Zuk",
+      "tier": "Grandmaster",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "ZUK_PERFECTION_1",
+      "name": "No Luck Required",
+      "monster": "TzKal-Zuk",
+      "tier": "Grandmaster",
+      "type": "Perfection"
+    },
+    {
+      "slug": "ZUK_PERFECTION_2",
+      "name": "Nibblers, Begone!",
+      "monster": "TzKal-Zuk",
+      "tier": "Master",
+      "type": "Perfection"
+    },
+    {
+      "slug": "ZUK_RESTRICTION_1",
+      "name": "Wasn't Even Close",
+      "monster": "TzKal-Zuk",
+      "tier": "Grandmaster",
+      "type": "Restriction"
+    },
+    {
+      "slug": "ZUK_RESTRICTION_2",
+      "name": "Budget Setup",
+      "monster": "TzKal-Zuk",
+      "tier": "Grandmaster",
+      "type": "Restriction"
+    },
+    {
+      "slug": "ZUK_RESTRICTION_3",
+      "name": "Nibbler Chaser",
+      "monster": "TzKal-Zuk",
+      "tier": "Grandmaster",
+      "type": "Restriction"
+    },
+    {
+      "slug": "ZUK_RESTRICTION_4",
+      "name": "Facing Jad Head-on II",
+      "monster": "TzKal-Zuk",
+      "tier": "Grandmaster",
+      "type": "Restriction"
+    },
+    {
+      "slug": "ZUK_RESTRICTION_5",
+      "name": "Jad? What Are You Doing Here?",
+      "monster": "TzKal-Zuk",
+      "tier": "Grandmaster",
+      "type": "Restriction"
+    },
+    {
+      "slug": "ZUK_SPEED_1",
+      "name": "Inferno Speed-Runner",
+      "monster": "TzKal-Zuk",
+      "tier": "Grandmaster",
+      "type": "Speed"
+    }
+  ],
+  "unmatched": [
+    "CATA_BOSS_RESTRICTION_1",
+    "CATA_BOSS_RESTRICTION_2",
+    "CATA_BOSS_RESTRICTION_3",
+    "FILTER",
+    "HILLGIANT_BOSS_KILLCOUNT_2",
+    "HILLGIANT_BOSS_MECHANICAL_1",
+    "HILLGIANT_BOSS_MECHANICAL_2",
+    "HILLGIANT_BOSS_PERFECTION_1",
+    "HILLGIANT_BOSS_RESTRICTION_1",
+    "TEMPOROSS_PERFECTION_0",
+    "THRALL_MECHANICAL_1",
+    "TZHAARKETRAK_KILLCOUNT_3",
+    "TZHAARKETRAK_SPEED_2",
+    "TZHAARKETRAK_SPEED_3",
+    "VORKATH_MECHANICAL_2",
+    "WINTERTODT_PERFECTION_2"
+  ]
+}

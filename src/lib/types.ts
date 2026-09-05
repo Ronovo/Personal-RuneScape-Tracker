@@ -1,10 +1,15 @@
-// Shared server-side shapes: wiki API payloads, and the derived objects
-// lib/prices.ts computes from them. Kept here (rather than inline) since
-// prices.ts and server.ts (the latter mostly for the query-enum types like
-// MembersFilter/MoversSort/FlipSort/SortDir) both reference these. hiscores.ts
-// and collectionlog.ts don't import from here - each defines its own local
-// request/response shapes instead, since their data doesn't come from the
-// wiki prices API this file is centered on.
+// Shared server-side shapes for the wiki prices API: prices.ts's derived
+// objects plus app.ts's query-enum types. hiscores.ts and collectionlog.ts
+// define their own local shapes instead, since their data isn't from this
+// API. Shapes identical on the client side (MembersFilter, PriceRange,
+// Confidence, SortDir, FlipSort/FLIP_SORTS, FlipRow/FlipItem) live in
+// src/shared/types.ts and are re-exported below rather than duplicated.
+
+import type { MembersFilter, PriceRange, Confidence, SortDir, FlipSort, FlipRow, FlipItem } from '../shared/types.js';
+import { FLIP_SORTS } from '../shared/types.js';
+
+export type { MembersFilter, PriceRange, Confidence, SortDir, FlipSort, FlipRow, FlipItem };
+export { FLIP_SORTS };
 
 // ---- OSRS Wiki prices API (https://prices.runescape.wiki/api/v1/osrs) ----
 
@@ -46,14 +51,9 @@ export interface TimeseriesPoint {
   lowPriceVolume: number | null;
 }
 
-// ---- Common filter enums ----
-
-export type MembersFilter = 'all' | 'members' | 'f2p';
-export type PriceRange = '1d' | '1w' | '1m' | '3m' | '1y';
-
 // ---- Movers ("Hot or Not") ----
 
-export type GeView = 'risers' | 'fallers' | 'penny' | 'random' | 'spread' | 'staircase';
+export type GeView = 'risers' | 'fallers' | 'volume' | 'random';
 
 export interface JoinedPriceItem {
   id: number;
@@ -73,6 +73,8 @@ export interface JoinedPriceItem {
   marginAfterTax: number | null;
   roi: number | null;
   profitPerLimit: number | null;
+  // Realistic gp/hour: margin after tax scaled by how fast the buy limit could fill.
+  gpPerHour: number | null;
   highTime: number | null;
   lowTime: number | null;
 }
@@ -85,17 +87,21 @@ export interface MoversOptions {
   maxPrice?: number;
   minMargin?: number;
   minRoi?: number;
+  maxAgeMinutes?: number;
   hideStale?: boolean;
   membersOnly?: MembersFilter;
   sort?: MoversSort;
+  sortDir?: SortDir;
   limit?: number;
   view?: GeView;
   seed?: string;
 }
 
 export interface MoversResult {
-  risers: JoinedPriceItem[];
-  fallers: JoinedPriceItem[];
+  // Only the Rising/Dropping views carry these; High Volume and Random rank the
+  // unsplit list and return `items` instead.
+  risers?: JoinedPriceItem[];
+  fallers?: JoinedPriceItem[];
   items?: JoinedPriceItem[];
   consideredCount: number;
 }
@@ -162,53 +168,10 @@ export interface SearchResult {
 
 // ---- Flip Helper ----
 
-export type Confidence = 'high' | 'medium' | 'low';
-
 export interface ConfidenceInfo {
   confidence: Confidence;
   confidenceWhy: string;
 }
-
-export interface FlipRow {
-  id: number;
-  name: string;
-  members: boolean;
-  icon: string;
-  buy: number;
-  sell: number;
-  margin: number;
-  tax: number;
-  taxExempt: boolean;
-  profit: number;
-  roi: number | null;
-  limit: number | null;
-  profitPerLimit: number | null;
-  capital: number | null;
-  volume24h: number;
-  buyPressure: number | null;
-  age: number | null;
-  highTime: number | null;
-  lowTime: number | null;
-  marginVsAvg: number | null;
-  confidence: Confidence;
-  confidenceWhy: string;
-}
-
-export interface FlipItem extends FlipRow {
-  affordableUnits?: number;
-  realisticProfit?: number;
-}
-
-export type FlipSort =
-  | 'profitPerLimit' | 'profit' | 'roi' | 'volume' | 'realisticProfit' | 'margin' | 'confidence'
-  | 'name' | 'buy' | 'sell' | 'tax' | 'limit' | 'capital' | 'age';
-
-export const FLIP_SORTS = [
-  'profitPerLimit', 'profit', 'roi', 'volume', 'realisticProfit', 'margin', 'confidence',
-  'name', 'buy', 'sell', 'tax', 'limit', 'capital', 'age'
-] as const satisfies readonly FlipSort[];
-
-export type SortDir = 'asc' | 'desc';
 
 export interface FlipCandidatesOptions {
   minVolume?: number;
@@ -216,6 +179,7 @@ export interface FlipCandidatesOptions {
   maxPrice?: number;
   minMargin?: number; // after-tax profit per unit, not raw spread (unlike movers)
   minRoi?: number;
+  minMarginVsAvg?: number; // current margin / this item's own avg 24h margin
   maxAgeMinutes?: number;
   membersOnly?: MembersFilter;
   bankroll?: number | null;

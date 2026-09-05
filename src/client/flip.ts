@@ -1,44 +1,71 @@
 // Flip Helper: ranked GE scanner, presets, watchlist, and a client-side calculator.
 
-import { fmt, fmtGp, fmtGpShort, fmtPct, fmtAgo, pctClass, escapeHtml, geTax, fetchJson, errorMessage, safeJsonParse, el } from './format.js';
-import { getWatchlist, toggleWatchlist, getBankroll, setBankroll } from './session.js';
+import {
+  fmtGp, fmtPct, escapeHtml, geTax, fetchJson, errorMessage, safeJsonParse, el,
+  storageGet, storageRemove, storageSet
+} from './format.js';
+import { createFilterRow, flipSortDir, sortDirLabel } from './filterRow.js';
+import { getWatchlist, loadWatchlist, toggleWatchlist, getBankroll, setBankroll } from './identity.js';
+import './chrome.js';
 import { FLIP_SORTS } from './types.js';
 import type { FlipItem, FlipsResponse, ApiErrorBody, FlipSort, SortDir, MembersFilter } from './types.js';
+import { mountF2pToggle } from './f2pToggle.js';
+import { DEFAULTS, PRESETS, PRESET_NOTES } from './flipPresets.js';
+import type { PresetName, FilterValues } from './flipPresets.js';
+import {
+  ALL_COLUMN_KEYS, FACTORY_DEFAULT_COLUMNS, cardCellsHtml, columnCellsHtml,
+  columnHeadersHtml, columnsPanelHtml, confidenceDotHtml, sortOptionsHtml,
+  visibleColumnCount
+} from './flipColumns.js';
+import type { ColumnKey } from './flipColumns.js';
 
 const statusEl = document.getElementById('status')!;
 const bodyEl = document.getElementById('flipBody')!;
 const cardsEl = document.getElementById('flipCards')!;
-const presetStrip = document.getElementById('presetStrip')!;
+const presetToolbar = document.getElementById('presetToolbar')!;
+const resultsTitleEl = document.getElementById('resultsTitle')!;
 const FILTERS_KEY = 'osrs_flip_filters';
 
-type PresetName = 'volume' | 'margin' | 'roi' | 'f2p' | 'cheap' | 'bankroll' | 'watchlist';
+// The drawer's controls. sort/sortDir are page state and ride along on
+// persist(); everything a preset writes is a field here.
+const filterRow = createFilterRow<Record<string, string>>(FILTERS_KEY, [
+  { id: 'minVolume' },
+  { id: 'minPrice' },
+  { id: 'maxPrice', blankable: true },
+  { id: 'minMargin' },
+  { id: 'minRoi' },
+  { id: 'minMarginVsAvg', blankable: true },
+  { id: 'maxAgeMinutes', blankable: true },
+  { id: 'membersOnly' },
+  { id: 'pageSize' },
+], {
+  minVolume: String(DEFAULTS.minVolume ?? ''),
+  minPrice: String(DEFAULTS.minPrice ?? ''),
+  maxPrice: '',
+  minMargin: String(DEFAULTS.minMargin ?? ''),
+  minRoi: String(DEFAULTS.minRoi ?? ''),
+  minMarginVsAvg: '',
+  maxAgeMinutes: '',
+  membersOnly: DEFAULTS.membersOnly ?? 'all',
+  pageSize: String(DEFAULTS.pageSize ?? 50),
+});
 
 // Toggleable table columns (Item and the action buttons are always shown;
-// Realistic is controlled separately by whether a bankroll is set).
-type ColumnKey = 'buy' | 'sell' | 'margin' | 'tax' | 'profit' | 'roi' | 'limit' | 'profitPerLimit' | 'capital' | 'volume' | 'age' | 'confidence' | 'realisticProfit';
-const ALL_COLUMN_KEYS: ColumnKey[] = ['buy', 'sell', 'margin', 'tax', 'profit', 'roi', 'limit', 'profitPerLimit', 'capital', 'volume', 'age', 'confidence', 'realisticProfit'];
-// The built-in starting point. A user can overwrite "the default" via Set as
-// Default (saved to DEFAULT_COLUMNS_KEY) and restore this via Reset to Factory
-// Default - column choices are NOT auto-persisted on every toggle any more,
-// so a refresh always lands on whichever of these two is currently "the default".
-const FACTORY_DEFAULT_COLUMNS: ColumnKey[] = ['buy', 'sell', 'margin', 'profit', 'roi', 'volume'];
+// Realistic is controlled separately by whether a bankroll is set). The key
+// list, labels, tooltips and cell formatting all come from flipColumns.ts.
+// A user can overwrite "the default" via Set as Default (saved to
+// DEFAULT_COLUMNS_KEY) and restore FACTORY_DEFAULT_COLUMNS via Reset to
+// Factory Default. Toggles are session-only unless saved via Set as Default.
 const DEFAULT_COLUMNS_KEY = 'osrs_flip_default_columns';
 
-// readFiltersFromForm() always produces strings (raw input values); presets
-// and DEFAULTS mix in plain numbers. applyFiltersToForm() accepts either -
-// values just get String()'d onto the input, same as the original JS.
-interface FilterValues {
-  minVolume?: number | string;
-  minPrice?: number | string;
-  maxPrice?: number | string;
-  minMargin?: number | string;
-  minRoi?: number | string;
-  maxAgeMinutes?: number | string;
-  membersOnly?: MembersFilter;
-  pageSize?: number | string;
-  sort?: FlipSort;
-  sortDir?: SortDir;
-}
+// The checkbox panel and sort dropdown are generated once; the header row is
+// rebuilt whenever the visible column set changes (see renderColumns).
+el('columnsPanel').querySelector('.columns-panel-actions')!.insertAdjacentHTML('beforebegin', columnsPanelHtml());
+el('flipSort').insertAdjacentHTML('beforeend', sortOptionsHtml());
+
+const headRowEl = document.querySelector('#flipTable thead tr')!;
+// The two fixed columns (actions, Item) that every render keeps.
+const FIXED_COLUMNS = headRowEl.querySelectorAll('th').length;
 
 interface ResultViewSnapshot {
   page: number;
@@ -53,35 +80,12 @@ interface CalculatorSelection extends ResultViewSnapshot {
   id: number;
 }
 
-const DEFAULTS: FilterValues = {
-  minVolume: 1000,
-  minPrice: 50,
-  maxPrice: '',
-  minMargin: 0,
-  minRoi: 0,
-  maxAgeMinutes: '',
-  membersOnly: 'all',
-  pageSize: 50,
-  sort: 'profitPerLimit',
-  sortDir: 'desc'
-};
-
 // First-click direction per key: numeric columns lead with "best/highest
 // first" (matches the table's original single-direction behavior); the name
 // column leads with A-Z since that's what "alphabetical" means to most people.
 function defaultSortDir(key: FlipSort): SortDir {
   return key === 'name' ? 'asc' : 'desc';
 }
-
-const PRESETS: Record<PresetName, FilterValues> = {
-  volume: { minVolume: 100000, maxAgeMinutes: 10, sort: 'profitPerLimit' },
-  margin: { minMargin: 50000, minVolume: 100, sort: 'profit' },
-  roi: { minRoi: 3, minVolume: 10000, sort: 'roi' },
-  f2p: { membersOnly: 'f2p' },
-  cheap: { maxPrice: 1000, minVolume: 500000 },
-  bankroll: { sort: 'realisticProfit' },
-  watchlist: {}
-};
 
 // idsFromUrl is set by GE "Flip" deep-links (?ids=4151) and bypasses filters.
 // page/totalPages track the current results page; reset to page 1 whenever
@@ -103,6 +107,7 @@ const state: {
 };
 
 let calculatorSelection: CalculatorSelection | null = null;
+let calcTaxExempt = false;
 let activeResultView: ResultViewSnapshot | null = null;
 let pendingCalculatorItemId: number | null = null;
 
@@ -111,7 +116,7 @@ let pendingCalculatorItemId: number | null = null;
 // Checkbox toggles during the session are scratch-only (see the columnsPanel
 // change listener below) - only Set as Default writes to DEFAULT_COLUMNS_KEY.
 function loadVisibleColumns(): Set<ColumnKey> {
-  const parsed = safeJsonParse<string[]>(localStorage.getItem(DEFAULT_COLUMNS_KEY), []);
+  const parsed = safeJsonParse<string[]>(storageGet(localStorage, DEFAULT_COLUMNS_KEY), []);
   const valid = parsed.filter((k): k is ColumnKey => (ALL_COLUMN_KEYS as string[]).includes(k));
   return valid.length ? new Set(valid) : new Set(FACTORY_DEFAULT_COLUMNS);
 }
@@ -124,49 +129,45 @@ let visibleColumns = loadVisibleColumns();
 // checkbox itself (no re-render involved) still respects it.
 let bankrollOnForColumns = false;
 
-// Purely visual - hides/shows already-rendered <th>/<td> cells and syncs the
-// checkbox panel. No re-fetch needed since the data is already in the DOM.
-// Scoped to #flipTable: the checkboxes in #columnsPanel also carry data-col
-// (to say which column they control, not to be hidden themselves) - a bare
-// `[data-col]` selector would match those checkboxes too and hide them
-// whenever their own column was off, making them impossible to switch back on.
-function applyColumnVisibility(): void {
-  document.querySelectorAll<HTMLElement>('#flipTable [data-col]').forEach((cell) => {
-    const key = cell.dataset.col as ColumnKey;
-    const visible = key === 'realisticProfit'
-      ? visibleColumns.has(key) && bankrollOnForColumns
-      : visibleColumns.has(key);
-    cell.hidden = !visible;
-  });
+// The last rendered page, so toggling a column re-renders from memory instead
+// of re-running the scan.
+let lastItems: FlipItem[] | null = null;
+
+// Realistic Profit only means anything with a bankroll set, so it is gated by
+// both the checkbox and that flag rather than by the checkbox alone.
+function isColumnVisible(key: ColumnKey): boolean {
+  if (!visibleColumns.has(key)) return false;
+  return key !== 'realisticProfit' || bankrollOnForColumns;
+}
+
+// Rebuilds the header and, if rows are on screen, re-renders them for the new
+// column set. Hidden columns are left out of the markup entirely, so this is a
+// render rather than a visibility toggle - still no re-fetch, since the last
+// payload is kept in lastItems.
+function renderColumns(): void {
+  headRowEl.querySelectorAll('th[data-col]').forEach((th) => th.remove());
+  headRowEl.insertAdjacentHTML('beforeend', columnHeadersHtml(isColumnVisible));
+  updateSortUi();
   document.querySelectorAll<HTMLInputElement>('#columnsPanel input[type="checkbox"]').forEach((cb) => {
     cb.checked = visibleColumns.has(cb.dataset.col as ColumnKey);
   });
+  if (lastItems) renderRows(lastItems, bankrollOnForColumns);
 }
 
+// The drawer as a plain object. Both the query builder and the calculator's
+// "return to this result view" snapshot want it, so it stays a function rather
+// than folding into buildQuery().
 function readFiltersFromForm(): FilterValues {
   return {
-    minVolume: el<HTMLInputElement>('minVolume').value,
-    minPrice: el<HTMLInputElement>('minPrice').value,
-    maxPrice: el<HTMLInputElement>('maxPrice').value,
-    minMargin: el<HTMLInputElement>('minMargin').value,
-    minRoi: el<HTMLInputElement>('minRoi').value,
-    maxAgeMinutes: el<HTMLInputElement>('maxAgeMinutes').value,
+    ...filterRow.read(),
     membersOnly: el<HTMLSelectElement>('membersOnly').value as MembersFilter,
-    pageSize: el<HTMLSelectElement>('pageSize').value,
     sort: state.sort,
     sortDir: state.sortDir
   };
 }
 
 function applyFiltersToForm(filters: FilterValues, bankroll?: number | string | null): void {
-  el<HTMLInputElement>('minVolume').value = String(filters.minVolume ?? DEFAULTS.minVolume);
-  el<HTMLInputElement>('minPrice').value = String(filters.minPrice ?? DEFAULTS.minPrice);
-  el<HTMLInputElement>('maxPrice').value = filters.maxPrice != null ? String(filters.maxPrice) : '';
-  el<HTMLInputElement>('minMargin').value = String(filters.minMargin ?? DEFAULTS.minMargin);
-  el<HTMLInputElement>('minRoi').value = String(filters.minRoi ?? DEFAULTS.minRoi);
-  el<HTMLInputElement>('maxAgeMinutes').value = filters.maxAgeMinutes != null ? String(filters.maxAgeMinutes) : '';
-  el<HTMLSelectElement>('membersOnly').value = filters.membersOnly ?? 'all';
-  el<HTMLSelectElement>('pageSize').value = String(filters.pageSize ?? 50);
+  filterRow.apply(filters as Partial<Record<string, string>>);
   if (bankroll) el<HTMLInputElement>('bankroll').value = String(bankroll);
   if (filters.sort) state.sort = filters.sort;
   state.sortDir = filters.sortDir ?? defaultSortDir(state.sort);
@@ -188,14 +189,14 @@ function updateSortUi(): void {
     th.classList.toggle('sort-desc', active && state.sortDir === 'desc');
   });
   const dirBtn = document.getElementById('sortDirBtn');
-  if (dirBtn) dirBtn.textContent = state.sortDir === 'desc' ? '↓ High to low' : '↑ Low to high';
+  if (dirBtn) dirBtn.textContent = sortDirLabel(state.sortDir);
 }
 
 // Shared by header clicks and the mobile Sort dropdown: re-picking the
 // current key flips direction, picking a new one resets to its default.
 function applySort(key: FlipSort): void {
   if (state.sort === key) {
-    state.sortDir = state.sortDir === 'desc' ? 'asc' : 'desc';
+    state.sortDir = flipSortDir(state.sortDir);
   } else {
     state.sort = key;
     state.sortDir = defaultSortDir(key);
@@ -203,39 +204,59 @@ function applySort(key: FlipSort): void {
   syncSortSelect();
   updateSortUi();
   state.page = 1;
-  load();
+  void load();
 }
 
 // Last-used filter row + bankroll survive reloads. Bankroll is per-user via session.ts.
 function persistFilters(): void {
-  const filters = readFiltersFromForm();
-  localStorage.setItem(FILTERS_KEY, JSON.stringify(filters));
+  filterRow.persist({ sort: state.sort, sortDir: state.sortDir });
   const bankroll = Number(el<HTMLInputElement>('bankroll').value);
   if (Number.isFinite(bankroll)) setBankroll(bankroll);
 }
 
 function restoreFilters(): void {
-  const filters = safeJsonParse<FilterValues>(localStorage.getItem(FILTERS_KEY), DEFAULTS);
-  if (filters.sort && !FLIP_SORTS.includes(filters.sort)) {
-    filters.sort = DEFAULTS.sort;
+  const saved: FilterValues = { ...DEFAULTS, ...filterRow.saved<FilterValues>() };
+  if (saved.sort && !FLIP_SORTS.includes(saved.sort)) {
+    saved.sort = DEFAULTS.sort;
   }
-  applyFiltersToForm(filters, getBankroll());
+  applyFiltersToForm(saved, getBankroll());
+}
+
+// Names the current scan above the results, mirroring GE's #gridTitle. Reads
+// the active preset button's own label rather than duplicating the names, and
+// tags it with the one word that says what the method optimises for.
+function renderResultsTitle(): void {
+  const btn = state.preset ? presetToolbar.querySelector(`[data-preset="${state.preset}"]`) : null;
+  const name = btn?.textContent?.trim() || 'All flips';
+  const note: string[] = [];
+  if (state.preset) note.push(PRESET_NOTES[state.preset]);
+  if (f2p.isF2p()) note.push('F2P');
+  resultsTitleEl.innerHTML = escapeHtml(name)
+    + (note.length ? ` <span class="results-note">${escapeHtml(note.join(' · '))}</span>` : '');
+}
+
+function presetButtons(): NodeListOf<HTMLButtonElement> {
+  return presetToolbar.querySelectorAll<HTMLButtonElement>('button[data-preset]');
 }
 
 function setPresetActive(name: PresetName | null): void {
-  state.preset = name;
-  presetStrip.querySelectorAll<HTMLButtonElement>('button').forEach((b) => b.classList.toggle('active', b.dataset.preset === name));
+  state.preset = name && name in PRESETS ? name : null;
+  presetButtons().forEach((b) => b.classList.toggle('active', b.dataset.preset === state.preset));
 }
 
 // Presets just write the filter inputs (resetting to DEFAULTS first) and reload.
+// Members is carried across rather than reset: F2P is who you are playing as,
+// not part of the scan method, so picking a preset must not silently clear it.
 function applyPreset(name: PresetName): void {
   const preset = PRESETS[name];
   if (!preset) return;
-  applyFiltersToForm({ ...DEFAULTS, ...preset }, el<HTMLInputElement>('bankroll').value || getBankroll());
+  const membersOnly = preset.membersOnly ?? (el<HTMLSelectElement>('membersOnly').value as MembersFilter);
+  applyFiltersToForm({ ...DEFAULTS, ...preset, membersOnly }, el<HTMLInputElement>('bankroll').value || getBankroll());
+  f2p.sync();
   setPresetActive(name);
   persistFilters();
   state.page = 1;
-  load();
+  void load();
 }
 
 // Watchlist / ?ids= go through the ids= bypass so pinned rows aren't filtered out.
@@ -267,6 +288,7 @@ function buildQuery(): URLSearchParams | null {
   if (f.maxPrice !== '') params.set('maxPrice', String(f.maxPrice));
   params.set('minMargin', String(f.minMargin || 0));
   params.set('minRoi', String(f.minRoi || 0));
+  if (f.minMarginVsAvg !== '') params.set('minMarginVsAvg', String(f.minMarginVsAvg));
   if (f.maxAgeMinutes !== '') params.set('maxAgeMinutes', String(f.maxAgeMinutes));
   params.set('membersOnly', f.membersOnly || 'all');
   if (state.preset === 'bankroll' && bankroll > 0) params.set('maxCapital', String(bankroll));
@@ -279,7 +301,8 @@ function watchedSet(): Set<number> {
   return new Set(getWatchlist());
 }
 
-function renderEmpty(message: string, colCount = 15): void {
+function renderEmpty(message: string): void {
+  const colCount = FIXED_COLUMNS + visibleColumnCount(isColumnVisible);
   bodyEl.innerHTML = `<tr><td colspan="${colCount}">${message}</td></tr>`;
   cardsEl.innerHTML = `<p class="status">${message}</p>`;
 }
@@ -296,20 +319,17 @@ function flipItemActions(item: FlipItem, watched: Set<number>): { buttons: strin
   const on = watched.has(item.id);
   return {
     buttons: `<button type="button" class="star-btn ${on ? 'on' : ''}" data-id="${item.id}" title="Watchlist">★</button>
-        <button type="button" class="calc-btn" data-id="${item.id}" data-name="${escapeHtml(item.name)}" data-buy="${item.buy}" data-sell="${item.sell}" title="Use in calculator">🧮</button>`,
+        <button type="button" class="calc-btn" data-id="${item.id}" data-name="${escapeHtml(item.name)}" data-buy="${item.buy}" data-sell="${item.sell}" data-tax-exempt="${item.taxExempt}" title="Use in calculator">🧮</button>`,
     link: `<a class="item-link" href="item.html?id=${item.id}">
-          <img src="${item.icon}" alt="" />
+          <img src="${escapeHtml(item.icon)}" alt="" />
           ${escapeHtml(item.name)}
         </a>`,
-    conf: `<span class="conf-dot conf-${item.confidence}" title="${escapeHtml(item.confidenceWhy || item.confidence)}"></span>`
+    conf: confidenceDotHtml(item)
   };
 }
 
-function renderCard(item: FlipItem, watched: Set<number>, bankrollOn: boolean): string {
+function renderCard(item: FlipItem, watched: Set<number>, ctx: { bankrollOn: boolean }): string {
   const { buttons, link, conf } = flipItemActions(item, watched);
-  const realistic = bankrollOn
-    ? `<div><dt>Realistic</dt><dd>${item.realisticProfit != null ? fmtGpShort(item.realisticProfit) : 'n/a'}</dd></div>`
-    : '';
   return `
     <article class="flip-card" data-item-id="${item.id}">
       <div class="flip-card-head">
@@ -318,15 +338,7 @@ function renderCard(item: FlipItem, watched: Set<number>, bankrollOn: boolean): 
         ${conf}
       </div>
       <dl class="flip-card-grid">
-        <div><dt>Buy</dt><dd>${fmtGp(item.buy)}</dd></div>
-        <div><dt>Sell</dt><dd>${fmtGp(item.sell)}</dd></div>
-        <div><dt>Margin</dt><dd>${fmtGp(item.margin)}</dd></div>
-        <div><dt>ROI</dt><dd class="pct ${pctClass(item.roi)}">${fmtPct(item.roi)}</dd></div>
-        <div><dt>Profit/limit</dt><dd>${fmtGp(item.profitPerLimit)}</dd></div>
-        <div><dt>Vol/day</dt><dd>${fmt(item.volume24h)}</dd></div>
-        <div><dt>Capital</dt><dd>${fmtGp(item.capital)}</dd></div>
-        <div><dt>Age</dt><dd>${item.age != null ? fmtAgo(item.age) : 'n/a'}</dd></div>
-        ${realistic}
+        ${cardCellsHtml(item, ctx)}
       </dl>
     </article>`;
 }
@@ -334,15 +346,14 @@ function renderCard(item: FlipItem, watched: Set<number>, bankrollOn: boolean): 
 function renderRows(items: FlipItem[], bankrollOn: boolean): void {
   const watched = watchedSet();
   bankrollOnForColumns = bankrollOn;
-  const colCount = 2 + ALL_COLUMN_KEYS.length;
+  lastItems = items;
   if (!items.length) {
-    renderEmpty('No items match.', colCount);
-    applyColumnVisibility();
+    renderEmpty('No items match.');
     return;
   }
+  const ctx = { bankrollOn };
   bodyEl.innerHTML = items.map((item) => {
-    const { buttons, link, conf } = flipItemActions(item, watched);
-    const realisticText = bankrollOn && item.realisticProfit != null ? fmtGpShort(item.realisticProfit) : 'n/a';
+    const { buttons, link } = flipItemActions(item, watched);
     return `<tr data-item-id="${item.id}">
       <td>
         ${buttons}
@@ -350,29 +361,20 @@ function renderRows(items: FlipItem[], bankrollOn: boolean): void {
       <td>
         ${link}
       </td>
-      <td data-col="buy">${fmtGp(item.buy)}</td>
-      <td data-col="sell">${fmtGp(item.sell)}</td>
-      <td data-col="margin">${fmtGp(item.margin)}</td>
-      <td data-col="tax">${fmtGp(item.tax)}</td>
-      <td data-col="profit">${fmtGp(item.profit)}</td>
-      <td data-col="roi" class="pct ${pctClass(item.roi)}">${fmtPct(item.roi)}</td>
-      <td data-col="limit">${item.limit ? fmt(item.limit) : 'n/a'}</td>
-      <td data-col="profitPerLimit">${fmtGp(item.profitPerLimit)}</td>
-      <td data-col="capital">${fmtGp(item.capital)}</td>
-      <td data-col="volume">${fmt(item.volume24h)}</td>
-      <td data-col="age">${item.age != null ? fmtAgo(item.age) : 'n/a'}</td>
-      <td data-col="confidence">${conf}</td>
-      <td data-col="realisticProfit">${realisticText}</td>
+      ${columnCellsHtml(item, ctx, isColumnVisible)}
     </tr>`;
   }).join('');
-  cardsEl.innerHTML = items.map((item) => renderCard(item, watched, bankrollOn)).join('');
-  applyColumnVisibility();
+  cardsEl.innerHTML = items.map((item) => renderCard(item, watched, ctx)).join('');
 }
 
 async function load(): Promise<boolean> {
   persistFilters();
+  // Set before the empty-watchlist bail-out, so the heading never describes a
+  // scan that is no longer on screen.
+  renderResultsTitle();
   const params = buildQuery();
   if (!params) {
+    lastItems = null;
     renderEmpty('Watchlist is empty — star items to pin them here.');
     renderPagination(1, 1);
     statusEl.textContent = '';
@@ -390,7 +392,9 @@ async function load(): Promise<boolean> {
     preset: state.preset,
     idsFromUrl: state.idsFromUrl ? [...state.idsFromUrl] : null
   };
-  statusEl.textContent = 'Scanning...';
+  // No "Scanning..." label: the request is short enough that it only flickers.
+  // #status is now purely an error slot.
+  statusEl.textContent = '';
   statusEl.classList.remove('error');
   try {
     const { ok, data } = await fetchJson<FlipsResponse & ApiErrorBody>(`/api/ge/flips?${params}`);
@@ -400,13 +404,12 @@ async function load(): Promise<boolean> {
     renderRows(items, bankrollOn);
     renderPagination(data.page, data.totalPages);
     activeResultView = { ...requestedView, page: data.page };
-    statusEl.textContent = `${data.consideredCount} item(s) considered · showing ${items.length} (page ${data.page} of ${data.totalPages}, cached ~5 min).`;
 
     // A single-item GE Flip link behaves like clicking that row's calculator button.
     if (pendingCalculatorItemId !== null) {
       const item = items.find((candidate) => candidate.id === pendingCalculatorItemId);
       pendingCalculatorItemId = null;
-      if (item) loadIntoCalculator(item.id, item.name, item.buy, item.sell);
+      if (item) loadIntoCalculator(item.id, item.name, item.buy, item.sell, item.taxExempt);
     }
     return true;
   } catch (err) {
@@ -416,8 +419,10 @@ async function load(): Promise<boolean> {
   }
 }
 
-// Pure client-side; uses geTax so the numbers agree with the table
-// for non-exempt items. No item name here, so exemptions don't apply.
+// Pure client-side; uses geTax so the numbers agree with the table.
+// calcTaxExempt carries the exemption flag from the item the calculator was
+// opened with, and stays in effect while its buy/sell fields are edited by
+// hand — exemption is a property of the item, not of the current price.
 function updateCalc(): void {
   const buy = Number(el<HTMLInputElement>('calcBuy').value);
   const sell = Number(el<HTMLInputElement>('calcSell').value);
@@ -429,7 +434,7 @@ function updateCalc(): void {
     el('calcCapital').textContent = 'n/a';
     return;
   }
-  const taxEach = geTax(sell);
+  const taxEach = geTax(sell, calcTaxExempt);
   const profitEach = sell - buy - taxEach;
   el('calcTax').textContent = fmtGp(taxEach * qty);
   el('calcProfit').textContent = fmtGp(profitEach * qty);
@@ -440,7 +445,8 @@ function updateCalc(): void {
 // "Use in calculator" copies an item's buy/sell into the calc fields and
 // scrolls the calculator into view. Qty is left as-is — clobbering a
 // quantity the user is mid-typing would be more surprising than useful.
-function loadIntoCalculator(id: number, name: string, buy: number, sell: number): void {
+function loadIntoCalculator(id: number, name: string, buy: number, sell: number, taxExempt: boolean): void {
+  calcTaxExempt = taxExempt;
   calculatorSelection = activeResultView
     ? {
         ...activeResultView,
@@ -493,7 +499,7 @@ async function returnToCalculatorItem(): Promise<void> {
   window.setTimeout(() => target.classList.remove('return-target'), 2100);
 }
 
-presetStrip.querySelectorAll<HTMLButtonElement>('button').forEach((btn) => {
+presetButtons().forEach((btn) => {
   btn.addEventListener('click', () => applyPreset(btn.dataset.preset as PresetName));
 });
 
@@ -506,10 +512,29 @@ function rescan(): void {
     setPresetActive(null);
   }
   state.page = 1;
-  load();
+  void load();
 }
 
 el('scanBtn').addEventListener('click', rescan);
+
+// Reset drops the filter row and the active preset back to the built-in
+// defaults. Bankroll is deliberately left alone - it is per-user session data,
+// not a filter, and DEFAULTS carries no value for it.
+el('resetBtn').addEventListener('click', () => {
+  filterRow.clear();
+  applyFiltersToForm(DEFAULTS);
+  f2p.sync();
+  setPresetActive(null);
+  rescan();
+});
+
+// F2P narrows the current results rather than starting a new scan, so unlike
+// rescan() it keeps the active preset highlighted. load() persists the filters.
+const f2p = mountF2pToggle({
+  button: el<HTMLButtonElement>('f2pFilterBtn'),
+  select: el<HTMLSelectElement>('membersOnly'),
+  onChange: () => { state.page = 1; void load(); }
+});
 el('returnToItemBtn').addEventListener('click', () => void returnToCalculatorItem());
 
 // Item name search - live, debounced, unlike every other filter (which only
@@ -523,9 +548,10 @@ el<HTMLInputElement>('flipSearch').addEventListener('input', () => {
 
 // Header click re-requests with that sort so ranking is over the whole set,
 // not the page. Clicking the already-active column flips its direction.
-document.querySelectorAll<HTMLTableCellElement>('#flipTable th[data-sort]').forEach((th) => {
-  th.style.cursor = 'pointer';
-  th.addEventListener('click', () => applySort(th.dataset.sort as FlipSort));
+// Delegated to the row, since renderColumns() rebuilds the cells beneath it.
+headRowEl.addEventListener('click', (ev) => {
+  const th = (ev.target as HTMLElement).closest<HTMLTableCellElement>('th[data-sort]');
+  if (th?.dataset.sort) applySort(th.dataset.sort as FlipSort);
 });
 
 el<HTMLSelectElement>('flipSort').addEventListener('change', () => {
@@ -535,29 +561,29 @@ el<HTMLSelectElement>('flipSort').addEventListener('change', () => {
 // Explicit direction flip for whatever's currently sorted - the only way to
 // reverse direction on mobile, where the table (and its clickable headers) is hidden.
 el('sortDirBtn').addEventListener('click', () => {
-  state.sortDir = state.sortDir === 'desc' ? 'asc' : 'desc';
+  state.sortDir = flipSortDir(state.sortDir);
   updateSortUi();
   state.page = 1;
-  load();
+  void load();
 });
 
 // Per-page select and Prev/Next paging. Prev/Next are disabled at the bounds
 // by renderPagination(), but guard here too in case a stale click slips through.
 el<HTMLSelectElement>('pageSize').addEventListener('change', () => {
   state.page = 1;
-  load();
+  void load();
 });
 
 el<HTMLButtonElement>('pagePrev').addEventListener('click', () => {
   if (state.page <= 1) return;
   state.page -= 1;
-  load();
+  void load();
 });
 
 el<HTMLButtonElement>('pageNext').addEventListener('click', () => {
   if (state.page >= state.totalPages) return;
   state.page += 1;
-  load();
+  void load();
 });
 
 // Add/Remove Columns: a plain show/hide toggle for the checkbox panel.
@@ -576,7 +602,7 @@ el('columnsPanel').addEventListener('change', (ev) => {
   const key = cb.dataset.col as ColumnKey;
   if (cb.checked) visibleColumns.add(key);
   else visibleColumns.delete(key);
-  applyColumnVisibility();
+  renderColumns();
 });
 
 // Set as Default: click once to arm it, click again within 5s to confirm -
@@ -608,16 +634,16 @@ el('setDefaultBtn').addEventListener('click', () => {
   }
   clearTimeout(setDefaultArmTimer);
   setDefaultArmTimer = null;
-  localStorage.setItem(DEFAULT_COLUMNS_KEY, JSON.stringify([...visibleColumns]));
+  storageSet(localStorage, DEFAULT_COLUMNS_KEY, JSON.stringify([...visibleColumns]));
   el('setDefaultBtn').textContent = 'Set as Default';
   showColumnsStatus('Saved - this column set now loads by default.');
 });
 
 el('resetDefaultBtn').addEventListener('click', () => {
   cancelSetDefaultArmed();
-  localStorage.removeItem(DEFAULT_COLUMNS_KEY);
+  storageRemove(localStorage, DEFAULT_COLUMNS_KEY);
   visibleColumns = new Set(FACTORY_DEFAULT_COLUMNS);
-  applyColumnVisibility();
+  renderColumns();
   showColumnsStatus('Reset to the factory default columns.');
 });
 
@@ -632,12 +658,18 @@ document.getElementById('flipResults')!.addEventListener('click', (ev) => {
     toggleWatchlist(id);
     const on = getWatchlist().includes(id);
     document.querySelectorAll<HTMLButtonElement>(`.star-btn[data-id="${id}"]`).forEach((b) => b.classList.toggle('on', on));
-    if (state.preset === 'watchlist') load();
+    if (state.preset === 'watchlist') void load();
     return;
   }
   const calcBtn = target.closest<HTMLButtonElement>('.calc-btn');
   if (!calcBtn) return;
-  loadIntoCalculator(Number(calcBtn.dataset.id), calcBtn.dataset.name ?? '', Number(calcBtn.dataset.buy), Number(calcBtn.dataset.sell));
+  loadIntoCalculator(
+    Number(calcBtn.dataset.id),
+    calcBtn.dataset.name ?? '',
+    Number(calcBtn.dataset.buy),
+    Number(calcBtn.dataset.sell),
+    calcBtn.dataset.taxExempt === 'true'
+  );
 });
 
 ['calcBuy', 'calcSell', 'calcQty'].forEach((id) => {
@@ -645,21 +677,31 @@ document.getElementById('flipResults')!.addEventListener('click', (ev) => {
 });
 
 // GE Flip links land here as ?ids= so the scanner shows that item live.
-const urlIds = new URLSearchParams(location.search).get('ids');
+const urlParams = new URLSearchParams(location.search);
+const urlIds = urlParams.get('ids');
 if (urlIds) {
   const ids = urlIds.split(',').map(Number).filter(Number.isInteger);
   state.idsFromUrl = ids;
   pendingCalculatorItemId = ids.length === 1 ? ids[0]! : null;
 }
 
+// GE stamps &from=ge on its Flip links. "Return to item" only restores the Flip
+// result view the calculator row came from - which is a single row when you
+// arrived this way - so offer a real way back instead. GE persists its own
+// filters, so the link lands on the view that was left behind.
+if (urlParams.get('from') === 'ge') {
+  el('backToGe').hidden = false;
+}
+
 // Switching "Playing as" swaps the watchlist and bankroll buckets.
 window.addEventListener('osrs-session-change', () => {
   el<HTMLInputElement>('bankroll').value = String(getBankroll() || '');
   state.page = 1;
-  load();
+  void loadWatchlist().then(load);
 });
 
 restoreFilters();
-applyColumnVisibility();
-load();
+f2p.sync();
+renderColumns();
+void loadWatchlist().then(load);
 updateCalc();
