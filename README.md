@@ -23,7 +23,7 @@ tabs are the exception: Jagex's hiscores don't expose any of them, so all four
 read the state the RuneLite plugin syncs instead.
 
 - **Hiscores**
-- **Boss Kills
+- **Boss Kills**
 - **Quests** 
 - **Achievement Diaries** 
 - **Combat Achievements** 
