@@ -357,4 +357,4 @@ Report vulnerabilities privately — see [SECURITY.md](SECURITY.md).
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+BSD 2-Clause — see [LICENSE](LICENSE).
