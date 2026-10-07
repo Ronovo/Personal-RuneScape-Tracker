@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Page not found &mdash; Personal RuneScape Tracker</title>
+<meta name="color-scheme" content="dark light">
+<meta name="robots" content="noindex">
+<style>
+  :root {
+    --bg: #1b1712;
+    --panel: #26211a;
+    --border: #4a3f2f;
+    --text: #f4ecd8;
+    --muted: #ccbd97;
+    --gold: #d9c27e;
+    --link: #e6cf8c;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #f5f1e4;
+      --panel: #fffdf6;
+      --border: #ddd2b2;
+      --text: #33301f;
+      --muted: #6c6650;
+      --gold: #9a6f16;
+      --link: #8a5e0c;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 24px 16px;
+    background: var(--bg);
+    color: var(--text);
+    font: 400 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  .box {
+    max-width: 440px;
+    width: 100%;
+    text-align: center;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 32px 24px;
+  }
+  h1 { margin: 0 0 8px; font-size: 26px; }
+  p { margin: 0 0 22px; color: var(--muted); }
+  a.btn {
+    display: inline-block;
+    padding: 10px 20px;
+    border-radius: 999px;
+    background: var(--gold);
+    color: #241d13;
+    font-weight: 600;
+    text-decoration: none;
+  }
+</style>
+</head>
+<body>
+  <div class="box">
+    <h1>Page not found</h1>
+    <p>That page doesn't exist. The tracker home page has everything.</p>
+    <!-- Absolute path: GitHub serves this page at whatever URL was missing,
+         so a relative "./" would point at the wrong folder. -->
+    <a class="btn" href="/Personal-RuneScape-Tracker/">Back to the tracker</a>
+  </div>
+</body>
+</html>

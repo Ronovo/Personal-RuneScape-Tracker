@@ -8,6 +8,9 @@ a Flip Helper in one responsive app.
 The server and browser code are TypeScript compiled with `tsc`. The backend uses
 Node/Express; the frontend is framework-free HTML, CSS, and ES modules.
 
+Project page: <https://ronovo.github.io/Personal-RuneScape-Tracker/> (served
+from `docs/` via GitHub Pages; not part of the app or the Docker image).
+
 ## Features
 
 ### Character
