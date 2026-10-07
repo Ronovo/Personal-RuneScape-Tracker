@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- GitHub Pages project page under `docs/`
+
 ## 1.0.0 — 2026-08-29
 
 - Single JWT auth: `JWT_SECRET` signs every token. `LAN_MODE=1` mints one stable
