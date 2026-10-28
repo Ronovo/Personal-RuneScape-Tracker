@@ -207,7 +207,7 @@ function applySort(key: FlipSort): void {
   void load();
 }
 
-// Last-used filter row + bankroll survive reloads. Bankroll is per-user via session.ts.
+// Last-used filter row + bankroll survive reloads. Bankroll is per-user via identity.ts.
 function persistFilters(): void {
   filterRow.persist({ sort: state.sort, sortDir: state.sortDir });
   const bankroll = Number(el<HTMLInputElement>('bankroll').value);

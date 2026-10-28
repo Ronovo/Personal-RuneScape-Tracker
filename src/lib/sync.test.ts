@@ -464,7 +464,7 @@ test('JWT sync auto-claims an RSN and alts on the same accountHash', async () =>
   try {
     const { registerUser } = await import('./users.js');
     const { mintApiToken } = await import('./auth.js');
-    const user = await registerUser('sync-jwt@example.com', 'password123');
+    const user = await registerUser('sync-jwt', 'password123', "What is your mother's maiden name?", 'rex');
     const token = await mintApiToken(user.id);
     const hash = '123456789012345';
 
@@ -492,7 +492,7 @@ test('JWT sync auto-claims an RSN and alts on the same accountHash', async () =>
     );
     assert.equal(alt.username, 'altrsn');
 
-    const other = await registerUser('other-sync-jwt@example.com', 'password123');
+    const other = await registerUser('other-sync-jwt', 'password123', "What is your mother's maiden name?", 'rex');
     const otherToken = await mintApiToken(other.id);
     await assert.rejects(
       () =>

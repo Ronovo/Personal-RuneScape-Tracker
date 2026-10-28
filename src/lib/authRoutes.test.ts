@@ -20,6 +20,7 @@ const app = createApp();
 const server = app.listen(0);
 await new Promise<void>((resolve) => server.once('listening', resolve));
 const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+const QUESTION = "What is your mother's maiden name?";
 
 after(async () => {
   await new Promise<void>((resolve, reject) => server.close((err) => (err ? reject(err) : resolve())));
@@ -69,19 +70,19 @@ test('public posture: over-long password is rejected 400 before hashing', async 
     const res = await fetch(`${base}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'lengthcap@example.com', password: 'x'.repeat(201) }),
+      body: JSON.stringify({ username: 'lengthcap', password: 'x'.repeat(201) }),
     });
     assert.equal(res.status, 400);
   });
 });
 
-test('auth endpoints throttle repeated attempts on the same email (429)', async () => {
+test('auth endpoints throttle repeated attempts on the same username (429)', async () => {
   await withEnv({ JWT_SECRET: 'authroutes-secret', LAN_MODE: undefined }, async () => {
-    const email = `bruteforce-${Date.now()}@example.com`;
+    const username = `brute${Date.now() % 1e9}`;
     const attempt = () => fetch(`${base}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password: 'wrong-password' }),
+      body: JSON.stringify({ username, password: 'wrong-password' }),
     });
 
     // AUTH_RATE_LIMIT_MAX defaults to 10/min; the 11th hit on this bucket trips.
@@ -118,7 +119,7 @@ test('LAN posture: status carries a wildcard token, /api/auth/token returns it u
     const reg = await fetch(`${base}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'x@example.com', password: 'password123' }),
+      body: JSON.stringify({ username: 'lanplayer', password: 'password123' }),
     });
     assert.equal(reg.status, 403);
   });
@@ -149,16 +150,16 @@ test('public posture: register then /api/auth/me round-trips the account', async
     const created = await fetch(`${base}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'round@example.com', password: 'longpassword' }),
+      body: JSON.stringify({ username: 'round', password: 'longpassword', question: QUESTION, answer: 'rex' }),
     });
     assert.equal(created.status, 201);
-    const { token, user } = await created.json() as { token: string; user: { email: string } };
-    assert.equal(user.email, 'round@example.com');
+    const { token, user } = await created.json() as { token: string; user: { username: string } };
+    assert.equal(user.username, 'round');
 
     const me = await fetch(`${base}/api/auth/me`, { headers: { Authorization: `Bearer ${token}` } });
     assert.equal(me.status, 200);
-    const body = await me.json() as { email: string; rsns: string[] };
-    assert.equal(body.email, 'round@example.com');
+    const body = await me.json() as { username: string; rsns: string[] };
+    assert.equal(body.username, 'round');
     assert.deepEqual(body.rsns, [], 'a fresh account has claimed nothing');
 
     // Minting a plugin token needs that same account token, and yields a
@@ -173,18 +174,20 @@ test('public posture: register then /api/auth/me round-trips the account', async
   });
 });
 
-test('public posture: registration rejects a bad email, a short password and a duplicate', async () => {
+test('public posture: registration rejects a bad username, a short password, no question and a duplicate', async () => {
   await withEnv({ JWT_SECRET: 'validate-secret-'.repeat(3), LAN_MODE: undefined }, async () => {
     const post = (body: unknown) => fetch(`${base}/api/auth/register`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
     });
 
-    assert.equal((await post({ email: 'not-an-email', password: 'longpassword' })).status, 400);
-    assert.equal((await post({ email: 'short@example.com', password: 'abc' })).status, 400);
-    assert.equal((await post({ email: 'dupe@example.com', password: 'longpassword' })).status, 201);
-    assert.equal((await post({ email: 'dupe@example.com', password: 'longpassword' })).status, 409);
+    const security = { question: QUESTION, answer: 'rex' };
+    assert.equal((await post({ username: 'not a name!', password: 'longpassword', ...security })).status, 400);
+    assert.equal((await post({ username: 'shortpw', password: 'abc', ...security })).status, 400);
+    assert.equal((await post({ username: 'noquestion', password: 'longpassword' })).status, 400);
+    assert.equal((await post({ username: 'dupe', password: 'longpassword', ...security })).status, 201);
+    assert.equal((await post({ username: 'DUPE', password: 'longpassword', ...security })).status, 409);
     // Missing fields entirely, rather than invalid ones.
-    assert.equal((await post({ email: 'nopass@example.com' })).status, 400);
+    assert.equal((await post({ username: 'nopass' })).status, 400);
     assert.equal((await post('a string, not an object')).status, 400);
   });
 });
@@ -194,7 +197,7 @@ test('guest posture: the account endpoints report that accounts are off', async 
     const res = await fetch(`${base}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'guest@example.com', password: 'longpassword' }),
+      body: JSON.stringify({ username: 'guest', password: 'longpassword' }),
     });
     assert.equal(res.status, 501);
     assert.match((await res.json() as { error: string }).error, /not enabled/);
@@ -207,10 +210,36 @@ test('LAN posture: registration and sign-in are refused outright', async () => {
       const res = await fetch(`${base}/api/auth/${route}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: 'lan@example.com', password: 'longpassword' }),
+        body: JSON.stringify({ username: 'lanplayer', password: 'longpassword' }),
       });
       assert.equal(res.status, 403, route);
       assert.match((await res.json() as { error: string }).error, /LAN mode/);
     }
+  });
+});
+
+test('public posture: a password reset needs the security answer and retires old tokens', async () => {
+  await withEnv({ JWT_SECRET: 'reset-secret-'.repeat(3), LAN_MODE: undefined }, async () => {
+    const post = (route: string, body: unknown, token?: string) => fetch(`${base}/api/auth/${route}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: JSON.stringify(body),
+    });
+    const created = await post('register', { username: 'resetme', password: 'longpassword', question: QUESTION, answer: 'Smith' });
+    const { token } = await created.json() as { token: string };
+
+    assert.deepEqual(await (await post('reset-question', { username: 'resetme' })).json(), { question: QUESTION });
+    assert.equal((await post('reset-password', { username: 'resetme', answer: 'jones', password: 'newpassword' })).status, 400);
+    assert.equal((await post('reset-password', { username: 'resetme', answer: ' SMITH ', password: 'newpassword' })).status, 200);
+
+    const me = await fetch(`${base}/api/auth/me`, { headers: { Authorization: `Bearer ${token}` } });
+    assert.equal(me.status, 401, 'the token from before the reset no longer works');
+    const login = await post('login', { username: 'resetme', password: 'newpassword' });
+    const { token: fresh, needsSecurityQuestion } = await login.json() as { token: string; needsSecurityQuestion: boolean };
+    assert.equal(needsSecurityQuestion, false);
+    assert.equal((await fetch(`${base}/api/auth/me`, { headers: { Authorization: `Bearer ${fresh}` } })).status, 200);
+
+    assert.equal((await post('security-question', { question: QUESTION, answer: 'x' })).status, 401);
+    assert.equal((await post('security-question', { question: QUESTION, answer: 'Brown' }, fresh)).status, 200);
   });
 });

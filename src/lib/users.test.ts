@@ -9,7 +9,17 @@ const usersTmp = await fs.mkdtemp(path.join(os.tmpdir(), 'osrs-users-test-'));
 process.env.USERS_DATA_DIR = usersTmp;
 process.env.JWT_SECRET = 'users-test-secret';
 
-const { registerUser, loginUser, bindJagexAccountForSync, getUserById } = await import('./users.js');
+const {
+  registerUser, loginUser, bindJagexAccountForSync, getUserById, ronovoUser, resetPassword, securityQuestionFor,
+  setSecurityQuestion,
+} = await import('./users.js');
+const { SECURITY_QUESTIONS } = await import('../shared/securityQuestions.js');
+
+const QUESTION = SECURITY_QUESTIONS[1]!;
+
+function register(username: string, password = 'longpassword') {
+  return registerUser(username, password, QUESTION, 'Rex');
+}
 
 after(async () => {
   await fs.rm(usersTmp, { recursive: true, force: true });
@@ -18,17 +28,17 @@ after(async () => {
 });
 
 test('register and login round-trip', async () => {
-  const created = await registerUser('player@example.com', 'longpassword');
+  const created = await register('player');
   assert.ok(created.id);
-  assert.equal(created.email, 'player@example.com');
+  assert.equal(created.username, 'player');
   assert.deepEqual(created.rsns, []);
 
-  const loggedIn = await loginUser('player@example.com', 'longpassword');
+  const loggedIn = await loginUser('PLAYER', 'longpassword');
   assert.equal(loggedIn.id, created.id);
 });
 
 test('bindJagexAccountForSync auto-claims the RSN and hash, then alts on the same hash', async () => {
-  const user = await registerUser('binder@example.com', 'longpassword');
+  const user = await register('binder');
   const first = await bindJagexAccountForSync(user.id, 'Zezima', '111');
   assert.deepEqual(first.rsns, ['zezima']);
   assert.equal(first.accountHash, '111');
@@ -37,7 +47,7 @@ test('bindJagexAccountForSync auto-claims the RSN and hash, then alts on the sam
   assert.deepEqual(alt.rsns, ['zezima', 'altone']);
   assert.equal(alt.accountHash, '111');
 
-  const other = await registerUser('otherbind@example.com', 'longpassword');
+  const other = await register('otherbind');
   await assert.rejects(() => bindJagexAccountForSync(other.id, 'Zezima', '222'), /claimed by another account/);
   await assert.rejects(() => bindJagexAccountForSync(other.id, 'NewAlt', '111'), /bound to another login/);
   await assert.rejects(
@@ -50,94 +60,82 @@ test('getUserById returns null for missing users', async () => {
   assert.equal(await getUserById('missing-id'), null);
 });
 
-// The email becomes a filename, so it gets the same traversal treatment
-// storageKey() gives usernames. `a@x.co/../../sync/<name>` is address-shaped to
-// any regex that only looks for "something @ something . something", and once
-// wrote {"userId":...} straight over a player's synced data file.
-test('registerUser rejects an email that would escape the users directory', async () => {
-  const decoyDir = path.join(usersTmp, '..', 'sync-decoy');
-  await fs.mkdir(decoyDir, { recursive: true });
-  const decoy = path.join(decoyDir, 'victim.json');
-  await fs.writeFile(decoy, '{"username":"victim","syncedAt":"real"}', 'utf8');
-
-  await assert.rejects(
-    () => registerUser('a@x.co/../../sync-decoy/victim', 'longpassword'),
-    /Invalid email/,
-  );
-  assert.equal(await fs.readFile(decoy, 'utf8'), '{"username":"victim","syncedAt":"real"}');
-
-  await fs.rm(decoyDir, { recursive: true, force: true });
-});
-
-test('registerUser rejects separators and dot-segments anywhere in the address', async () => {
-  for (const email of [
-    'a/b@example.com',
-    'a\\b@example.com',
-    'user@exam/ple.com',
-    'user@example.com/../x.co',
-    '..@example.com',
-    'user@..example.com',
-  ]) {
-    await assert.rejects(() => registerUser(email, 'longpassword'), /Invalid email/, email);
+test('registerUser only takes plain usernames', async () => {
+  for (const username of ['ab', 'a'.repeat(21), 'has space', '../../sync/victim', 'a/b', 'me@example.com']) {
+    await assert.rejects(() => register(username), /Usernames are 3-20/, username);
   }
 });
 
-test('loginUser rejects a malformed address with the same 401 as a wrong password', async () => {
+test('registerUser needs a listed security question and an answer', async () => {
+  await assert.rejects(() => registerUser('noquestion', 'longpassword', 'Favorite color?', 'blue'), /Pick a security question/);
+  await assert.rejects(() => registerUser('noanswer', 'longpassword', QUESTION, '   '), /Answer your security question/);
+});
+
+test('the username index is stored under a hash, not the name itself', async () => {
+  await register('Indexed');
+  const digest = createHash('sha256').update('indexed').digest('hex');
+  const entries = await fs.readdir(path.join(usersTmp, 'by-username'));
+  assert.ok(entries.includes(`${digest}.json`));
+  assert.ok(!entries.includes('Indexed.json'));
+});
+
+// Accounts from before usernames registered with an email address, indexed under
+// by-email. That address is now their username: it still logs in, and the
+// index moves onto by-username.
+test('an email account from before usernames logs in with its address', async () => {
+  const user = await register('willmove');
+  const digest = createHash('sha256').update('old@example.com').digest('hex');
+  const byEmail = path.join(usersTmp, 'by-email');
+  await fs.mkdir(byEmail, { recursive: true });
+  await fs.writeFile(path.join(byEmail, `${digest}.json`), JSON.stringify({ userId: user.id }), 'utf8');
+  const record = JSON.parse(await fs.readFile(path.join(usersTmp, `${user.id}.json`), 'utf8'));
+  delete record.username;
+  await fs.writeFile(path.join(usersTmp, `${user.id}.json`), JSON.stringify({ ...record, email: 'old@example.com' }), 'utf8');
+
+  const loggedIn = await loginUser('Old@Example.com', 'longpassword');
+  assert.equal(loggedIn.id, user.id);
+  assert.equal(loggedIn.username, 'old@example.com');
+  assert.ok(!(await fs.readdir(byEmail)).includes(`${digest}.json`), 'moved off by-email');
+  assert.equal((await loginUser('old@example.com', 'longpassword')).id, user.id);
+});
+
+test('a plaintext index from before hashing is honoured once, then migrated', async () => {
+  const user = await register('plainlegacy');
+  const byEmail = path.join(usersTmp, 'by-email');
+  await fs.mkdir(byEmail, { recursive: true });
+  await fs.writeFile(path.join(byEmail, 'legacy@example.com.json'), JSON.stringify({ userId: user.id }), 'utf8');
+
+  assert.equal((await loginUser('legacy@example.com', 'longpassword')).id, user.id);
+  assert.ok(!(await fs.readdir(byEmail)).includes('legacy@example.com.json'), 'plaintext index removed');
+});
+
+// A lookup that isn't address-shaped never builds a plaintext path, so a login
+// attempt can't read outside the users directory.
+test('loginUser rejects path-shaped names with the same 401 as a wrong password', async () => {
   await assert.rejects(
     () => loginUser('a@x.co/../../sync-decoy/victim', 'longpassword'),
     (err: unknown) => {
       assert.equal((err as { statusCode?: number }).statusCode, 401);
-      assert.match((err as Error).message, /Invalid email or password/);
+      assert.match((err as Error).message, /Invalid username or password/);
       return true;
     },
   );
 });
 
-test('the email index is stored under a hash, not the address itself', async () => {
-  await registerUser('Indexed@Example.com', 'longpassword');
-  const digest = createHash('sha256').update('indexed@example.com').digest('hex');
-
-  const entries = await fs.readdir(path.join(usersTmp, 'by-email'));
-  assert.ok(entries.includes(`${digest}.json`));
-  assert.ok(!entries.some((name) => name.includes('@')), 'no address is written as a filename');
-});
-
-// A pre-hash install has `<address>.json` on disk; that account has to keep
-// working, so the first lookup moves it onto the hashed path.
-test('a legacy plaintext index file is honoured once, then migrated', async () => {
-  const user = await registerUser('legacy@example.com', 'longpassword');
-  const digest = createHash('sha256').update('legacy@example.com').digest('hex');
-  const byEmail = path.join(usersTmp, 'by-email');
-
-  // Put the tree back the way the old code would have left it.
-  await fs.rm(path.join(byEmail, `${digest}.json`));
-  await fs.writeFile(path.join(byEmail, 'legacy@example.com.json'), JSON.stringify({ userId: user.id }), 'utf8');
-
-  const loggedIn = await loginUser('legacy@example.com', 'longpassword');
-  assert.equal(loggedIn.id, user.id);
-
-  const entries = await fs.readdir(byEmail);
-  assert.ok(entries.includes(`${digest}.json`), 'migrated onto the hashed path');
-  assert.ok(!entries.includes('legacy@example.com.json'), 'plaintext index removed');
-});
-
-// Registration is two writes. If it dies between them the email is held by an
-// id that resolves to nothing; that must be re-claimable, not a permanent
-// lockout on the address.
+// Registration is two writes. If it dies between them the name is held by an
+// id that resolves to nothing; that must be re-claimable, not a permanent lockout.
 test('an index entry pointing at a missing account does not block registration', async () => {
-  const user = await registerUser('halfway@example.com', 'longpassword');
+  const user = await register('halfway');
   await fs.rm(path.join(usersTmp, `${user.id}.json`));
 
-  const retried = await registerUser('halfway@example.com', 'differentpassword');
+  const retried = await register('halfway', 'differentpassword');
   assert.notEqual(retried.id, user.id);
-
-  const loggedIn = await loginUser('halfway@example.com', 'differentpassword');
-  assert.equal(loggedIn.id, retried.id);
+  assert.equal((await loginUser('halfway', 'differentpassword')).id, retried.id);
 });
 
-test('a live account still blocks a second registration on the same email', async () => {
-  await registerUser('taken@example.com', 'longpassword');
-  await assert.rejects(() => registerUser('taken@example.com', 'longpassword'), /already registered/);
+test('a live account still blocks a second registration on the same name', async () => {
+  await register('taken');
+  await assert.rejects(() => register('TAKEN'), /That username is taken/);
 });
 
 // The stored format now carries its own cost parameters. Records written
@@ -147,7 +145,7 @@ test('a password hashed in the pre-parameters format still verifies', async () =
   const { promisify } = await import('node:util');
   const scryptAsync = promisify(scrypt) as (p: string, s: string, l: number) => Promise<Buffer>;
 
-  const user = await registerUser('legacyhash@example.com', 'longpassword');
+  const user = await register('legacyhash');
   const legacy = `scrypt:fixed-salt:${(await scryptAsync('longpassword', 'fixed-salt', 64)).toString('base64')}`;
   const record = JSON.parse(await fs.readFile(path.join(usersTmp, `${user.id}.json`), 'utf8'));
   await fs.writeFile(
@@ -156,14 +154,53 @@ test('a password hashed in the pre-parameters format still verifies', async () =
     'utf8',
   );
 
-  const loggedIn = await loginUser('legacyhash@example.com', 'longpassword');
-  assert.equal(loggedIn.id, user.id);
-  await assert.rejects(() => loginUser('legacyhash@example.com', 'wrongpassword'), /Invalid email or password/);
+  assert.equal((await loginUser('legacyhash', 'longpassword')).id, user.id);
+  await assert.rejects(() => loginUser('legacyhash', 'wrongpassword'), /Invalid username or password/);
 });
 
 test('a new hash records its scrypt cost parameters', async () => {
-  const user = await registerUser('params@example.com', 'longpassword');
+  const user = await register('params');
   const record = JSON.parse(await fs.readFile(path.join(usersTmp, `${user.id}.json`), 'utf8'));
   assert.match(record.passwordHash, /^scrypt:16384:8:1:[^:]+:.+$/);
-  assert.equal((await loginUser('params@example.com', 'longpassword')).id, user.id);
+  assert.equal((await loginUser('params', 'longpassword')).id, user.id);
+});
+
+test('the right security answer resets the password and stamps the change', async () => {
+  const user = await register('forgetful');
+  assert.equal(await securityQuestionFor('Forgetful'), QUESTION);
+  await assert.rejects(() => resetPassword('forgetful', 'cat', 'newpassword'), /That answer is wrong/);
+  await resetPassword('forgetful', '  REX ', 'newpassword');
+  assert.equal((await loginUser('forgetful', 'newpassword')).id, user.id);
+  assert.equal((await getUserById(user.id))!.tokenVersion, 1);
+});
+
+test('wrong answers lock resets for a while', async () => {
+  await register('locked');
+  for (let i = 0; i < 5; i++) {
+    await assert.rejects(() => resetPassword('locked', 'cat', 'newpassword'), /That answer is wrong/);
+  }
+  await assert.rejects(() => resetPassword('locked', 'rex', 'newpassword'), /Too many wrong answers/);
+});
+
+test('an unknown username gets a steady stand-in question and cannot be reset', async () => {
+  const question = await securityQuestionFor('ghost');
+  assert.ok(SECURITY_QUESTIONS.includes(question));
+  assert.equal(await securityQuestionFor('GHOST'), question);
+  await assert.rejects(() => resetPassword('ghost', 'anything', 'newpassword'), /That answer is wrong/);
+});
+
+test('an account without a question can set one', async () => {
+  const user = await register('later');
+  await assert.rejects(() => setSecurityQuestion(user.id, 'nope', 'x'), /Pick a security question/);
+  await setSecurityQuestion(user.id, SECURITY_QUESTIONS[0], 'smith');
+  assert.equal(await securityQuestionFor('later'), SECURITY_QUESTIONS[0]);
+});
+
+test('a Ronovo login makes one account, named after it, that has no reset', async () => {
+  const first = await ronovoUser('42', 'ronovo');
+  assert.equal(first.username, 'ronovo');
+  assert.equal((await ronovoUser('42', 'ronovo')).id, first.id);
+  await register('taken2');
+  assert.equal((await ronovoUser('43', 'taken2')).username, 'taken22');
+  await assert.rejects(() => resetPassword('ronovo', '', 'newpassword'), /That answer is wrong/);
 });

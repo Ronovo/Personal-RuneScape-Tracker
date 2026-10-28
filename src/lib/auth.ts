@@ -67,6 +67,9 @@ async function resolveScopedAuth(payload: JWTPayload): Promise<AuthContext> {
   if (!user) {
     throw httpError('Unauthorized', 401);
   }
+  if ((payload.ver ?? 0) !== (user.tokenVersion ?? 0)) {
+    throw httpError('Unauthorized', 401);
+  }
   return { scope: 'user', userId: user.id, rsns: [...user.rsns] };
 }
 
@@ -118,13 +121,15 @@ export async function requirePlayerDataAuth(req: Request): Promise<void> {
   await requireBearerToken(req);
 }
 
-export async function mintApiToken(userId: string): Promise<string> {
+// version is the account's tokenVersion, which a password reset bumps so every
+// token issued before it stops working.
+export async function mintApiToken(userId: string, version = 0): Promise<string> {
   const secret = jwtSecretKey();
   if (!secret) {
     throw httpError('Account auth is not enabled on this server', 501);
   }
 
-  return new SignJWT({ typ: 'api' })
+  return new SignJWT({ typ: 'api', ver: version })
     .setProtectedHeader({ alg: 'HS256' })
     .setSubject(userId)
     .setIssuedAt()

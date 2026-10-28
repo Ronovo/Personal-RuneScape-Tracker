@@ -7,12 +7,14 @@
 // the change event below rather than being called into from here, so this
 // module has no idea a header exists.
 
-import { safeJsonParse, fetchJson, apiAuthHeaders, storageGet, storageRemove, storageSet } from './format.js';
+import { safeJsonParse, fetchJson, apiAuthHeaders, storageGet, storageRemove, storageSet, API_TOKEN_KEY } from './format.js';
 
 const CURRENT_USER_KEY = 'osrs_current_user';
 const KNOWN_USERS_KEY = 'osrs_known_users';
 const KNOWN_USERS_MAX = 15;
 const GUEST_BUCKET = '_guest_';
+const BANKROLL_PREFIX = 'osrs_bankroll::';
+const BANKROLL_SAVED_PREFIX = 'osrs_bankroll_saved_at::';
 
 /** Fired whenever the identity changes; every page re-reads its per-user state. */
 export const SESSION_CHANGE_EVENT = 'osrs-session-change';
@@ -126,5 +128,55 @@ export function setBankroll(n: number): number {
   const value = Number(n);
   if (!Number.isFinite(value) || value < 0) return getBankroll();
   storageSet(localStorage, userKey('osrs_bankroll'), String(value));
+  storageSet(localStorage, userKey('osrs_bankroll_saved_at'), String(Date.now()));
+  void syncBankrolls();
   return value;
+}
+
+type SavedBankroll = { value: number; savedAt: number };
+
+function localBankrolls(): Record<string, SavedBankroll> {
+  const bankrolls: Record<string, SavedBankroll> = {};
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key?.startsWith(BANKROLL_PREFIX)) continue;
+      const bucket = key.slice(BANKROLL_PREFIX.length);
+      const value = Number(storageGet(localStorage, key));
+      if (!Number.isFinite(value) || value < 0) continue;
+      bankrolls[bucket] = { value, savedAt: Number(storageGet(localStorage, BANKROLL_SAVED_PREFIX + bucket)) || 0 };
+    }
+  } catch {
+    // Storage blocked - nothing local to send.
+  }
+  return bankrolls;
+}
+
+/**
+ * Merges this browser's bankrolls with the signed-in account's, newer value
+ * per player winning, so a bankroll set on one device shows up on the others.
+ * Resolves true when a local value changed. Without an account token the
+ * server answers 401 and nothing changes.
+ */
+export async function syncBankrolls(): Promise<boolean> {
+  if (!storageGet(localStorage, API_TOKEN_KEY)) return false;
+  let changed = false;
+  try {
+    const local = localBankrolls();
+    const { ok, data } = await fetchJson<{ bankrolls?: Record<string, SavedBankroll> }>('/api/auth/bankrolls', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bankrolls: local }),
+    });
+    if (!ok || !data.bankrolls) return false;
+    for (const [bucket, entry] of Object.entries(data.bankrolls)) {
+      if (local[bucket]?.value === entry.value) continue;
+      storageSet(localStorage, BANKROLL_PREFIX + bucket, String(entry.value));
+      storageSet(localStorage, BANKROLL_SAVED_PREFIX + bucket, String(entry.savedAt));
+      changed = true;
+    }
+  } catch {
+    // Server unreachable - the local values stand until the next sync.
+  }
+  return changed;
 }

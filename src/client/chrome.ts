@@ -7,7 +7,7 @@
 
 import { escapeHtml } from './format.js';
 import {
-  SESSION_CHANGE_EVENT, clearUsername, emitSessionChange, getKnownUsers, getUsername, setUsername
+  SESSION_CHANGE_EVENT, clearUsername, emitSessionChange, getKnownUsers, getUsername, setUsername, syncBankrolls
 } from './identity.js';
 import {
   accountChipHtml,
@@ -19,6 +19,12 @@ import {
   loginAccount,
   mintPluginToken,
   registerAccount,
+  resetPanelHtml,
+  resetPassword,
+  resetQuestion,
+  ronovoLogin,
+  saveSecurityQuestion,
+  securityPanelHtml,
   setStoredToken,
   type AuthStatus,
   type AuthUser,
@@ -55,6 +61,7 @@ const NAV_LINKS: NavLink[] = [
 
 let authStatus: AuthStatus | null = null;
 let authUser: AuthUser | null = null;
+let authNotice: { text: string; isError: boolean } | null = null;
 
 function currentPage(): string {
   const path = location.pathname;
@@ -163,21 +170,44 @@ function wireAccountButtons(): void {
   });
 }
 
+function fieldValue(id: string): string {
+  return (document.getElementById(id) as HTMLInputElement | HTMLSelectElement | null)?.value ?? '';
+}
+
+function errorText(err: unknown, fallback: string): string {
+  return err instanceof Error ? err.message : fallback;
+}
+
+function replaceAuthPanel(html: string): void {
+  const panel = document.getElementById('authPanel');
+  if (panel) panel.outerHTML = html;
+}
+
 function wireAuthForm(): void {
+  document.getElementById('authRonovoBtn')?.addEventListener('click', () => {
+    location.href = '/sso/login';
+  });
   const form = document.getElementById('authForm') as HTMLFormElement | null;
   const registerBtn = document.getElementById('authRegisterBtn');
   if (!form || !registerBtn) return;
 
   const submit = async (register: boolean) => {
-    const email = (document.getElementById('authEmail') as HTMLInputElement).value.trim();
-    const password = (document.getElementById('authPassword') as HTMLInputElement).value;
+    const username = fieldValue('authUsername').trim();
+    const password = fieldValue('authPassword');
     try {
-      const result = register ? await registerAccount(email, password) : await loginAccount(email, password);
+      const result = register
+        ? await registerAccount(username, password, fieldValue('authQuestion'), fieldValue('authAnswer'))
+        : await loginAccount(username, password);
       authUser = result.user;
+      await syncBankrolls();
+      if (result.needsSecurityQuestion) {
+        showSecurityPanel();
+        return;
+      }
       showAuthMessage(register ? 'Account created. Token saved for this browser.' : 'Signed in.');
       emitSessionChange();
     } catch (err) {
-      showAuthMessage(err instanceof Error ? err.message : 'Auth failed', true);
+      showAuthMessage(errorText(err, 'Auth failed'), true);
     }
   };
 
@@ -186,6 +216,67 @@ function wireAuthForm(): void {
     void submit(false);
   });
   registerBtn.addEventListener('click', () => void submit(true));
+  document.getElementById('authForgotBtn')?.addEventListener('click', showResetPanel);
+}
+
+function showSecurityPanel(): void {
+  replaceAuthPanel(securityPanelHtml());
+  document.getElementById('securityForm')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    void (async () => {
+      try {
+        await saveSecurityQuestion(fieldValue('securityQuestion'), fieldValue('securityAnswer'));
+        emitSessionChange();
+      } catch (err) {
+        showAuthMessage(errorText(err, 'Could not save'), true);
+      }
+    })();
+  });
+}
+
+function showResetPanel(): void {
+  replaceAuthPanel(resetPanelHtml());
+  const form = document.getElementById('resetForm') as HTMLFormElement;
+  const answer = document.getElementById('resetAnswer') as HTMLInputElement;
+  document.getElementById('resetBackBtn')?.addEventListener('click', emitSessionChange);
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    void (async () => {
+      const username = fieldValue('resetUsername').trim();
+      try {
+        if (answer.hidden) {
+          const question = document.getElementById('resetQuestion')!;
+          question.textContent = await resetQuestion(username);
+          for (const el of [question, answer, document.getElementById('resetPassword')!]) el.hidden = false;
+          (document.getElementById('resetUsername') as HTMLInputElement).readOnly = true;
+          document.getElementById('resetSubmitBtn')!.textContent = 'Reset password';
+          answer.focus();
+          return;
+        }
+        await resetPassword(username, answer.value, fieldValue('resetPassword'));
+        authNotice = { text: 'Password changed. Sign in with your new password.', isError: false };
+        emitSessionChange();
+      } catch (err) {
+        showAuthMessage(errorText(err, 'Reset failed'), true);
+      }
+    })();
+  });
+}
+
+// The Ronovo callback lands on /?ronovo=<code>. The code comes out of the
+// address bar straight away so a reload or a shared link can't replay it.
+async function consumeRonovoLogin(): Promise<void> {
+  const params = new URLSearchParams(location.search);
+  const code = params.get('ronovo');
+  if (!code) return;
+  params.delete('ronovo');
+  const query = params.toString();
+  history.replaceState(null, '', `${location.pathname}${query ? `?${query}` : ''}${location.hash}`);
+  try {
+    authUser = await ronovoLogin(code);
+  } catch (err) {
+    authNotice = { text: errorText(err, 'Ronovo login failed'), isError: true };
+  }
 }
 
 function playingAsHtml(username: string | null): string {
@@ -242,7 +333,7 @@ async function mountSessionBar(): Promise<void> {
 
   if (jwtMode) {
     if (authUser) identityParts.push(accountChipHtml(authUser, isPlayingAsClaimed(username)));
-    else authPanel = authPanelHtml();
+    else authPanel = authPanelHtml(authStatus.ronovo);
   }
 
   el.innerHTML = [
@@ -255,12 +346,19 @@ async function mountSessionBar(): Promise<void> {
   if (authStatus.mode === 'lan') mountLanTokenChip(el);
   wireAuthForm();
   wireAccountButtons();
+  if (authNotice) {
+    showAuthMessage(authNotice.text, authNotice.isError);
+    authNotice = null;
+  }
 }
 
 async function mountChrome(): Promise<void> {
   mountNav();
   mountHomeLinks();
+  await consumeRonovoLogin();
+  const bankrollsChanged = await syncBankrolls();
   await mountSessionBar();
+  if (bankrollsChanged) emitSessionChange();
 }
 
 document.addEventListener('DOMContentLoaded', () => {

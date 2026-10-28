@@ -3,7 +3,7 @@
 // means the player hasn't synced, which we show as help rather than an error.
 
 import { fmt, fetchJson, errorMessage, onEnterOrClick, escapeHtml, fmtSyncedAt, syncSetupStepsHtml } from './format.js';
-import { prefillUsername } from './session.js';
+import { prefillUsername } from './identity.js';
 import type { CollectionLogData, CollectionGroup, CollectionCategory, ApiErrorBody } from './types.js';
 
 const usernameInput = document.getElementById('username') as HTMLInputElement;

@@ -179,9 +179,15 @@ app emits `Strict-Transport-Security` on HTTPS responses automatically — set
 
 Each player:
 
-1. Opens the tracker and uses **Sign in** / **Register** in the header (Playing as is hidden until then)
+1. Opens the tracker and uses **Sign in** / **Register** in the header (Playing as is hidden until then). Accounts are a username and password, plus a security question picked when registering; **Forgot password?** resets the password with its answer, and a reset stops every token issued before it. Accounts made with an email address log in with that address as their username.
 2. Clicks **Copy plugin token** and pastes it into RuneLite **Sync Settings → API Token**
 3. Logs into OSRS and syncs. The first sync binds that Jagex account and claims the character name. Alts on the same Jagex account claim automatically when you sync them with the same token. A different Jagex account needs a different site login.
+
+With `RONOVO_SSO_URL` (the portfolio's address, such as `http://ronovo.lan`) and `RONOVO_SSO_PUBLIC_KEY`
+(printed by the portfolio's `python sso.py`) set, the header offers **Log in with Ronovo**. The first Ronovo
+login creates a tracker account named after the Ronovo username, with a number added if that name is taken, and
+every later Ronovo login from any device uses the same one. That account has no password of its own, so
+Ronovo is the only way into it. Without those two settings the app runs on its own.
 
 That JWT is scoped to RSNs bound this way — syncing or reading another player's data returns 403. Tokens last ~90 days; sign in again and copy a fresh one from **Copy plugin token**. Playing as only chooses whose data you are viewing; it does not grab a name.
 
@@ -204,7 +210,7 @@ Hiscores and Grand Exchange stay public. Character plugin tabs, Leagues Tasks, a
 Optional hardening:
 
 - `RATE_LIMIT_MAX` / `RATE_LIMIT_WINDOW_MS` — in-process cap on `/api/*` (default 120/min per IP). Set `RATE_LIMIT_MAX=0` to disable.
-- `AUTH_RATE_LIMIT_MAX` / `AUTH_RATE_LIMIT_WINDOW_MS` — stricter cap on `/api/auth/{login,register,token}` (default 10/min), keyed by IP + submitted email so login guessing is throttled per account.
+- `AUTH_RATE_LIMIT_MAX` / `AUTH_RATE_LIMIT_WINDOW_MS` — stricter cap on `/api/auth/{login,register,token}` (default 10/min), keyed by IP + submitted username so login guessing is throttled per account.
 - `TRUST_PROXY` — set to `1` (or a preset like `loopback`) **only** when a reverse proxy actually terminates connections in front of the app. It makes rate limiting key on the real client IP and lets HSTS fire behind the proxy. Leave it unset for a direct LAN host — trusting `X-Forwarded-For` when nothing sets it lets clients spoof their IP.
 - `WIKI_API_CONTACT` — contact string added to the outbound User-Agent on OSRS Wiki API calls. Defaults to the project repo URL.
 - Security headers: `nosniff`, `X-Frame-Options: DENY`, CSP (wiki icons only cross-origin), and `Strict-Transport-Security` on any response served over HTTPS.
@@ -226,6 +232,11 @@ status code. 5xx bodies are always the generic `Internal error` — internal tex
 | POST | `/api/auth/login` | none | Sign in, returns personal JWT (public posture only) |
 | POST | `/api/auth/token` | JWT bearer (public) / none (LAN) | Mint a plugin token |
 | GET | `/api/auth/me` | JWT bearer | Current account + claimed RSNs |
+| POST | `/api/auth/security-question` | JWT bearer | Set the account's security question |
+| POST | `/api/auth/reset-question` | none | The security question for a username |
+| POST | `/api/auth/reset-password` | none | New password, given the security answer |
+| POST | `/api/auth/ronovo` | none | Trade the one-time code from a Ronovo login for a JWT |
+| POST | `/api/auth/bankrolls` | JWT bearer | Merge this browser's Flip bankrolls with the account's |
 | GET | `/api/hiscores/:username` | none | Jagex hiscores lookup |
 | GET | `/api/collectionlog/:username` | bearer if auth configured | Collection log from the last plugin sync |
 | GET | `/api/ge/movers` | none | 24h GE risers/fallers |

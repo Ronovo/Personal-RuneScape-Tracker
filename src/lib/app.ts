@@ -7,7 +7,11 @@ import { getMovers, searchItems, getItemDetail, getFlipCandidates, normalizeRang
 import { fetchCollectionLog } from './collectionlog.js';
 import { acceptLeaguesSync, acceptSectionSync, requirePlayerDataAuth, assertAllowedUsername } from './sync.js';
 import type { SyncSection } from './sync.js';
-import { authLogin, authMe, authMintToken, authRegister, authStatus } from './authRoutes.js';
+import {
+  authBankrolls, authLogin, authMe, authMintToken, authRegister, authResetPassword, authResetQuestion,
+  authSecurityQuestion, authStatus,
+} from './authRoutes.js';
+import { authRonovo, ssoCallback, ssoLogin } from './ronovo.js';
 import { fetchQuestProgress } from './quests.js';
 import { fetchDiaryProgress } from './diaries.js';
 import { fetchCombatAchievements } from './combatachievements.js';
@@ -162,6 +166,13 @@ export function createApp(): Express {
   app.post('/api/auth/login', authLimiter, asyncHandler(authLogin));
   app.post('/api/auth/token', authLimiter, asyncHandler(authMintToken));
   app.get('/api/auth/me', asyncHandler(authMe));
+  app.post('/api/auth/ronovo', authLimiter, asyncHandler(authRonovo));
+  app.post('/api/auth/bankrolls', asyncHandler(authBankrolls));
+  app.post('/api/auth/security-question', authLimiter, asyncHandler(authSecurityQuestion));
+  app.post('/api/auth/reset-question', authLimiter, asyncHandler(authResetQuestion));
+  app.post('/api/auth/reset-password', authLimiter, asyncHandler(authResetPassword));
+  app.get('/sso/login', ssoLogin);
+  app.post('/sso/callback', express.urlencoded({ extended: false, limit: '16kb' }), asyncHandler(ssoCallback));
 
   app.get('/api/hiscores/:username', asyncHandler(async (req, res) => {
     const data = await fetchHiscores(String(req.params.username));

@@ -9,7 +9,7 @@ interface RateLimitOptions {
   windowMs: number;
   max: number;
   // Bucket key; defaults to the caller's IP. Auth routes override this to
-  // fold in the route + submitted email so login guessing is throttled per
+  // fold in the route + submitted username so login guessing is throttled per
   // account, not just per address.
   keyFn?: (req: Request) => string;
 }
@@ -79,16 +79,16 @@ export function apiRateLimit(): (req: Request, res: Response, next: NextFunction
 
 // Stricter limiter for /api/auth/{login,register,token} - brute-force
 // protection on the credential endpoints. Keyed by IP + route + submitted
-// email so one IP can't grind many accounts and one account can't be ground
+// username so one IP can't grind many accounts and one account can't be ground
 // from many requests behind a shared NAT without also tripping the IP bucket.
 export function authRateLimit(): (req: Request, res: Response, next: NextFunction) => void {
   return rateLimit({
     windowMs: envLimit('AUTH_RATE_LIMIT_WINDOW_MS', 60_000),
     max: envLimit('AUTH_RATE_LIMIT_MAX', 10),
     keyFn: (req) => {
-      const body = req.body as { email?: unknown } | undefined;
-      const email = typeof body?.email === 'string' ? body.email.trim().toLowerCase() : '';
-      return `${clientIp(req)}|${req.path}|${email}`;
+      const body = req.body as { username?: unknown } | undefined;
+      const username = typeof body?.username === 'string' ? body.username.trim().toLowerCase() : '';
+      return `${clientIp(req)}|${req.path}|${username}`;
     },
   });
 }

@@ -1,4 +1,4 @@
-FROM node:24-alpine
+FROM node:24-alpine@sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53
 
 # The image keeps its dev dependencies and source so git-sync can pull and rebuild on every start.
 # NODE_ENV=production would make npm ci skip the dev dependencies the build needs, hence --include=dev.

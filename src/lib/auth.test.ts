@@ -12,7 +12,7 @@ const { mintApiToken, mintWildcardToken, requireBearerToken, extractBearerToken 
 const { registerUser, loginUser, bindJagexAccountForSync } = await import('./users.js');
 
 before(async () => {
-  await registerUser('jwt-user@example.com', 'password123');
+  await registerUser('jwt-user', 'password123', "What is your mother's maiden name?", 'rex');
 });
 
 after(async () => {
@@ -27,7 +27,7 @@ function fakeReq(authorization?: string) {
 }
 
 test('mintApiToken returns a verifiable JWT', async () => {
-  const user = await loginUser('jwt-user@example.com', 'password123');
+  const user = await loginUser('jwt-user', 'password123');
   const token = await mintApiToken(user.id);
   assert.match(token, /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/);
 });
@@ -40,7 +40,7 @@ test('mintWildcardToken is deterministic across mints', async () => {
 });
 
 test('requireBearerToken accepts a scoped JWT and attaches auth context', async () => {
-  const user = await loginUser('jwt-user@example.com', 'password123');
+  const user = await loginUser('jwt-user', 'password123');
   await bindJagexAccountForSync(user.id, 'TestRsn', '4242');
   const token = await mintApiToken(user.id);
   const req = fakeReq(`Bearer ${token}`);
