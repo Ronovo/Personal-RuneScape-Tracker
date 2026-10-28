@@ -4,7 +4,7 @@ import {
   getUserById, loginUser, mergeBankrolls, registerUser, resetPassword, securityQuestionFor, setSecurityQuestion,
 } from './users.js';
 import type { SavedBankroll, UserRecord } from './users.js';
-import { ronovoConfigured } from './ronovo.js';
+import { ronovoConfigured, ronovoUrl } from './ronovo.js';
 import { httpError } from './errors.js';
 
 function readBody(body: unknown): Record<string, unknown> {
@@ -37,7 +37,7 @@ export async function authStatus(_req: Request, res: Response): Promise<void> {
   if (lanModeConfigured()) {
     res.json({ mode: 'lan', accounts: false, lanToken: await mintWildcardToken() });
   } else if (jwtAuthConfigured()) {
-    res.json({ mode: 'public', accounts: true, ...(ronovoConfigured() ? { ronovo: true } : {}) });
+    res.json({ mode: 'public', accounts: true, ...(ronovoConfigured() ? { ronovo: true, ronovoUrl: ronovoUrl() } : {}) });
   } else {
     res.json({ mode: 'guest', accounts: false });
   }

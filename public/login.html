@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Log in - OSRS Tracker</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1><a href="index.html">OSRS Tracker</a></h1>
+    <nav></nav>
+    <div id="sessionBar" class="session-bar"></div>
+  </header>
+  <main>
+    <section class="account-page">
+      <form id="loginForm" class="account-form">
+        <h2>Log in</h2>
+        <label>Username <input id="loginUsername" type="text" autocomplete="username" required /></label>
+        <label>Password <input id="loginPassword" type="password" autocomplete="current-password" required /></label>
+        <button type="submit">Log in</button>
+      </form>
+      <form id="resetForm" class="account-form" hidden>
+        <h2>Reset password</h2>
+        <label>Username <input id="resetUsername" type="text" autocomplete="username" required /></label>
+        <p id="resetQuestion" class="account-note" hidden></p>
+        <label id="resetAnswerField" hidden>Answer <input id="resetAnswer" class="answer-input" type="text" autocomplete="off" /></label>
+        <label id="resetPasswordField" hidden>New password <input id="resetPassword" type="password" autocomplete="new-password" /></label>
+        <button id="resetSubmitBtn" type="submit">Next</button>
+        <button id="resetBackBtn" type="button">Back</button>
+      </form>
+      <form id="securityForm" class="account-form" hidden>
+        <h2>Security question</h2>
+        <p class="account-note">Pick a security question. You need its answer to reset your password.</p>
+        <label>Security question <select id="securityQuestion" class="question-select" required></select></label>
+        <label>Answer <input id="securityAnswer" class="answer-input" type="text" autocomplete="off" required /></label>
+        <button type="submit">Save</button>
+      </form>
+      <p id="accountMessage" class="auth-message" hidden></p>
+      <div id="loginLinks">
+        <p>No account yet? <a href="register.html">Register</a></p>
+        <p><a href="#" id="forgotLink">Forgot password?</a></p>
+      </div>
+    </section>
+  </main>
+  <script type="module" src="client/chrome.js"></script>
+  <script type="module" src="client/account.js"></script>
+</body>
+</html>

@@ -22,6 +22,7 @@ test('always sets nosniff, frame, referrer and a locked-down CSP', () => {
   assert.ok(csp.includes("default-src 'self'"));
   assert.ok(!csp.includes('unsafe-inline'));
   assert.ok(csp.includes("frame-ancestors 'none'"));
+  assert.ok(csp.includes("connect-src 'self';"));
 });
 
 test('HSTS is sent only on HTTPS requests', () => {

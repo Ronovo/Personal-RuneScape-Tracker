@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Register - OSRS Tracker</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1><a href="index.html">OSRS Tracker</a></h1>
+    <nav></nav>
+    <div id="sessionBar" class="session-bar"></div>
+  </header>
+  <main>
+    <section class="account-page">
+      <h2>Register</h2>
+      <form id="registerForm" class="account-form">
+        <label>Username <input id="registerUsername" type="text" autocomplete="username" required /></label>
+        <label>Password <input id="registerPassword" type="password" autocomplete="new-password" required /></label>
+        <label>Confirm password <input id="registerConfirm" type="password" autocomplete="new-password" required /></label>
+        <label>Security question <select id="registerQuestion" class="question-select" required></select></label>
+        <label>Answer <input id="registerAnswer" class="answer-input" type="text" autocomplete="off" required /></label>
+        <p class="account-note">You need this answer to reset your password.</p>
+        <button type="submit">Register</button>
+      </form>
+      <p id="accountMessage" class="auth-message" hidden></p>
+      <div id="ronovoLink" class="account-ronovo" hidden>
+        <p>Or link your Ronovo account</p>
+        <button id="pageRonovoBtn" type="button">Log in with Ronovo</button>
+      </div>
+      <p id="loginLinks">Already have an account? <a href="login.html">Log in</a></p>
+    </section>
+  </main>
+  <script type="module" src="client/chrome.js"></script>
+  <script type="module" src="client/account.js"></script>
+</body>
+</html>

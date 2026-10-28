@@ -1,5 +1,4 @@
 import { API_TOKEN_KEY, escapeHtml, fetchJson, storageGet, storageRemove, storageSet } from './format.js';
-import { MAX_SECURITY_ANSWER, SECURITY_QUESTIONS } from '../shared/securityQuestions.js';
 
 export type AuthStatus = {
   mode: 'guest' | 'public' | 'lan';
@@ -8,6 +7,7 @@ export type AuthStatus = {
   // automatically (same-origin on a LAN host) so no one has to paste it.
   lanToken?: string;
   ronovo?: boolean;
+  ronovoUrl?: string;
 };
 
 export type AuthUser = {
@@ -143,56 +143,44 @@ export async function copyText(text: string): Promise<void> {
   document.body.removeChild(ta);
 }
 
-function questionSelectHtml(id: string): string {
-  const options = SECURITY_QUESTIONS.map((q) => `<option>${escapeHtml(q)}</option>`).join('');
-  return `<select id="${id}" aria-label="Security question"><option value="">Security question (to register)</option>${options}</select>`;
-}
-
-export function authPanelHtml(ronovo = false): string {
+export function authLinksHtml(ronovo = false): string {
   return `
     <div id="authPanel" class="auth-panel">
-      ${ronovo ? '<button id="authRonovoBtn" type="button">Log in with Ronovo</button>' : ''}
-      <form id="authForm" class="auth-form">
-        <input id="authUsername" type="text" placeholder="Username" autocomplete="username" />
-        <input id="authPassword" type="password" placeholder="Password" autocomplete="current-password" />
-        <button type="submit">Sign in</button>
-        ${questionSelectHtml('authQuestion')}
-        <input id="authAnswer" type="text" placeholder="Security answer" autocomplete="off" maxlength="${MAX_SECURITY_ANSWER}" />
+      <span class="auth-links">
+        <button id="authLoginBtn" type="button">Log in</button>
+        ${ronovo ? '<button id="authRonovoBtn" type="button">Log in with Ronovo</button>' : ''}
         <button id="authRegisterBtn" type="button">Register</button>
-        <button id="authForgotBtn" type="button">Forgot password?</button>
-      </form>
+      </span>
       <p id="authMessage" class="auth-message" hidden></p>
     </div>`;
 }
 
-// Two steps: the username brings up its security question, then the answer
-// and a new password change it.
-export function resetPanelHtml(): string {
-  return `
-    <div id="authPanel" class="auth-panel">
-      <form id="resetForm" class="auth-form">
-        <input id="resetUsername" type="text" placeholder="Username" autocomplete="username" />
-        <span id="resetQuestion" class="session-account" hidden></span>
-        <input id="resetAnswer" type="text" placeholder="Security answer" autocomplete="off" maxlength="${MAX_SECURITY_ANSWER}" hidden />
-        <input id="resetPassword" type="password" placeholder="New password" autocomplete="new-password" hidden />
-        <button id="resetSubmitBtn" type="submit">Next</button>
-        <button id="resetBackBtn" type="button">Back</button>
-      </form>
-      <p id="authMessage" class="auth-message" hidden></p>
-    </div>`;
+let cachedRonovoName: Promise<string | null> | null = null;
+
+/** The portfolio account this browser is logged in to, or null when there is none or the portfolio can't be reached. */
+export function ronovoName(portfolioUrl: string): Promise<string | null> {
+  cachedRonovoName ??= (async () => {
+    try {
+      const res = await fetch(`${portfolioUrl}/sso/me`, { credentials: 'include', signal: AbortSignal.timeout(5000) });
+      if (!res.ok) return null;
+      const { username } = (await res.json()) as { username?: unknown };
+      return typeof username === 'string' && username ? username : null;
+    } catch {
+      return null;
+    }
+  })();
+  return cachedRonovoName;
 }
 
-// Accounts made before security questions set one straight after signing in.
-export function securityPanelHtml(): string {
-  return `
-    <div id="authPanel" class="auth-panel">
-      <form id="securityForm" class="auth-form">
-        ${questionSelectHtml('securityQuestion')}
-        <input id="securityAnswer" type="text" placeholder="Security answer" autocomplete="off" maxlength="${MAX_SECURITY_ANSWER}" />
-        <button type="submit">Save security question</button>
-      </form>
-      <p id="authMessage" class="auth-message">Pick a security question. You need its answer to reset your password.</p>
-    </div>`;
+/** Sends the browser through Ronovo login, and relabels the button "Log in as <name>" once the portfolio says who that is. */
+export function wireRonovoButton(btn: HTMLElement, portfolioUrl: string | undefined): void {
+  btn.addEventListener('click', () => {
+    location.href = '/sso/login';
+  });
+  if (!portfolioUrl) return;
+  void ronovoName(portfolioUrl).then((name) => {
+    if (name) btn.textContent = `Log in as ${name}`;
+  });
 }
 
 // An RSN is claimed by syncing from the plugin while logged into that

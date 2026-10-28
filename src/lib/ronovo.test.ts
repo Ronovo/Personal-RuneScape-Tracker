@@ -81,9 +81,10 @@ async function postJson(url: string, body: unknown, token?: string): Promise<Res
   });
 }
 
-test('status offers Ronovo login when it is configured', async () => {
-  const status = await (await fetch(`${base}/api/auth/status`)).json();
-  assert.deepEqual(status, { mode: 'public', accounts: true, ronovo: true });
+test('status offers Ronovo login and the portfolio address when it is configured', async () => {
+  const res = await fetch(`${base}/api/auth/status`);
+  assert.deepEqual(await res.json(), { mode: 'public', accounts: true, ronovo: true, ronovoUrl: 'http://ronovo.test' });
+  assert.ok(res.headers.get('content-security-policy')?.includes("connect-src 'self' http://ronovo.test;"));
 });
 
 test('callback rejects a wrong state, another app\'s token and an expired token', async () => {

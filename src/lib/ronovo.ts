@@ -30,6 +30,11 @@ export function ronovoConfigured(): boolean {
     && jwtAuthConfigured() && !lanModeConfigured();
 }
 
+/** The portfolio's address. Only meaningful when ronovoConfigured(). */
+export function ronovoUrl(): string {
+  return process.env.RONOVO_SSO_URL!.trim().replace(/\/+$/, '');
+}
+
 let cachedKey: { raw: string; key: KeyObject } | undefined;
 
 function publicKey(): KeyObject {
@@ -61,7 +66,7 @@ export function ssoLogin(req: Request, res: Response): void {
   const state = randomBytes(16).toString('base64url');
   res.cookie(STATE_COOKIE, state, { httpOnly: true, sameSite: 'lax', path: '/sso', maxAge: LOGIN_TTL_MS, secure: req.secure });
   const query = new URLSearchParams({ app: APP_ID, return: `${req.protocol}://${req.get('host')}/sso/callback`, state });
-  res.redirect(`${process.env.RONOVO_SSO_URL!.trim().replace(/\/+$/, '')}/sso/authorize?${query.toString()}`);
+  res.redirect(`${ronovoUrl()}/sso/authorize?${query.toString()}`);
 }
 
 export async function ssoCallback(req: Request, res: Response): Promise<void> {

@@ -11,21 +11,15 @@ import {
 } from './identity.js';
 import {
   accountChipHtml,
-  authPanelHtml,
+  authLinksHtml,
   copyText,
   fetchMe,
   getStoredToken,
   loadAuthStatus,
-  loginAccount,
   mintPluginToken,
-  registerAccount,
-  resetPanelHtml,
-  resetPassword,
-  resetQuestion,
   ronovoLogin,
-  saveSecurityQuestion,
-  securityPanelHtml,
   setStoredToken,
+  wireRonovoButton,
   type AuthStatus,
   type AuthUser,
 } from './auth.js';
@@ -170,97 +164,19 @@ function wireAccountButtons(): void {
   });
 }
 
-function fieldValue(id: string): string {
-  return (document.getElementById(id) as HTMLInputElement | HTMLSelectElement | null)?.value ?? '';
-}
-
 function errorText(err: unknown, fallback: string): string {
   return err instanceof Error ? err.message : fallback;
 }
 
-function replaceAuthPanel(html: string): void {
-  const panel = document.getElementById('authPanel');
-  if (panel) panel.outerHTML = html;
-}
-
-function wireAuthForm(): void {
-  document.getElementById('authRonovoBtn')?.addEventListener('click', () => {
-    location.href = '/sso/login';
+function wireAuthLinks(): void {
+  document.getElementById('authLoginBtn')?.addEventListener('click', () => {
+    location.href = 'login.html';
   });
-  const form = document.getElementById('authForm') as HTMLFormElement | null;
-  const registerBtn = document.getElementById('authRegisterBtn');
-  if (!form || !registerBtn) return;
-
-  const submit = async (register: boolean) => {
-    const username = fieldValue('authUsername').trim();
-    const password = fieldValue('authPassword');
-    try {
-      const result = register
-        ? await registerAccount(username, password, fieldValue('authQuestion'), fieldValue('authAnswer'))
-        : await loginAccount(username, password);
-      authUser = result.user;
-      await syncBankrolls();
-      if (result.needsSecurityQuestion) {
-        showSecurityPanel();
-        return;
-      }
-      showAuthMessage(register ? 'Account created. Token saved for this browser.' : 'Signed in.');
-      emitSessionChange();
-    } catch (err) {
-      showAuthMessage(errorText(err, 'Auth failed'), true);
-    }
-  };
-
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    void submit(false);
+  document.getElementById('authRegisterBtn')?.addEventListener('click', () => {
+    location.href = 'register.html';
   });
-  registerBtn.addEventListener('click', () => void submit(true));
-  document.getElementById('authForgotBtn')?.addEventListener('click', showResetPanel);
-}
-
-function showSecurityPanel(): void {
-  replaceAuthPanel(securityPanelHtml());
-  document.getElementById('securityForm')?.addEventListener('submit', (e) => {
-    e.preventDefault();
-    void (async () => {
-      try {
-        await saveSecurityQuestion(fieldValue('securityQuestion'), fieldValue('securityAnswer'));
-        emitSessionChange();
-      } catch (err) {
-        showAuthMessage(errorText(err, 'Could not save'), true);
-      }
-    })();
-  });
-}
-
-function showResetPanel(): void {
-  replaceAuthPanel(resetPanelHtml());
-  const form = document.getElementById('resetForm') as HTMLFormElement;
-  const answer = document.getElementById('resetAnswer') as HTMLInputElement;
-  document.getElementById('resetBackBtn')?.addEventListener('click', emitSessionChange);
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    void (async () => {
-      const username = fieldValue('resetUsername').trim();
-      try {
-        if (answer.hidden) {
-          const question = document.getElementById('resetQuestion')!;
-          question.textContent = await resetQuestion(username);
-          for (const el of [question, answer, document.getElementById('resetPassword')!]) el.hidden = false;
-          (document.getElementById('resetUsername') as HTMLInputElement).readOnly = true;
-          document.getElementById('resetSubmitBtn')!.textContent = 'Reset password';
-          answer.focus();
-          return;
-        }
-        await resetPassword(username, answer.value, fieldValue('resetPassword'));
-        authNotice = { text: 'Password changed. Sign in with your new password.', isError: false };
-        emitSessionChange();
-      } catch (err) {
-        showAuthMessage(errorText(err, 'Reset failed'), true);
-      }
-    })();
-  });
+  const ronovoBtn = document.getElementById('authRonovoBtn');
+  if (ronovoBtn) wireRonovoButton(ronovoBtn, authStatus?.ronovoUrl);
 }
 
 // The Ronovo callback lands on /?ronovo=<code>. The code comes out of the
@@ -333,7 +249,7 @@ async function mountSessionBar(): Promise<void> {
 
   if (jwtMode) {
     if (authUser) identityParts.push(accountChipHtml(authUser, isPlayingAsClaimed(username)));
-    else authPanel = authPanelHtml(authStatus.ronovo);
+    else authPanel = authLinksHtml(authStatus.ronovo);
   }
 
   el.innerHTML = [
@@ -344,7 +260,7 @@ async function mountSessionBar(): Promise<void> {
   if (showPlayingAs) wirePlayingAs(username);
 
   if (authStatus.mode === 'lan') mountLanTokenChip(el);
-  wireAuthForm();
+  wireAuthLinks();
   wireAccountButtons();
   if (authNotice) {
     showAuthMessage(authNotice.text, authNotice.isError);
