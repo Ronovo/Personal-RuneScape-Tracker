@@ -1,5 +1,5 @@
 // Security questions for password resets. The same 30 questions are in every
-// Ronovo portfolio app.
+// portfolio app.
 
 export const SECURITY_QUESTIONS: readonly string[] = [
   "What is your mother's maiden name?",

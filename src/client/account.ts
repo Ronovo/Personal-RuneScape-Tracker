@@ -1,10 +1,11 @@
-// The Log in and Register pages. Both go back to the main page once signed in.
+// The Log in, Register and Link Your Account pages. All go back to the main page once signed in.
 
 import { MAX_SECURITY_ANSWER, SECURITY_QUESTIONS } from '../shared/securityQuestions.js';
 import { escapeHtml } from './format.js';
 import { syncBankrolls } from './identity.js';
 import {
-  loadAuthStatus, loginAccount, registerAccount, resetPassword, resetQuestion, saveSecurityQuestion, wireRonovoButton,
+  linkPortfolioAccount, loadAuthStatus, loginAccount, newPortfolioAccount, portfolioPending, registerAccount,
+  resetPassword, resetQuestion, saveSecurityQuestion, wirePortfolioButton,
 } from './auth.js';
 
 function element<T extends HTMLElement>(id: string): T | null {
@@ -62,7 +63,7 @@ async function finishSignIn(needsSecurityQuestion: boolean): Promise<void> {
   location.href = 'index.html';
 }
 
-function wireRegister(ronovo: boolean, portfolioUrl: string | undefined): void {
+function wireRegister(portfolio: boolean, portfolioUrl: string | undefined): void {
   onSubmit('registerForm', async () => {
     if (fieldValue('registerPassword') !== fieldValue('registerConfirm')) {
       throw new Error('Passwords do not match');
@@ -72,10 +73,10 @@ function wireRegister(ronovo: boolean, portfolioUrl: string | undefined): void {
     await finishSignIn(false);
   }, 'Registration failed');
 
-  const ronovoBtn = element('pageRonovoBtn');
-  if (ronovo && ronovoBtn) {
-    element('ronovoLink')!.hidden = false;
-    wireRonovoButton(ronovoBtn, portfolioUrl);
+  const portfolioBtn = element('pagePortfolioBtn');
+  if (portfolio && portfolioBtn) {
+    element('portfolioLink')!.hidden = false;
+    wirePortfolioButton(portfolioBtn, portfolioUrl);
   }
 }
 
@@ -111,11 +112,34 @@ function wireLogin(): void {
     showForm('loginForm');
     showMessage('Password changed. Log in with your new password.');
   }, 'Reset failed');
+}
 
-  onSubmit('securityForm', async () => {
-    await saveSecurityQuestion(fieldValue('securityQuestion'), fieldValue('securityAnswer'));
-    location.href = 'index.html';
-  }, 'Could not save');
+// The first portfolio login: link a tracker account the player already has,
+// or make a new one. The code comes out of the address bar straight away so a
+// reload or a shared link can't replay it.
+async function wireLinkPage(): Promise<void> {
+  const params = new URLSearchParams(location.search);
+  const code = params.get('portfolio') ?? '';
+  history.replaceState(null, '', location.pathname);
+  try {
+    const name = await portfolioPending(code);
+    element('linkName')!.textContent = name;
+    element<HTMLInputElement>('linkUsername')!.value = name;
+  } catch (err) {
+    showForm('');
+    showMessage(errorText(err, 'Log in with your portfolio account again.'), true);
+    return;
+  }
+  onSubmit('linkForm', async () => {
+    const result = await linkPortfolioAccount(code, fieldValue('linkUsername').trim(), fieldValue('linkPassword'));
+    await finishSignIn(result.needsSecurityQuestion);
+  }, 'Linking failed');
+  element('linkNewBtn')?.addEventListener('click', () => {
+    void newPortfolioAccount(code)
+      .then(() => finishSignIn(false))
+      .catch((err: unknown) => showMessage(errorText(err, 'Could not make the account'), true));
+  });
+  element('linkPassword')?.focus();
 }
 
 async function mountAccountPage(): Promise<void> {
@@ -127,8 +151,13 @@ async function mountAccountPage(): Promise<void> {
     return;
   }
   fillSecurityFields();
-  if (element('registerForm')) wireRegister(Boolean(status.ronovo), status.ronovoUrl);
+  if (element('registerForm')) wireRegister(Boolean(status.portfolio), status.portfolioUrl);
   if (element('loginForm')) wireLogin();
+  if (element('linkForm')) await wireLinkPage();
+  onSubmit('securityForm', async () => {
+    await saveSecurityQuestion(fieldValue('securityQuestion'), fieldValue('securityAnswer'));
+    location.href = 'index.html';
+  }, 'Could not save');
 }
 
 document.addEventListener('DOMContentLoaded', () => {

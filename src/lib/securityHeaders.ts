@@ -1,12 +1,12 @@
 import type { Request, Response, NextFunction } from 'express';
-import { ronovoConfigured, ronovoUrl } from './ronovo.js';
+import { portfolioConfigured, portfolioUrl } from './portfolio.js';
 
-// Wiki item icons and the Ronovo portfolio's /sso/me are the only cross-origin
+// Wiki item icons and the portfolio's /sso/me are the only cross-origin
 // resources the UI loads. Scripts and styles stay same-origin; innerHTML is
 // used for markup, not inline JS.
 
 function connectSrc(): string {
-  const url = ronovoConfigured() ? ronovoUrl() : '';
+  const url = portfolioConfigured() ? portfolioUrl() : '';
   return URL.canParse(url) ? `'self' ${new URL(url).origin}` : "'self'";
 }
 

@@ -17,9 +17,9 @@ import {
   getStoredToken,
   loadAuthStatus,
   mintPluginToken,
-  ronovoLogin,
+  portfolioLogin,
   setStoredToken,
-  wireRonovoButton,
+  wirePortfolioButton,
   type AuthStatus,
   type AuthUser,
 } from './auth.js';
@@ -175,23 +175,23 @@ function wireAuthLinks(): void {
   document.getElementById('authRegisterBtn')?.addEventListener('click', () => {
     location.href = 'register.html';
   });
-  const ronovoBtn = document.getElementById('authRonovoBtn');
-  if (ronovoBtn) wireRonovoButton(ronovoBtn, authStatus?.ronovoUrl);
+  const portfolioBtn = document.getElementById('authPortfolioBtn');
+  if (portfolioBtn) wirePortfolioButton(portfolioBtn, authStatus?.portfolioUrl);
 }
 
-// The Ronovo callback lands on /?ronovo=<code>. The code comes out of the
+// The portfolio login callback lands on /?portfolio=<code>. The code comes out of the
 // address bar straight away so a reload or a shared link can't replay it.
-async function consumeRonovoLogin(): Promise<void> {
+async function consumePortfolioLogin(): Promise<void> {
   const params = new URLSearchParams(location.search);
-  const code = params.get('ronovo');
+  const code = params.get('portfolio');
   if (!code) return;
-  params.delete('ronovo');
+  params.delete('portfolio');
   const query = params.toString();
   history.replaceState(null, '', `${location.pathname}${query ? `?${query}` : ''}${location.hash}`);
   try {
-    authUser = await ronovoLogin(code);
+    authUser = await portfolioLogin(code);
   } catch (err) {
-    authNotice = { text: errorText(err, 'Ronovo login failed'), isError: true };
+    authNotice = { text: errorText(err, 'Portfolio login failed'), isError: true };
   }
 }
 
@@ -249,7 +249,7 @@ async function mountSessionBar(): Promise<void> {
 
   if (jwtMode) {
     if (authUser) identityParts.push(accountChipHtml(authUser, isPlayingAsClaimed(username)));
-    else authPanel = authLinksHtml(authStatus.ronovo);
+    else authPanel = authLinksHtml(authStatus.portfolio);
   }
 
   el.innerHTML = [
@@ -271,7 +271,7 @@ async function mountSessionBar(): Promise<void> {
 async function mountChrome(): Promise<void> {
   mountNav();
   mountHomeLinks();
-  await consumeRonovoLogin();
+  await consumePortfolioLogin();
   const bankrollsChanged = await syncBankrolls();
   await mountSessionBar();
   if (bankrollsChanged) emitSessionChange();

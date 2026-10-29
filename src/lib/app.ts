@@ -11,7 +11,7 @@ import {
   authBankrolls, authLogin, authMe, authMintToken, authRegister, authResetPassword, authResetQuestion,
   authSecurityQuestion, authStatus,
 } from './authRoutes.js';
-import { authRonovo, ssoCallback, ssoLogin } from './ronovo.js';
+import { authPortfolio, authPortfolioLink, authPortfolioNew, authPortfolioPending, ssoCallback, ssoLogin } from './portfolio.js';
 import { fetchQuestProgress } from './quests.js';
 import { fetchDiaryProgress } from './diaries.js';
 import { fetchCombatAchievements } from './combatachievements.js';
@@ -166,7 +166,10 @@ export function createApp(): Express {
   app.post('/api/auth/login', authLimiter, asyncHandler(authLogin));
   app.post('/api/auth/token', authLimiter, asyncHandler(authMintToken));
   app.get('/api/auth/me', asyncHandler(authMe));
-  app.post('/api/auth/ronovo', authLimiter, asyncHandler(authRonovo));
+  app.post('/api/auth/portfolio', authLimiter, asyncHandler(authPortfolio));
+  app.post('/api/auth/portfolio/pending', authLimiter, authPortfolioPending);
+  app.post('/api/auth/portfolio/link', authLimiter, asyncHandler(authPortfolioLink));
+  app.post('/api/auth/portfolio/new', authLimiter, asyncHandler(authPortfolioNew));
   app.post('/api/auth/bankrolls', asyncHandler(authBankrolls));
   app.post('/api/auth/security-question', authLimiter, asyncHandler(authSecurityQuestion));
   app.post('/api/auth/reset-question', authLimiter, asyncHandler(authResetQuestion));

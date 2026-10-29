@@ -4,7 +4,7 @@ import {
   getUserById, loginUser, mergeBankrolls, registerUser, resetPassword, securityQuestionFor, setSecurityQuestion,
 } from './users.js';
 import type { SavedBankroll, UserRecord } from './users.js';
-import { ronovoConfigured, ronovoUrl } from './ronovo.js';
+import { portfolioConfigured, portfolioUrl } from './portfolio.js';
 import { httpError } from './errors.js';
 
 function readBody(body: unknown): Record<string, unknown> {
@@ -37,7 +37,7 @@ export async function authStatus(_req: Request, res: Response): Promise<void> {
   if (lanModeConfigured()) {
     res.json({ mode: 'lan', accounts: false, lanToken: await mintWildcardToken() });
   } else if (jwtAuthConfigured()) {
-    res.json({ mode: 'public', accounts: true, ...(ronovoConfigured() ? { ronovo: true, ronovoUrl: ronovoUrl() } : {}) });
+    res.json({ mode: 'public', accounts: true, ...(portfolioConfigured() ? { portfolio: true, portfolioUrl: portfolioUrl() } : {}) });
   } else {
     res.json({ mode: 'guest', accounts: false });
   }
@@ -62,7 +62,7 @@ export async function authLogin(req: Request, res: Response): Promise<void> {
   const user = await loginUser(username, password);
   const token = await mintApiToken(user.id, user.tokenVersion);
   // Accounts made before security questions are asked to set one straight after signing in.
-  res.json({ token, user: publicUser(user), needsSecurityQuestion: !user.securityAnswerHash && !user.ronovoSub });
+  res.json({ token, user: publicUser(user), needsSecurityQuestion: !user.securityAnswerHash && !user.portfolioSub });
 }
 
 export async function authMintToken(req: Request, res: Response): Promise<void> {

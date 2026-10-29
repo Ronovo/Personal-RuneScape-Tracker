@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Link Your Account - OSRS Tracker</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1><a href="index.html">OSRS Tracker</a></h1>
+    <nav></nav>
+    <div id="sessionBar" class="session-bar"></div>
+  </header>
+  <main>
+    <section class="account-page">
+      <form id="linkForm" class="account-form">
+        <h2>Link your account</h2>
+        <p class="account-note">This is the first time <strong id="linkName"></strong> has logged in here. If you
+          already have a tracker account, log in to it once to link it. After that, your portfolio account opens it on
+          any device.</p>
+        <label>Username <input id="linkUsername" type="text" autocomplete="username" required /></label>
+        <label>Password <input id="linkPassword" type="password" autocomplete="current-password" required /></label>
+        <button type="submit">Link this account</button>
+        <button id="linkNewBtn" type="button">Make a new account</button>
+        <a href="index.html">Cancel</a>
+      </form>
+      <form id="securityForm" class="account-form" hidden>
+        <h2>Security question</h2>
+        <p class="account-note">Pick a security question. You need its answer to reset your password.</p>
+        <label>Security question <select id="securityQuestion" class="question-select" required></select></label>
+        <label>Answer <input id="securityAnswer" class="answer-input" type="text" autocomplete="off" required /></label>
+        <button type="submit">Save</button>
+      </form>
+      <p id="accountMessage" class="auth-message" hidden></p>
+    </section>
+  </main>
+  <script type="module" src="client/chrome.js"></script>
+  <script type="module" src="client/account.js"></script>
+</body>
+</html>

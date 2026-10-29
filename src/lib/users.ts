@@ -41,7 +41,7 @@ export interface UserRecord {
   tokenVersion?: number;
   rsns: string[];
   accountHash?: string;
-  ronovoSub?: string;
+  portfolioSub?: string;
   bankrolls?: Record<string, SavedBankroll>;
   createdAt: string;
 }
@@ -81,8 +81,8 @@ function rsnClaimPath(rsn: string): string {
   return path.join(usersDir(), 'rsn-claims', `${rsn}.json`);
 }
 
-function ronovoClaimPath(sub: string): string {
-  return path.join(usersDir(), 'ronovo-claims', `${sub}.json`);
+function portfolioClaimPath(sub: string): string {
+  return path.join(usersDir(), 'portfolio-claims', `${sub}.json`);
 }
 
 function hashClaimPath(accountHash: string): string {
@@ -160,7 +160,7 @@ async function ensureUserDirs(): Promise<void> {
   await fs.mkdir(path.join(root, 'by-username'), { recursive: true });
   await fs.mkdir(path.join(root, 'rsn-claims'), { recursive: true });
   await fs.mkdir(path.join(root, 'hash-claims'), { recursive: true });
-  await fs.mkdir(path.join(root, 'ronovo-claims'), { recursive: true });
+  await fs.mkdir(path.join(root, 'portfolio-claims'), { recursive: true });
 }
 
 export function parseAccountHash(value: unknown): string {
@@ -395,35 +395,54 @@ export async function bindJagexAccountForSync(
 }
 
 // The portfolio's account id. Checked before it becomes a file name.
-const RONOVO_SUB_RE = /^[A-Za-z0-9_-]{1,64}$/;
+const PORTFOLIO_SUB_RE = /^[A-Za-z0-9_-]{1,64}$/;
 
-export async function getUserByRonovoSub(sub: string): Promise<UserRecord | null> {
-  if (!RONOVO_SUB_RE.test(sub)) return null;
-  const claim = await readJsonOrDefault<{ userId?: string } | null>(ronovoClaimPath(sub), null);
+function checkPortfolioSub(sub: string): void {
+  if (!PORTFOLIO_SUB_RE.test(sub)) {
+    throw httpError('Invalid portfolio account', 400);
+  }
+}
+
+export async function getUserByPortfolioSub(sub: string): Promise<UserRecord | null> {
+  if (!PORTFOLIO_SUB_RE.test(sub)) return null;
+  const claim = await readJsonOrDefault<{ userId?: string } | null>(portfolioClaimPath(sub), null);
   if (!claim?.userId) return null;
   const user = await getUserById(claim.userId);
-  return user?.ronovoSub === sub ? user : null;
+  return user?.portfolioSub === sub ? user : null;
+}
+
+/** Links an account the player already has to their portfolio account. */
+export async function linkPortfolio(user: UserRecord, sub: string): Promise<UserRecord> {
+  checkPortfolioSub(sub);
+  if (user.portfolioSub) {
+    throw httpError('That account is already linked to another portfolio account', 409);
+  }
+  if (await getUserByPortfolioSub(sub)) {
+    throw httpError('Your portfolio account is already linked to another tracker account', 409);
+  }
+  const linked = { ...user, portfolioSub: sub };
+  await saveUser(linked);
+  await atomicWriteFile(portfolioClaimPath(sub), JSON.stringify({ userId: user.id }));
+  return linked;
 }
 
 /**
- * The account tied to a Ronovo portfolio account, created on its first login
- * and named after it. Its password is random and never shown, so logging in
- * with Ronovo is the only way in.
+ * A new account linked to a portfolio account and named after it. Its
+ * password is random and never shown, so logging in with the portfolio
+ * account is the only way in.
  */
-export async function ronovoUser(sub: string, ronovoName: string): Promise<UserRecord> {
-  if (!RONOVO_SUB_RE.test(sub)) {
-    throw httpError('Invalid Ronovo account', 400);
-  }
-  const existing = await getUserByRonovoSub(sub);
+export async function portfolioUser(sub: string, portfolioName: string): Promise<UserRecord> {
+  checkPortfolioSub(sub);
+  const existing = await getUserByPortfolioSub(sub);
   if (existing) {
     return existing;
   }
-  const base = USERNAME_RE.test(ronovoName) ? ronovoName : 'player';
+  const base = USERNAME_RE.test(portfolioName) ? portfolioName : 'player';
   for (let n = 1; ; n++) {
     const username = n === 1 ? base : `${base.slice(0, 20 - String(n).length)}${n}`;
-    const user = await createUser({ username, passwordHash: await hashPassword(randomUUID()), ronovoSub: sub });
+    const user = await createUser({ username, passwordHash: await hashPassword(randomUUID()), portfolioSub: sub });
     if (user) {
-      await atomicWriteFile(ronovoClaimPath(sub), JSON.stringify({ userId: user.id }));
+      await atomicWriteFile(portfolioClaimPath(sub), JSON.stringify({ userId: user.id }));
       return user;
     }
   }

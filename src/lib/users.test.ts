@@ -10,7 +10,7 @@ process.env.USERS_DATA_DIR = usersTmp;
 process.env.JWT_SECRET = 'users-test-secret';
 
 const {
-  registerUser, loginUser, bindJagexAccountForSync, getUserById, ronovoUser, resetPassword, securityQuestionFor,
+  registerUser, loginUser, bindJagexAccountForSync, getUserById, portfolioUser, resetPassword, securityQuestionFor,
   setSecurityQuestion,
 } = await import('./users.js');
 const { SECURITY_QUESTIONS } = await import('../shared/securityQuestions.js');
@@ -196,11 +196,11 @@ test('an account without a question can set one', async () => {
   assert.equal(await securityQuestionFor('later'), SECURITY_QUESTIONS[0]);
 });
 
-test('a Ronovo login makes one account, named after it, that has no reset', async () => {
-  const first = await ronovoUser('42', 'ronovo');
+test('a new portfolio account login makes one account, named after it, that has no reset', async () => {
+  const first = await portfolioUser('42', 'ronovo');
   assert.equal(first.username, 'ronovo');
-  assert.equal((await ronovoUser('42', 'ronovo')).id, first.id);
+  assert.equal((await portfolioUser('42', 'ronovo')).id, first.id);
   await register('taken2');
-  assert.equal((await ronovoUser('43', 'taken2')).username, 'taken22');
+  assert.equal((await portfolioUser('43', 'taken2')).username, 'taken22');
   await assert.rejects(() => resetPassword('ronovo', '', 'newpassword'), /That answer is wrong/);
 });

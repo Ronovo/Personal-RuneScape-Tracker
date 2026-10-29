@@ -6,8 +6,8 @@ export type AuthStatus = {
   // LAN posture only: the wildcard token this host mints. The browser stores it
   // automatically (same-origin on a LAN host) so no one has to paste it.
   lanToken?: string;
-  ronovo?: boolean;
-  ronovoUrl?: string;
+  portfolio?: boolean;
+  portfolioUrl?: string;
 };
 
 export type AuthUser = {
@@ -97,9 +97,22 @@ export function loginAccount(username: string, password: string): Promise<SignIn
   return signIn('/api/auth/login', { username, password });
 }
 
-/** Trades the one-time code the Ronovo callback put in the URL for this app's API token. */
-export async function ronovoLogin(code: string): Promise<AuthUser> {
-  return (await signIn('/api/auth/ronovo', { code })).user;
+/** Trades the one-time code the portfolio login callback put in the URL for this app's API token. */
+export async function portfolioLogin(code: string): Promise<AuthUser> {
+  return (await signIn('/api/auth/portfolio', { code })).user;
+}
+
+/** The portfolio username of a first portfolio login waiting for the player to choose an account. */
+export async function portfolioPending(code: string): Promise<string> {
+  return (await postJson<{ username: string }>('/api/auth/portfolio/pending', { code })).username;
+}
+
+export function linkPortfolioAccount(code: string, username: string, password: string): Promise<SignIn> {
+  return signIn('/api/auth/portfolio/link', { code, username, password });
+}
+
+export function newPortfolioAccount(code: string): Promise<SignIn> {
+  return signIn('/api/auth/portfolio/new', { code });
 }
 
 export async function saveSecurityQuestion(question: string, answer: string): Promise<void> {
@@ -143,23 +156,23 @@ export async function copyText(text: string): Promise<void> {
   document.body.removeChild(ta);
 }
 
-export function authLinksHtml(ronovo = false): string {
+export function authLinksHtml(portfolio = false): string {
   return `
     <div id="authPanel" class="auth-panel">
       <span class="auth-links">
         <button id="authLoginBtn" type="button">Log in</button>
-        ${ronovo ? '<button id="authRonovoBtn" type="button">Log in with Ronovo</button>' : ''}
+        ${portfolio ? '<button id="authPortfolioBtn" type="button">Log in with portfolio account</button>' : ''}
         <button id="authRegisterBtn" type="button">Register</button>
       </span>
       <p id="authMessage" class="auth-message" hidden></p>
     </div>`;
 }
 
-let cachedRonovoName: Promise<string | null> | null = null;
+let cachedPortfolioName: Promise<string | null> | null = null;
 
 /** The portfolio account this browser is logged in to, or null when there is none or the portfolio can't be reached. */
-export function ronovoName(portfolioUrl: string): Promise<string | null> {
-  cachedRonovoName ??= (async () => {
+export function portfolioName(portfolioUrl: string): Promise<string | null> {
+  cachedPortfolioName ??= (async () => {
     try {
       const res = await fetch(`${portfolioUrl}/sso/me`, { credentials: 'include', signal: AbortSignal.timeout(5000) });
       if (!res.ok) return null;
@@ -169,16 +182,16 @@ export function ronovoName(portfolioUrl: string): Promise<string | null> {
       return null;
     }
   })();
-  return cachedRonovoName;
+  return cachedPortfolioName;
 }
 
-/** Sends the browser through Ronovo login, and relabels the button "Log in as <name>" once the portfolio says who that is. */
-export function wireRonovoButton(btn: HTMLElement, portfolioUrl: string | undefined): void {
+/** Sends the browser through portfolio login, and relabels the button "Log in as <name>" once the portfolio says who that is. */
+export function wirePortfolioButton(btn: HTMLElement, portfolioUrl: string | undefined): void {
   btn.addEventListener('click', () => {
     location.href = '/sso/login';
   });
   if (!portfolioUrl) return;
-  void ronovoName(portfolioUrl).then((name) => {
+  void portfolioName(portfolioUrl).then((name) => {
     if (name) btn.textContent = `Log in as ${name}`;
   });
 }
