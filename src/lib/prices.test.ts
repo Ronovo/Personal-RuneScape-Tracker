@@ -599,6 +599,12 @@ test('searchItems: exact beats prefix beats substring, ties broken by volume, ca
   assert.deepEqual(await searchItems(''), []);
 });
 
+test('searchItems filters members before taking the top results, so F2P searches fill up', async () => {
+  const f2p = (await searchItems('Dagger', 'f2p', 2)).map((r) => r.id);
+  assert.deepEqual(f2p, [10, 11]);
+  assert.ok((await searchItems('Dagger', 'members')).every((r) => r.members));
+});
+
 test('getFlipCandidates: buy/sell/margin math, and both-sides-required filters out one-sided markets', async () => {
   const result = await getFlipCandidates({ minVolume: 0, minPrice: 0, pageSize: 50 });
   const scimitar = result.items.find((i) => i.id === 1)!;

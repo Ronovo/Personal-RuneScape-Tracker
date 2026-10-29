@@ -6,7 +6,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { atomicWriteFile } from './atomicWrite.js';
 import { httpError } from './errors.js';
-import { storageKey } from './sync.js';
+import { storageKey } from './storageKey.js';
 import { storagePathFor, readJsonOrDefault } from './jsonStore.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));

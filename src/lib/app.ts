@@ -218,7 +218,8 @@ export function createApp(): Express {
   }));
 
   app.get('/api/ge/search', asyncHandler(async (req, res) => {
-    const results = await searchItems(queryString(req.query.q));
+    const results = await searchItems(queryString(req.query.q), membersFilter(req.query.membersOnly),
+      clamp(num(req.query.limit, 25), 1, 50));
     res.json(results);
   }));
 

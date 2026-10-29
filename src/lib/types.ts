@@ -2,10 +2,16 @@
 // app.ts's query-enum types. Shapes identical on the client side live in
 // src/shared/types.ts and are re-exported below.
 
-import type { MembersFilter, PriceRange, Confidence, SortDir, FlipSort, FlipRow, FlipItem } from '../shared/types.js';
+import type {
+  MembersFilter, PriceRange, Confidence, SortDir, FlipSort, FlipRow, FlipItem, GeView, TimeseriesPoint, SearchResult,
+  MoverItem, MoversResult, RangeStats, ItemDetail, FlipsResult,
+} from '../shared/types.js';
 import { FLIP_SORTS } from '../shared/types.js';
 
-export type { MembersFilter, PriceRange, Confidence, SortDir, FlipSort, FlipRow, FlipItem };
+export type {
+  MembersFilter, PriceRange, Confidence, SortDir, FlipSort, FlipRow, FlipItem, GeView, TimeseriesPoint, SearchResult,
+  MoverItem, MoversResult, RangeStats, ItemDetail, FlipsResult,
+};
 export { FLIP_SORTS };
 
 // ---- OSRS Wiki prices API (https://prices.runescape.wiki/api/v1/osrs) ----
@@ -40,41 +46,7 @@ export interface DayEntry {
 
 export type DayPrices = Record<string, DayEntry>;
 
-export interface TimeseriesPoint {
-  timestamp: number;
-  avgHighPrice: number | null;
-  avgLowPrice: number | null;
-  highPriceVolume: number | null;
-  lowPriceVolume: number | null;
-}
-
 // ---- Movers ("Hot or Not") ----
-
-export type GeView = 'risers' | 'fallers' | 'volume' | 'random';
-
-export interface JoinedPriceItem {
-  id: number;
-  name: string;
-  members: boolean;
-  icon: string;
-  currentPrice: number;
-  pastPrice: number;
-  volume: number;
-  volume24h: number;
-  pctChange: number;
-  pctChange1h: number | null;
-  pctChange6h: number | null;
-  high: number | null;
-  low: number | null;
-  buyLimit: number | null;
-  marginAfterTax: number | null;
-  roi: number | null;
-  profitPerLimit: number | null;
-  // Realistic gp/hour: margin after tax scaled by how fast the buy limit could fill.
-  gpPerHour: number | null;
-  highTime: number | null;
-  lowTime: number | null;
-}
 
 export type MoversSort = 'pctChange' | 'volume' | 'price' | 'marginAfterTax' | 'profitPerLimit';
 
@@ -94,74 +66,7 @@ export interface MoversOptions {
   seed?: string;
 }
 
-export interface MoversResult {
-  // Only the Rising/Dropping views carry these; High Volume and Random rank the
-  // unsplit list and return `items` instead.
-  risers?: JoinedPriceItem[];
-  fallers?: JoinedPriceItem[];
-  items?: JoinedPriceItem[];
-  consideredCount: number;
-}
-
 // ---- Item detail page ----
-
-export interface RangeStats {
-  rangeHigh: number | null;
-  rangeLow: number | null;
-  rangeAvg: number | null;
-  pctChangeRange: number | null;
-  pricePosition: number | null;
-  volatility: number | null;
-}
-
-export interface ItemDetail extends RangeStats {
-  id: number;
-  name: string;
-  examine?: string;
-  members: boolean;
-  icon: string;
-  buyLimit: number | null;
-  highalch: number | null;
-  lowalch: number | null;
-  high: number | null;
-  highTime: number | null;
-  low: number | null;
-  lowTime: number | null;
-  price24hAgo: number | null;
-  pctChange24h: number | null;
-  volume24h: number;
-  buyVolume24h: number;
-  sellVolume24h: number;
-  avgHigh24h: number | null;
-  avgLow24h: number | null;
-  avgMargin24h: number | null;
-  margin: number | null;
-  tax: number | null;
-  taxExempt: boolean;
-  marginAfterTax: number | null;
-  roi: number | null;
-  profitPerLimit: number | null;
-  capitalPerLimit: number | null;
-  highAge: number | null;
-  lowAge: number | null;
-  stale: boolean;
-  alchProfit: number | null;
-  range: PriceRange;
-  history: TimeseriesPoint[];
-}
-
-// ---- Search ----
-
-export interface SearchResult {
-  id: number;
-  name: string;
-  members: boolean;
-  icon: string;
-  currentPrice: number | null;
-  pctChange: number | null;
-  volume24h: number;
-  marginAfterTax: number | null;
-}
 
 // ---- Flip Helper ----
 
@@ -187,12 +92,4 @@ export interface FlipCandidatesOptions {
   ids?: number[] | null;
   maxCapital?: number | null;
   name?: string;
-}
-
-export interface FlipCandidatesResult {
-  items: FlipItem[];
-  consideredCount: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
 }

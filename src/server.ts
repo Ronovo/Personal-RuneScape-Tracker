@@ -1,6 +1,7 @@
 import os from 'os';
 import { createApp } from './lib/app.js';
-import { jwtAuthConfigured, lanModeConfigured, mintWildcardToken } from './lib/auth.js';
+import { lanModeConfigured, mintWildcardToken } from './lib/auth.js';
+import { jwtAuthConfigured } from './lib/config.js';
 
 const PORT = process.env.PORT || 4123;
 

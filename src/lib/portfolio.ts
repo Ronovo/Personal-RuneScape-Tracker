@@ -2,7 +2,8 @@ import { createPublicKey, randomBytes, timingSafeEqual } from 'crypto';
 import type { KeyObject } from 'crypto';
 import type { Request, Response } from 'express';
 import { jwtVerify } from 'jose';
-import { jwtAuthConfigured, lanModeConfigured, mintApiToken } from './auth.js';
+import { lanModeConfigured, mintApiToken } from './auth.js';
+import { jwtAuthConfigured } from './config.js';
 import { httpError } from './errors.js';
 import { getUserById, getUserByPortfolioSub, linkPortfolio, loginUser, portfolioUser } from './users.js';
 import type { UserRecord } from './users.js';
@@ -179,7 +180,8 @@ export async function authPortfolioLink(req: Request, res: Response): Promise<vo
 
 export async function authPortfolioNew(req: Request, res: Response): Promise<void> {
   const { code, choice } = heldChoice(req);
-  const user = await portfolioUser(choice.sub, choice.name);
+  // Used up before the first await, so a second click can't make a second account.
   pendingChoices.delete(code);
+  const user = await portfolioUser(choice.sub, choice.name);
   await signedIn(res, user);
 }

@@ -5,8 +5,9 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { atomicWriteFile } from './atomicWrite.js';
 import { httpError } from './errors.js';
-import { storageKey } from './sync.js';
+import { storageKey } from './storageKey.js';
 import { readJsonOrDefault, storagePathFor } from './jsonStore.js';
+import { jwtAuthConfigured } from './config.js';
 import fs from 'fs/promises';
 import { MAX_SECURITY_ANSWER, SECURITY_QUESTIONS, normalizeAnswer } from '../shared/securityQuestions.js';
 
@@ -178,7 +179,7 @@ async function createUser(fields: Omit<UserRecord, 'id' | 'rsns' | 'createdAt'>)
 }
 
 export async function registerUser(username: string, password: string, question: unknown, answer: unknown): Promise<UserRecord> {
-  if (!jwtUsersEnabled()) {
+  if (!jwtAuthConfigured()) {
     throw httpError('Account auth is not enabled on this server', 501);
   }
   if (!USERNAME_RE.test(username)) {
@@ -199,7 +200,7 @@ export async function registerUser(username: string, password: string, question:
 }
 
 export async function loginUser(username: string, password: string): Promise<UserRecord> {
-  if (!jwtUsersEnabled()) {
+  if (!jwtAuthConfigured()) {
     throw httpError('Account auth is not enabled on this server', 501);
   }
   const userId = await findUserIdByUsername(username);
@@ -276,7 +277,7 @@ export async function bindJagexAccountForSync(
   username: string,
   accountHash: string,
 ): Promise<UserRecord> {
-  if (!jwtUsersEnabled()) {
+  if (!jwtAuthConfigured()) {
     throw httpError('Account auth is not enabled on this server', 501);
   }
 
@@ -387,7 +388,7 @@ export async function mergeBankrolls(
   if (!user) {
     throw httpError('Unauthorized', 401);
   }
-  const merged = { ...user.bankrolls };
+  const merged: Record<string, SavedBankroll> = Object.assign(Object.create(null), user.bankrolls);
   let changed = false;
   for (const [bucket, entry] of Object.entries(incoming)) {
     if (!merged[bucket] || entry.savedAt > merged[bucket].savedAt) {
@@ -399,8 +400,4 @@ export async function mergeBankrolls(
     await atomicWriteFile(userPath(user.id), JSON.stringify({ ...user, bankrolls: merged }, null, 2));
   }
   return merged;
-}
-
-export function jwtUsersEnabled(): boolean {
-  return Boolean(process.env.JWT_SECRET?.trim());
 }

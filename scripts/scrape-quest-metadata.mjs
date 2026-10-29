@@ -12,7 +12,7 @@
 
 import { readFileSync, writeFileSync, readdirSync } from 'fs';
 import path from 'path';
-import { LIB_DIR, SYNC_DIR, USER_AGENT, WIKI, WIKI_API as API } from './lib/wiki.mjs';
+import { LIB_DIR, ROOT, SYNC_DIR, USER_AGENT, WIKI, WIKI_API as API } from './lib/wiki.mjs';
 
 const OUT_FILE = path.join(LIB_DIR, 'quest-metadata.json');
 

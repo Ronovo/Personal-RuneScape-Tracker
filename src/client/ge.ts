@@ -1,12 +1,12 @@
 // Grand Exchange movers grid + item search.
 
 import {
-  fmtGp, fmtPct, fmtGpShort, pctClass, escapeHtml, fetchJson, errorMessage, el
+  fmtGp, fmtPct, fmtGpShort, pctClass, escapeHtml, fetchJson, errorMessage, el, latestRequest
 } from './format.js';
 import { createFilterRow, flipSortDir, sortDirLabel } from './filterRow.js';
-import './chrome.js';
+import { MOBILE_MQ } from './chrome.js';
 import { mountF2pToggle } from './f2pToggle.js';
-import type { MoverItem, MoversResponse, SearchResult, ApiErrorBody, GeView, SortDir } from './types.js';
+import type { MoverItem, MoversResult, SearchResult, ApiErrorBody, GeView, SortDir } from './types.js';
 
 const statusEl = el('status');
 const gridEl = el('grid');
@@ -20,7 +20,6 @@ const sortDirBtn = el<HTMLButtonElement>('sortDirBtn');
 const f2pFilterBtn = el<HTMLButtonElement>('f2pFilterBtn');
 const f2p = mountF2pToggle({ button: f2pFilterBtn, select: membersOnlyEl, onChange: () => reloadGrid() });
 
-const MOBILE_MQ = window.matchMedia('(max-width: 700px)');
 
 const VIEW_TITLES: Record<GeView, string> = {
   risers: 'Rising (24h)',
@@ -211,7 +210,11 @@ function viewTitle(view: GeView): string {
   return f2p.isF2p() ? `${VIEW_TITLES[view]} · F2P` : VIEW_TITLES[view];
 }
 
+// Movers and search both fill the grid, so whichever was asked for last wins.
+const startGridLoad = latestRequest();
+
 async function loadMovers(): Promise<void> {
+  const isCurrent = startGridLoad();
   persistFilters();
   gridTitleEl.textContent = viewTitle(state.view);
   syncSortAvailability();
@@ -219,7 +222,8 @@ async function loadMovers(): Promise<void> {
   statusEl.classList.remove('error');
 
   try {
-    const { ok, data } = await fetchJson<MoversResponse & ApiErrorBody>(`/api/ge/movers?${filterQuery()}`);
+    const { ok, data } = await fetchJson<MoversResult & ApiErrorBody>(`/api/ge/movers?${filterQuery()}`);
+    if (!isCurrent()) return;
     if (!ok) throw new Error(data.error || 'Failed to load movers');
 
     const items = (state.view === 'risers' || state.view === 'fallers'
@@ -228,33 +232,30 @@ async function loadMovers(): Promise<void> {
     renderGrid(items);
     statusEl.textContent = '';
   } catch (err) {
+    if (!isCurrent()) return;
     statusEl.textContent = errorMessage(err, 'Failed to load movers');
     statusEl.classList.add('error');
   }
 }
 
-function matchesMembers(item: { members: boolean }): boolean {
-  const filter = membersOnlyEl.value;
-  if (filter === 'members') return item.members;
-  if (filter === 'f2p') return !item.members;
-  return true;
-}
-
 // Name search replaces the movers grid until the box is cleared.
 async function loadSearch(query: string): Promise<void> {
+  const isCurrent = startGridLoad();
   gridTitleEl.textContent = f2p.isF2p() ? `Search: "${query}" · F2P` : `Search: "${query}"`;
   syncSortAvailability();
   statusEl.textContent = 'Searching...';
   statusEl.classList.remove('error');
 
   try {
-    const { ok, data: body } = await fetchJson<SearchResult[] | ApiErrorBody>(`/api/ge/search?q=${encodeURIComponent(query)}`);
+    const params = new URLSearchParams({ q: query, membersOnly: membersOnlyEl.value, limit: String(currentGridSize()) });
+    const { ok, data: body } = await fetchJson<SearchResult[] | ApiErrorBody>(`/api/ge/search?${params}`);
+    if (!isCurrent()) return;
     if (!ok) throw new Error((body as ApiErrorBody).error || 'Search failed');
 
-    const results = (body as SearchResult[]).filter(matchesMembers);
-    renderGrid(results.slice(0, currentGridSize()));
+    renderGrid(body as SearchResult[]);
     statusEl.textContent = '';
   } catch (err) {
+    if (!isCurrent()) return;
     statusEl.textContent = errorMessage(err, 'Search failed');
     statusEl.classList.add('error');
   }

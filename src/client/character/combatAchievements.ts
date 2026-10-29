@@ -1,6 +1,6 @@
 import { fmt, escapeHtml, syncSetupStepsHtml } from '../format.js';
 import type { CombatAchievementData, CombatAchievementTaskView, CombatAchievementGroup } from '../types.js';
-import { loadSyncedTab } from './context.js';
+import { loadSyncedTab, progressClass } from './context.js';
 import type { CharacterTabContext } from './context.js';
 
 const CA_SYNC_HELP_HTML = `
@@ -62,12 +62,6 @@ function toggleCaGroupPanel(): void {
   updateCaGroupToggle();
 }
 
-function caGroupProgressClass(group: CombatAchievementGroup): string {
-  if (group.total > 0 && group.complete >= group.total) return 'complete';
-  if (group.complete > 0) return 'started';
-  return '';
-}
-
 function renderCaTaskList(): void {
   const tasks = caTasksData.filter((task) =>
     (caSelectedGroup === 'all' || task.groupKey === caSelectedGroup) &&
@@ -104,13 +98,13 @@ function syncCaTabsActive(): void {
 function renderCaGroupPills(): void {
   const allComplete = caGroupsData.reduce((sum, g) => sum + g.complete, 0);
   const allTotal = caGroupsData.reduce((sum, g) => sum + g.total, 0);
-  const allProgress = allTotal > 0 && allComplete >= allTotal ? 'complete' : allComplete > 0 ? 'started' : '';
+  const allProgress = progressClass(allComplete, allTotal);
   const allCls = allProgress ? `cl-pill ${allProgress}` : 'cl-pill';
 
   const pills = [
     `<button class="${allCls}${caSelectedGroup === 'all' ? ' active' : ''}" data-group="all">All <span class="cl-count">${allComplete}/${allTotal}</span></button>`,
     ...caGroupsData.map((group) => {
-      const progress = caGroupProgressClass(group);
+      const progress = progressClass(group.complete, group.total);
       const cls = progress ? `cl-pill ${progress}` : 'cl-pill';
       const active = group.key === caSelectedGroup ? ' active' : '';
       return `<button class="${cls}${active}" data-group="${escapeHtml(group.key)}">${escapeHtml(group.name)} <span class="cl-count">${group.complete}/${group.total}</span></button>`;

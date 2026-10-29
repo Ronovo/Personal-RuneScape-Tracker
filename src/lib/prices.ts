@@ -3,9 +3,9 @@ import { fetchWithUserAgent, makeCacheSlot } from './http.js';
 import { geTax as computeGeTax } from '../shared/getax.js';
 import type {
   MappingItem, LatestPrices, DayPrices, DayEntry, TimeseriesPoint,
-  PriceRange, JoinedPriceItem, MoversOptions, MoversResult,
+  PriceRange, MoverItem, MoversOptions, MoversResult,
   RangeStats, ItemDetail, SearchResult, Confidence, ConfidenceInfo,
-  FlipRow, FlipItem, FlipCandidatesOptions, FlipCandidatesResult, MembersFilter
+  FlipRow, FlipItem, FlipCandidatesOptions, FlipsResult, MembersFilter
 } from './types.js';
 
 const BASE = 'https://prices.runescape.wiki/api/v1/osrs';
@@ -59,7 +59,7 @@ const TAX_EXEMPT_NAMES = new Set([
 ]);
 
 const mappingCache = makeCacheSlot<Map<number, MappingItem>>(MAPPING_TTL_MS);
-const moversCache = makeCacheSlot<JoinedPriceItem[]>(MOVERS_TTL_MS);
+const moversCache = makeCacheSlot<MoverItem[]>(MOVERS_TTL_MS);
 const latestCache = makeCacheSlot<LatestPrices>(LATEST_TTL_MS);
 const dayCache = makeCacheSlot<DayPrices>(DAY_TTL_MS);
 const flipsRawCache = makeCacheSlot<FlipRow[]>(FLIPS_TTL_MS);
@@ -274,7 +274,7 @@ function* pricedItems(
 
 // Builds the shared GE view cache. Hourly snapshots drive the 1h/6h % change
 // columns; /24h supplies true daily volume.
-async function getJoinedPriceData(): Promise<JoinedPriceItem[]> {
+async function getJoinedPriceData(): Promise<MoverItem[]> {
   const cached = moversCache.get();
   if (cached) return cached;
 
@@ -293,7 +293,7 @@ async function getJoinedPriceData(): Promise<JoinedPriceItem[]> {
   ]);
 
   const nowSec = Math.floor(Date.now() / 1000);
-  const joined: JoinedPriceItem[] = [];
+  const joined: MoverItem[] = [];
   for (const p of pricedItems(byId, latest, day, nowSec)) {
     // A mover needs something to have moved from: no 24h-ago price, no row.
     const past24hEntry = past24h.data[p.key];
@@ -379,7 +379,7 @@ export async function getMovers({
     return true;
   });
 
-  function sortValue(item: JoinedPriceItem): number {
+  function sortValue(item: MoverItem): number {
     switch (sort) {
       case 'volume': return item.volume24h ?? 0;
       case 'price': return item.currentPrice ?? 0;
@@ -389,7 +389,7 @@ export async function getMovers({
     }
   }
 
-  const bySort = (a: JoinedPriceItem, b: JoinedPriceItem): number => {
+  const bySort = (a: MoverItem, b: MoverItem): number => {
     const cmp = sortValue(a) - sortValue(b);
     return sortDir === 'desc' ? -cmp : cmp;
   };
@@ -407,7 +407,7 @@ export async function getMovers({
   }
 
   // Random owns its ranking; High Volume defers to the Sort field like Rising/Dropping.
-  const hashForSeed = (item: JoinedPriceItem): number => {
+  const hashForSeed = (item: MoverItem): number => {
     let hash = 2166136261;
     for (const char of `${seed}:${item.id}`) {
       hash ^= char.charCodeAt(0);
@@ -416,7 +416,7 @@ export async function getMovers({
     return hash >>> 0;
   };
 
-  let candidates: JoinedPriceItem[];
+  let candidates: MoverItem[];
   switch (view) {
     case 'volume':
       candidates = filtered.slice().sort(bySort);
@@ -597,13 +597,13 @@ export function matchScore(name: string, q: string): number {
 // Scores all mapping matches server-side, then returns the top 25 by match
 // quality then volume. Falls back to /latest for a price when the item has
 // no movers row.
-export async function searchItems(query: string): Promise<SearchResult[]> {
+export async function searchItems(query: string, membersOnly: MembersFilter = 'all', limit = 25): Promise<SearchResult[]> {
   const byId = await getMapping();
   const q = query.trim().toLowerCase();
   if (!q) return [];
 
   const [joined, latest] = await Promise.all([
-    getJoinedPriceData().catch(() => [] as JoinedPriceItem[]),
+    getJoinedPriceData().catch(() => [] as MoverItem[]),
     getLatest().catch((): LatestPrices => ({}))
   ]);
   const priceById = new Map(joined.map((j) => [j.id, j]));
@@ -611,7 +611,7 @@ export async function searchItems(query: string): Promise<SearchResult[]> {
   const results: (SearchResult & { score: number })[] = [];
   for (const item of byId.values()) {
     const score = matchScore(item.name, q);
-    if (score < 0) continue;
+    if (score < 0 || !passesMembersFilter(item.members, membersOnly)) continue;
     const priced = priceById.get(item.id);
     const cur = entry(latest, item.id);
     const currentPrice = priced?.currentPrice ?? cur?.high ?? cur?.low ?? null;
@@ -629,7 +629,7 @@ export async function searchItems(query: string): Promise<SearchResult[]> {
   }
 
   results.sort((a, b) => a.score - b.score || (b.volume24h ?? 0) - (a.volume24h ?? 0));
-  return results.slice(0, 25).map(({ score: _score, ...rest }) => rest);
+  return results.slice(0, limit).map(({ score: _score, ...rest }) => rest);
 }
 
 // Used to sort by the Confidence column - high first, same "best result first"
@@ -789,7 +789,7 @@ export async function getFlipCandidates({
   ids = null,
   maxCapital = null,
   name
-}: FlipCandidatesOptions = {}): Promise<FlipCandidatesResult> {
+}: FlipCandidatesOptions = {}): Promise<FlipsResult> {
   const rows = await getFlipRows();
   const idSet = ids && ids.length ? new Set(ids) : null;
   const nameQuery = name?.trim().toLowerCase() || null;

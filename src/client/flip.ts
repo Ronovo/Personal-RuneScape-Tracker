@@ -5,10 +5,10 @@ import {
   storageGet, storageRemove, storageSet
 } from './format.js';
 import { createFilterRow, flipSortDir, sortDirLabel } from './filterRow.js';
-import { getWatchlist, loadWatchlist, toggleWatchlist, getBankroll, setBankroll } from './identity.js';
-import './chrome.js';
+import { getWatchlist, loadWatchlist, toggleWatchlist, getBankroll, setBankroll, SESSION_CHANGE_EVENT } from './identity.js';
+import { MOBILE_MQ } from './chrome.js';
 import { FLIP_SORTS } from './types.js';
-import type { FlipItem, FlipsResponse, ApiErrorBody, FlipSort, SortDir, MembersFilter } from './types.js';
+import type { FlipItem, FlipsResult, ApiErrorBody, FlipSort, SortDir, MembersFilter } from './types.js';
 import { mountF2pToggle } from './f2pToggle.js';
 import { DEFAULTS, PRESETS, PRESET_NOTES } from './flipPresets.js';
 import type { PresetName, FilterValues } from './flipPresets.js';
@@ -392,7 +392,7 @@ async function load(): Promise<boolean> {
   statusEl.textContent = '';
   statusEl.classList.remove('error');
   try {
-    const { ok, data } = await fetchJson<FlipsResponse & ApiErrorBody>(`/api/ge/flips?${params}`);
+    const { ok, data } = await fetchJson<FlipsResult & ApiErrorBody>(`/api/ge/flips?${params}`);
     if (!ok) throw new Error(data.error || 'Scan failed');
     const bankrollOn = Number(el<HTMLInputElement>('bankroll').value) > 0;
     const items = data.items || [];
@@ -478,7 +478,7 @@ async function returnToCalculatorItem(): Promise<void> {
   returnBtn.disabled = false;
   if (!loaded) return;
 
-  const itemContainer = window.matchMedia('(max-width: 700px)').matches ? cardsEl : bodyEl;
+  const itemContainer = MOBILE_MQ.matches ? cardsEl : bodyEl;
   const target = itemContainer.querySelector<HTMLElement>(`[data-item-id="${selection.id}"]`);
   if (!target) {
     statusEl.textContent = 'The selected item is no longer available in its original result view.';
@@ -648,7 +648,10 @@ document.getElementById('flipResults')!.addEventListener('click', (ev) => {
   const starBtn = target.closest<HTMLButtonElement>('.star-btn');
   if (starBtn) {
     const id = Number(starBtn.dataset.id);
-    toggleWatchlist(id);
+    toggleWatchlist(id, (message) => {
+      statusEl.textContent = message;
+      statusEl.classList.add('error');
+    });
     const on = getWatchlist().includes(id);
     document.querySelectorAll<HTMLButtonElement>(`.star-btn[data-id="${id}"]`).forEach((b) => b.classList.toggle('on', on));
     if (state.preset === 'watchlist') void load();
@@ -687,7 +690,7 @@ if (urlParams.get('from') === 'ge') {
 }
 
 // Switching "Playing as" swaps the watchlist and bankroll buckets.
-window.addEventListener('osrs-session-change', () => {
+window.addEventListener(SESSION_CHANGE_EVENT, () => {
   el<HTMLInputElement>('bankroll').value = String(getBankroll() || '');
   state.page = 1;
   void loadWatchlist().then(load);

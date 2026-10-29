@@ -68,11 +68,11 @@ export default tseslint.config(
     // type-aware rules have no program to consult. Their `rules` have to be
     // merged in rather than replaced, or the disable does nothing.
     files: ['scripts/**/*.mjs'],
-    languageOptions: { parserOptions: { project: null, projectService: false } },
-    rules: {
-      ...tseslint.configs.disableTypeChecked.rules,
-      // `process`, `console` and friends, without pulling in a globals package.
-      'no-undef': 'off',
+    languageOptions: {
+      parserOptions: { project: null, projectService: false },
+      // The Node globals the scripts use; anything else undefined is a real mistake.
+      globals: { process: 'readonly', console: 'readonly', fetch: 'readonly', URL: 'readonly', URLSearchParams: 'readonly' },
     },
+    rules: { ...tseslint.configs.disableTypeChecked.rules },
   },
 );

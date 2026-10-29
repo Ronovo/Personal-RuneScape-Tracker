@@ -2,7 +2,7 @@
 // declares its fields here and keeps whatever is its own (which sorts exist,
 // what a preset means, when to reload).
 
-import { safeJsonParse, storageGet, storageRemove, storageSet } from './format.js';
+import { el, safeJsonParse, storageGet, storageRemove, storageSet } from './format.js';
 import type { SortDir } from './types.js';
 
 export interface FieldSpec {
@@ -35,10 +35,6 @@ export interface FilterRow<V extends Record<string, FilterValue>> {
   clear(): void;
 }
 
-function element(id: string): HTMLInputElement | HTMLSelectElement | null {
-  return document.getElementById(id) as HTMLInputElement | HTMLSelectElement | null;
-}
-
 // A stored value that is no longer one of the control's options would blank it,
 // so fall back rather than trusting whatever came out of localStorage.
 function isRealOption(el: HTMLSelectElement, value: string): boolean {
@@ -55,22 +51,22 @@ export function createFilterRow<V extends Record<string, FilterValue>>(
   function read(): V {
     const values = {} as Record<string, FilterValue>;
     for (const field of fields) {
-      const el = element(field.id);
-      if (!el) continue;
-      values[keyOf(field)] = field.kind === 'checked' ? (el as HTMLInputElement).checked : el.value;
+      const control = el<HTMLInputElement | HTMLSelectElement | null>(field.id);
+      if (!control) continue;
+      values[keyOf(field)] = field.kind === 'checked' ? (control as HTMLInputElement).checked : control.value;
     }
     return values as V;
   }
 
   function apply(values: Partial<V>): void {
     for (const field of fields) {
-      const el = element(field.id);
-      if (!el) continue;
+      const control = el<HTMLInputElement | HTMLSelectElement | null>(field.id);
+      if (!control) continue;
       const key = keyOf(field);
       const incoming = values[key as keyof V];
 
       if (field.kind === 'checked') {
-        (el as HTMLInputElement).checked = Boolean(incoming ?? defaults[key as keyof V]);
+        (control as HTMLInputElement).checked = Boolean(incoming ?? defaults[key as keyof V]);
         continue;
       }
 
@@ -85,10 +81,10 @@ export function createFilterRow<V extends Record<string, FilterValue>>(
         next = String(incoming);
       }
 
-      if (el instanceof HTMLSelectElement && !isRealOption(el, next)) {
+      if (control instanceof HTMLSelectElement && !isRealOption(control, next)) {
         next = String(defaults[key as keyof V] ?? '');
       }
-      el.value = next;
+      control.value = next;
     }
   }
 

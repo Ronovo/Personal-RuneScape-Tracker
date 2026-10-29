@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
-import { requireBearerToken, mintApiToken, mintWildcardToken, jwtAuthConfigured, lanModeConfigured } from './auth.js';
+import { requireBearerToken, mintApiToken, mintWildcardToken, lanModeConfigured } from './auth.js';
+import { jwtAuthConfigured } from './config.js';
 import {
   getUserById, loginUser, mergeBankrolls, registerUser, resetPassword, securityQuestionFor,
 } from './users.js';
@@ -107,7 +108,8 @@ function readBankrolls(body: unknown): Record<string, SavedBankroll> {
   if (entries.length > MAX_BANKROLLS) {
     throw httpError('Too many bankrolls', 400);
   }
-  const bankrolls: Record<string, SavedBankroll> = {};
+  // No prototype, so a bucket named __proto__ or toString is just a key.
+  const bankrolls: Record<string, SavedBankroll> = Object.create(null);
   for (const [bucket, entry] of entries) {
     const { value, savedAt } = (entry ?? {}) as Record<string, unknown>;
     if (bucket.length <= 64 && typeof value === 'number' && Number.isFinite(value) && value >= 0

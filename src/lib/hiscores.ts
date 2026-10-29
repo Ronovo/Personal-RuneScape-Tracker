@@ -7,7 +7,7 @@
 
 import { httpError } from './errors.js';
 import { fetchWithUserAgent, cachedByKey } from './http.js';
-import { storageKey } from './sync.js';
+import { storageKey } from './storageKey.js';
 import type { HiscoresData, ScoredEntry, SkillEntry } from '../shared/api.js';
 
 type ActivityCategory = 'unknown' | 'others' | 'minigames' | 'bosses';

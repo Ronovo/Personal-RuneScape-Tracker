@@ -1,31 +1,23 @@
 // The Log in, Register and Link Your Account pages. All go back to the main page once signed in.
 
 import { MAX_SECURITY_ANSWER, SECURITY_QUESTIONS } from '../shared/securityQuestions.js';
-import { escapeHtml } from './format.js';
+import { el, errorMessage, escapeHtml } from './format.js';
 import { syncBankrolls } from './identity.js';
 import {
   linkPortfolioAccount, loadAuthStatus, loginAccount, newPortfolioAccount, portfolioPending, registerAccount,
   resetPassword, resetQuestion, wirePortfolioButton,
 } from './auth.js';
 
-function element<T extends HTMLElement>(id: string): T | null {
-  return document.getElementById(id) as T | null;
-}
-
 function fieldValue(id: string): string {
-  return element<HTMLInputElement | HTMLSelectElement>(id)?.value ?? '';
+  return el<HTMLInputElement | HTMLSelectElement | null>(id)?.value ?? '';
 }
 
 function showMessage(text: string, isError = false): void {
-  const el = element('accountMessage');
-  if (!el) return;
-  el.hidden = !text;
-  el.textContent = text;
-  el.classList.toggle('error', isError);
-}
-
-function errorText(err: unknown, fallback: string): string {
-  return err instanceof Error ? err.message : fallback;
+  const message = el<HTMLElement | null>('accountMessage');
+  if (!message) return;
+  message.hidden = !text;
+  message.textContent = text;
+  message.classList.toggle('error', isError);
 }
 
 function fillSecurityFields(): void {
@@ -43,14 +35,14 @@ function showForm(id: string): void {
   for (const form of document.querySelectorAll<HTMLFormElement>('.account-form')) {
     form.hidden = form.id !== id;
   }
-  element('loginLinks')?.toggleAttribute('hidden', id !== 'loginForm');
+  el<HTMLElement | null>('loginLinks')?.toggleAttribute('hidden', id !== 'loginForm');
   showMessage('');
 }
 
 function onSubmit(id: string, handler: () => Promise<void>, fallback: string): void {
-  element<HTMLFormElement>(id)?.addEventListener('submit', (e) => {
+  el<HTMLFormElement | null>(id)?.addEventListener('submit', (e) => {
     e.preventDefault();
-    void handler().catch((err: unknown) => showMessage(errorText(err, fallback), true));
+    void handler().catch((err: unknown) => showMessage(errorMessage(err, fallback), true));
   });
 }
 
@@ -69,9 +61,9 @@ function wireRegister(portfolio: boolean, portfolioUrl: string | undefined): voi
     await finishSignIn();
   }, 'Registration failed');
 
-  const portfolioBtn = element('pagePortfolioBtn');
+  const portfolioBtn = el<HTMLElement | null>('pagePortfolioBtn');
   if (portfolio && portfolioBtn) {
-    element('portfolioLink')!.hidden = false;
+    el('portfolioLink').hidden = false;
     wirePortfolioButton(portfolioBtn, portfolioUrl);
   }
 }
@@ -84,24 +76,24 @@ function wireLogin(): void {
     await finishSignIn();
   }, 'Log in failed');
 
-  element('forgotLink')?.addEventListener('click', (e) => {
+  el<HTMLElement | null>('forgotLink')?.addEventListener('click', (e) => {
     e.preventDefault();
     showForm('resetForm');
   });
-  element('resetBackBtn')?.addEventListener('click', () => {
+  el<HTMLElement | null>('resetBackBtn')?.addEventListener('click', () => {
     location.href = 'login.html';
   });
 
-  const answerField = element('resetAnswerField')!;
+  const answerField = el('resetAnswerField');
   onSubmit('resetForm', async () => {
     const username = fieldValue('resetUsername').trim();
     if (answerField.hidden) {
-      const question = element('resetQuestion')!;
+      const question = el('resetQuestion');
       question.textContent = await resetQuestion(username);
-      for (const el of [question, answerField, element('resetPasswordField')!]) el.hidden = false;
-      element<HTMLInputElement>('resetUsername')!.readOnly = true;
-      element('resetSubmitBtn')!.textContent = 'Reset password';
-      element('resetAnswer')?.focus();
+      for (const field of [question, answerField, el('resetPasswordField')]) field.hidden = false;
+      el<HTMLInputElement>('resetUsername').readOnly = true;
+      el('resetSubmitBtn').textContent = 'Reset password';
+      el<HTMLElement | null>('resetAnswer')?.focus();
       return;
     }
     await resetPassword(username, fieldValue('resetAnswer'), fieldValue('resetPassword'));
@@ -119,37 +111,42 @@ async function wireLinkPage(): Promise<void> {
   history.replaceState(null, '', location.pathname);
   try {
     const name = await portfolioPending(code);
-    element('linkName')!.textContent = name;
-    element<HTMLInputElement>('linkUsername')!.value = name;
+    el('linkName').textContent = name;
+    el<HTMLInputElement>('linkUsername').value = name;
   } catch (err) {
     showForm('');
-    showMessage(errorText(err, 'Log in with your portfolio account again.'), true);
+    showMessage(errorMessage(err, 'Log in with your portfolio account again.'), true);
     return;
   }
   onSubmit('linkForm', async () => {
     await linkPortfolioAccount(code, fieldValue('linkUsername').trim(), fieldValue('linkPassword'));
     await finishSignIn();
   }, 'Linking failed');
-  element('linkNewBtn')?.addEventListener('click', () => {
+  const newButton = el<HTMLButtonElement | null>('linkNewBtn');
+  newButton?.addEventListener('click', () => {
+    newButton.disabled = true;
     void newPortfolioAccount(code)
       .then(finishSignIn)
-      .catch((err: unknown) => showMessage(errorText(err, 'Could not make the account'), true));
+      .catch((err: unknown) => {
+        newButton.disabled = false;
+        showMessage(errorMessage(err, 'Could not make the account'), true);
+      });
   });
-  element('linkPassword')?.focus();
+  el<HTMLElement | null>('linkPassword')?.focus();
 }
 
 async function mountAccountPage(): Promise<void> {
   const status = await loadAuthStatus();
   if (!status.accounts) {
     for (const form of document.querySelectorAll<HTMLFormElement>('.account-form')) form.hidden = true;
-    element('loginLinks')?.toggleAttribute('hidden', true);
+    el<HTMLElement | null>('loginLinks')?.toggleAttribute('hidden', true);
     showMessage('Accounts are not turned on for this server.');
     return;
   }
   fillSecurityFields();
-  if (element('registerForm')) wireRegister(Boolean(status.portfolio), status.portfolioUrl);
-  if (element('loginForm')) wireLogin();
-  if (element('linkForm')) await wireLinkPage();
+  if (el<HTMLElement | null>('registerForm')) wireRegister(Boolean(status.portfolio), status.portfolioUrl);
+  if (el<HTMLElement | null>('loginForm')) wireLogin();
+  if (el<HTMLElement | null>('linkForm')) await wireLinkPage();
 }
 
 document.addEventListener('DOMContentLoaded', () => {

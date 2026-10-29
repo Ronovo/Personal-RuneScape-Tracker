@@ -161,7 +161,10 @@ export async function fetchJson<T>(url: string, init?: RequestInit): Promise<{ o
     );
   }
   const data = (await res.json()) as T;
-  if (res.status === 401) {
+  // A bare "Unauthorized" means the API token is missing or stale; a specific reason, such as a wrong password,
+  // is shown as the server wrote it.
+  const reason = (data as { error?: unknown }).error;
+  if (res.status === 401 && (reason === undefined || reason === 'Unauthorized')) {
     return { ok: false, status: 401, data: { ...(data as object), error: UNAUTHORIZED_HINT } as T };
   }
   return { ok: res.ok, status: res.status, data };
@@ -182,8 +185,21 @@ export function safeJsonParse<T>(raw: string | null, fallback: T): T {
   }
 }
 
-export function el<T extends HTMLElement = HTMLElement>(id: string): T {
+/** An element the markup guarantees; ask for `el<HTMLElement | null>` on pages where it may be missing. */
+export function el<T extends HTMLElement | null = HTMLElement>(id: string): T {
   return document.getElementById(id) as T;
+}
+
+/**
+ * Each call starts a new request and returns a check that stays true only until the next call, so a slow,
+ * older response can tell it has been overtaken and drop its result.
+ */
+export function latestRequest(): () => () => boolean {
+  let latest = 0;
+  return () => {
+    const mine = ++latest;
+    return () => mine === latest;
+  };
 }
 
 // "Press Enter in the field, or click the button" - the same pair of

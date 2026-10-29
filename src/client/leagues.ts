@@ -5,12 +5,13 @@
 // to "All".
 
 import {
-  fmt, fetchJson, errorMessage, onEnterOrClick, escapeHtml, syncSetupStepsHtml,
+  fmt, onEnterOrClick, escapeHtml, syncSetupStepsHtml, latestRequest,
   fmtSyncedAt, wireFilterGroup, markNarrowedDimensions
 } from './format.js';
-import { prefillUsername } from './identity.js';
+import { prefillUsername, SESSION_CHANGE_EVENT } from './identity.js';
+import { loadSyncedTab } from './character/context.js';
 import './chrome.js';
-import type { LeaguesTasksData, CompletedTaskWithMeta, ApiErrorBody } from './types.js';
+import type { LeaguesTasksData, CompletedTaskWithMeta } from './types.js';
 import { matchesTaskFilters, TASK_FILTER_ALL } from './leaguesFilters.js';
 
 const usernameInput = document.getElementById('username') as HTMLInputElement;
@@ -155,36 +156,29 @@ function renderTasks(data: LeaguesTasksData): void {
   selectFilterDimension('region');
 }
 
+const startRefresh = latestRequest();
+
 async function refresh(): Promise<void> {
   const username = usernameInput.value.trim();
   if (!username) return;
+  const isCurrent = startRefresh();
 
   statusEl.textContent = 'Loading...';
   statusEl.classList.remove('error');
-  syncHelpEl.hidden = true;
-  resultEl.hidden = true;
-
-  try {
-    const { ok, status, data } = await fetchJson<LeaguesTasksData & ApiErrorBody>(
-      `/api/leagues/${encodeURIComponent(username)}`,
-    );
-
-    if (status === 404) {
+  await loadSyncedTab<LeaguesTasksData>({
+    url: `/api/leagues/${encodeURIComponent(username)}`,
+    ctx: { statusEl, isCurrent },
+    resultEl,
+    syncHelpEl,
+    syncHelpHtml: SYNC_HELP_HTML,
+    errorText: 'Update failed',
+    render: (data) => {
       statusEl.textContent = '';
-      syncHelpEl.innerHTML = SYNC_HELP_HTML;
-      syncHelpEl.hidden = false;
-      return;
-    }
-    if (!ok) throw new Error(data.error || 'Update failed');
-
-    renderTasks(data);
-    statusEl.textContent = '';
-    resultEl.hidden = false;
-  } catch (err) {
-    statusEl.textContent = errorMessage(err, 'Update failed');
-    statusEl.classList.add('error');
-  }
+      renderTasks(data);
+    },
+  });
+  if (isCurrent() && !syncHelpEl.hidden) statusEl.textContent = '';
 }
 
 onEnterOrClick(usernameInput, refreshBtn, () => void refresh());
-window.addEventListener('osrs-session-change', () => prefillUsername(usernameInput));
+window.addEventListener(SESSION_CHANGE_EVENT, () => prefillUsername(usernameInput));

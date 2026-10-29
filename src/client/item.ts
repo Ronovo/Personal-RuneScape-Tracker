@@ -145,7 +145,7 @@ function render(data: ItemDetail): void {
 
 async function load(): Promise<void> {
   const id = Number(new URLSearchParams(location.search).get('id'));
-  if (!Number.isInteger(id)) {
+  if (!Number.isInteger(id) || id <= 0) {
     statusEl.textContent = 'No item specified.';
     statusEl.classList.add('error');
     return;

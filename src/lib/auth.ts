@@ -1,6 +1,7 @@
 import type { Request } from 'express';
 import type { JWTPayload } from 'jose';
 import { SignJWT, jwtVerify } from 'jose';
+import { jwtAuthConfigured } from './config.js';
 import { httpError } from './errors.js';
 import { getUserById } from './users.js';
 
@@ -32,17 +33,9 @@ declare global {
 const API_TOKEN_TTL = '90d';
 const WILDCARD_CLAIMS = { typ: 'api', scope: 'all' } as const;
 
-export function jwtAuthConfigured(): boolean {
-  return Boolean(process.env.JWT_SECRET?.trim());
-}
-
 /** LAN posture: the server mints a wildcard token and accepts wildcard tokens. */
 export function lanModeConfigured(): boolean {
   return Boolean(process.env.LAN_MODE?.trim()) && jwtAuthConfigured();
-}
-
-export function authConfigured(): boolean {
-  return jwtAuthConfigured();
 }
 
 function jwtSecretKey(): Uint8Array | undefined {
@@ -77,7 +70,7 @@ let warnedAuthNotConfigured = false;
 
 /** Sync POSTs: fail closed unless JWT_SECRET is configured. */
 export async function requireBearerToken(req: Request): Promise<void> {
-  if (!authConfigured()) {
+  if (!jwtAuthConfigured()) {
     if (!warnedAuthNotConfigured) {
       console.error('[auth] JWT_SECRET is not set — sync requests are rejected as Unauthorized.');
       warnedAuthNotConfigured = true;
@@ -115,7 +108,7 @@ export async function requireBearerToken(req: Request): Promise<void> {
 
 /** Player GETs / watchlist: open only when no auth mode is configured. */
 export async function requirePlayerDataAuth(req: Request): Promise<void> {
-  if (!authConfigured()) {
+  if (!jwtAuthConfigured()) {
     return;
   }
   await requireBearerToken(req);

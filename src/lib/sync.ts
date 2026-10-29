@@ -5,6 +5,8 @@ import { atomicWriteFile } from './atomicWrite.js';
 import { requireBearerToken } from './auth.js';
 import { httpError } from './errors.js';
 import { storagePathFor, readJsonOrDefault } from './jsonStore.js';
+import { foldName, storageKey } from './storageKey.js';
+import { bindJagexAccountForSync, parseAccountHash } from './users.js';
 
 export interface CompletedTaskRecord {
   taskId: string;
@@ -83,30 +85,11 @@ export type SyncSection =
   | 'achievementDiary'
   | 'combatAchievements';
 
-const SECTION_KEYS: SyncSection[] = [
-  'completedTasks',
-  'quests',
-  'collectionLog',
-  'achievementDiary',
-  'combatAchievements',
-];
-
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SYNC_DIR = process.env.SYNC_DATA_DIR || path.join(__dirname, '..', '..', 'data', 'sync');
 
-const USERNAME_RE = /^[a-z0-9 _-]{1,20}$/;
-const NBSP = /\u00A0/g;
-
 /** One in-flight acceptLeaguesSync per player so concurrent POSTs cannot lose sections. */
 const syncChains = new Map<string, Promise<unknown>>();
-
-export function storageKey(username: string): string {
-  const key = username.replace(NBSP, ' ').trim().toLowerCase();
-  if (!USERNAME_RE.test(key)) {
-    throw httpError('Invalid username', 400);
-  }
-  return key;
-}
 
 // Chain per-user; swallow prior rejection so one failed sync does not block the next.
 function enqueueSync<T>(username: string, work: () => Promise<T>): Promise<T> {
@@ -119,23 +102,6 @@ function enqueueSync<T>(username: string, work: () => Promise<T>): Promise<T> {
       syncChains.delete(key);
     }
   });
-}
-
-/**
- * When a request explicitly sends an empty array for a section, treat it as
- * "nothing to update" if stored data already exists -- the plugin sends
- * completedTasks: [] when its local store is empty after a reinstall, which
- * must not wipe server-side history. Omitted sections still fall through
- * to stored via undefined.
- */
-function mergeArraySection<T>(sent: T[] | undefined, stored: T[] | undefined): T[] | undefined {
-  if (sent === undefined) {
-    return stored;
-  }
-  if (sent.length === 0 && stored !== undefined && stored.length > 0) {
-    return stored;
-  }
-  return sent;
 }
 
 function storagePath(username: string): string {
@@ -163,7 +129,7 @@ export function assertAllowedUsername(req: Request, username: string): void {
   const allowed = new Set(
     raw
       .split(',')
-      .map((s) => s.replace(NBSP, ' ').trim().toLowerCase())
+      .map(foldName)
       .filter(Boolean),
   );
   if (!allowed.has(key)) {
@@ -366,40 +332,6 @@ function parseCombatAchievements(value: unknown): CombatAchievementSnapshot {
   return { points: snapshot.points, tasks };
 }
 
-export function parseLeaguesSyncPayload(body: unknown): LeaguesSyncPayload {
-  if (!body || typeof body !== 'object') {
-    throw httpError('Invalid JSON body', 400);
-  }
-
-  const payload = body as Record<string, unknown>;
-  if (!isNonEmptyString(payload.username)) {
-    throw httpError('Missing or invalid username', 400);
-  }
-
-  const parsed: LeaguesSyncPayload = {
-    username: storageKey(String(payload.username)),
-    syncedAt: typeof payload.syncedAt === 'string' ? payload.syncedAt : '',
-  };
-
-  if (payload.completedTasks !== undefined) {
-    parsed.completedTasks = parseCompletedTasks(payload.completedTasks);
-  }
-  if (payload.quests !== undefined) {
-    parsed.quests = parseQuests(payload.quests);
-  }
-  if (payload.collectionLog !== undefined) {
-    parsed.collectionLog = parseCollectionLog(payload.collectionLog);
-  }
-  if (payload.achievementDiary !== undefined) {
-    parsed.achievementDiary = parseAchievementDiary(payload.achievementDiary);
-  }
-  if (payload.combatAchievements !== undefined) {
-    parsed.combatAchievements = parseCombatAchievements(payload.combatAchievements);
-  }
-
-  return parsed;
-}
-
 function parseCompletedTasks(value: unknown): CompletedTaskRecord[] {
   if (!Array.isArray(value)) {
     throw httpError('Invalid completedTasks', 400);
@@ -412,8 +344,37 @@ function parseCompletedTasks(value: unknown): CompletedTaskRecord[] {
   return value as CompletedTaskRecord[];
 }
 
-/** Parses username/syncedAt plus at most one section; rejects any other section key. */
-export function parseSectionSyncPayload(body: unknown, section: SyncSection): LeaguesSyncPayload {
+/**
+ * How each section is read and merged. A list section that arrives empty keeps what is stored: the plugin
+ * sends completedTasks: [] when its local store is empty after a reinstall, which must not wipe server-side
+ * history. A snapshot section replaces what is stored.
+ */
+const SECTIONS: { [K in SyncSection]: { parse: (value: unknown) => NonNullable<LeaguesSyncPayload[K]>; list: boolean } } = {
+  completedTasks: { parse: parseCompletedTasks, list: true },
+  quests: { parse: parseQuests, list: true },
+  collectionLog: { parse: parseCollectionLog, list: false },
+  achievementDiary: { parse: parseAchievementDiary, list: true },
+  combatAchievements: { parse: parseCombatAchievements, list: false },
+};
+
+const SECTION_KEYS = Object.keys(SECTIONS) as SyncSection[];
+
+function setSection<K extends SyncSection>(target: LeaguesSyncPayload, key: K, value: LeaguesSyncPayload[K]): void {
+  target[key] = value;
+}
+
+function mergeSection<K extends SyncSection>(key: K, sent: LeaguesSyncPayload[K], stored: LeaguesSyncPayload[K]): LeaguesSyncPayload[K] {
+  if (sent === undefined) {
+    return stored;
+  }
+  if (SECTIONS[key].list && Array.isArray(sent) && sent.length === 0 && Array.isArray(stored) && stored.length > 0) {
+    return stored;
+  }
+  return sent;
+}
+
+/** Parses username/syncedAt plus the given sections; rejects any other section key. */
+function parsePayload(body: unknown, sections: readonly SyncSection[]): LeaguesSyncPayload {
   if (!body || typeof body !== 'object') {
     throw httpError('Invalid JSON body', 400);
   }
@@ -423,75 +384,44 @@ export function parseSectionSyncPayload(body: unknown, section: SyncSection): Le
     throw httpError('Missing or invalid username', 400);
   }
 
-  for (const key of SECTION_KEYS) {
-    if (key !== section && payload[key] !== undefined) {
-      throw httpError(`Unexpected field: ${key}`, 400);
-    }
-  }
-
   const parsed: LeaguesSyncPayload = {
     username: storageKey(String(payload.username)),
     syncedAt: typeof payload.syncedAt === 'string' ? payload.syncedAt : '',
   };
 
-  if (payload[section] === undefined) {
-    return parsed;
-  }
-
-  switch (section) {
-    case 'completedTasks':
-      parsed.completedTasks = parseCompletedTasks(payload.completedTasks);
-      break;
-    case 'quests':
-      parsed.quests = parseQuests(payload.quests);
-      break;
-    case 'collectionLog':
-      parsed.collectionLog = parseCollectionLog(payload.collectionLog);
-      break;
-    case 'achievementDiary':
-      parsed.achievementDiary = parseAchievementDiary(payload.achievementDiary);
-      break;
-    case 'combatAchievements':
-      parsed.combatAchievements = parseCombatAchievements(payload.combatAchievements);
-      break;
+  for (const key of SECTION_KEYS) {
+    if (payload[key] === undefined) {
+      continue;
+    }
+    if (!sections.includes(key)) {
+      throw httpError(`Unexpected field: ${key}`, 400);
+    }
+    setSection(parsed, key, SECTIONS[key].parse(payload[key]));
   }
 
   return parsed;
 }
 
-function mergeSectionIntoStored(
-  section: SyncSection,
-  payload: LeaguesSyncPayload,
-  stored: LeaguesSyncPayload | null
-): LeaguesSyncPayload {
+export function parseLeaguesSyncPayload(body: unknown): LeaguesSyncPayload {
+  return parsePayload(body, SECTION_KEYS);
+}
+
+export function parseSectionSyncPayload(body: unknown, section: SyncSection): LeaguesSyncPayload {
+  return parsePayload(body, [section]);
+}
+
+/**
+ * A sync carries only what the plugin was asked to send, e.g. a quests-only click. A section it left out keeps
+ * what is stored, and a section never sent nor stored stays absent.
+ */
+function mergeIntoStored(payload: LeaguesSyncPayload, stored: LeaguesSyncPayload | null): LeaguesSyncPayload {
   const merged: LeaguesSyncPayload = {
     username: payload.username,
     syncedAt: payload.syncedAt || stored?.syncedAt || '',
-    completedTasks: stored?.completedTasks,
-    quests: stored?.quests,
-    collectionLog: stored?.collectionLog,
-    achievementDiary: stored?.achievementDiary,
-    combatAchievements: stored?.combatAchievements,
   };
-
-  switch (section) {
-    case 'completedTasks':
-      merged.completedTasks = mergeArraySection(payload.completedTasks, stored?.completedTasks);
-      break;
-    case 'quests':
-      merged.quests = mergeArraySection(payload.quests, stored?.quests);
-      break;
-    case 'collectionLog':
-      merged.collectionLog = payload.collectionLog ?? stored?.collectionLog;
-      break;
-    case 'achievementDiary':
-      merged.achievementDiary = mergeArraySection(payload.achievementDiary, stored?.achievementDiary);
-      break;
-    case 'combatAchievements':
-      merged.combatAchievements = payload.combatAchievements ?? stored?.combatAchievements;
-      break;
+  for (const key of SECTION_KEYS) {
+    setSection(merged, key, mergeSection(key, payload[key], stored?.[key]));
   }
-
   return merged;
 }
 
@@ -506,7 +436,6 @@ export async function loadLeaguesSync(username: string): Promise<LeaguesSyncPayl
 
 async function bindJwtSyncIdentity(req: Request, username: string): Promise<void> {
   if (req.auth?.scope !== 'user' || !req.auth.userId) return;
-  const { bindJagexAccountForSync, parseAccountHash } = await import('./users.js');
   const hash = parseAccountHash(
     req.body && typeof req.body === 'object' ? (req.body as Record<string, unknown>).accountHash : undefined,
   );
@@ -514,46 +443,25 @@ async function bindJwtSyncIdentity(req: Request, username: string): Promise<void
   req.auth.rsns = [...user.rsns];
 }
 
-/** Validates and stores the snapshot. */
-export async function acceptLeaguesSync(req: Request): Promise<LeaguesSyncPayload> {
+async function acceptSync(req: Request, sections: readonly SyncSection[]): Promise<LeaguesSyncPayload> {
   await requireBearerToken(req);
-  const payload = parseLeaguesSyncPayload(req.body);
+  const payload = parsePayload(req.body, sections);
   await bindJwtSyncIdentity(req, payload.username);
   assertAllowedUsername(req, payload.username);
 
   return enqueueSync(payload.username, async () => {
-    // A sync that omits a section (the plugin client only sends what it was
-    // asked to sync, e.g. a quests-only or collection-log-only click) must
-    // not discard whatever is already stored for the sections it left out --
-    // and, symmetrically, must not manufacture a value for a section that was
-    // never sent and never stored either. All five sections behave the same:
-    // present only if this request or a prior stored sync actually had it.
-    const stored = await loadLeaguesSync(payload.username);
-    const merged = {
-      ...payload,
-      completedTasks: mergeArraySection(payload.completedTasks, stored?.completedTasks),
-      quests: mergeArraySection(payload.quests, stored?.quests),
-      collectionLog: payload.collectionLog ?? stored?.collectionLog,
-      achievementDiary: mergeArraySection(payload.achievementDiary, stored?.achievementDiary),
-      combatAchievements: payload.combatAchievements ?? stored?.combatAchievements,
-    };
-
+    const merged = mergeIntoStored(payload, await loadLeaguesSync(payload.username));
     await saveLeaguesSync(merged);
     return merged;
   });
 }
 
-/** Validates and stores one section only; other stored sections are preserved. */
-export async function acceptSectionSync(req: Request, section: SyncSection): Promise<LeaguesSyncPayload> {
-  await requireBearerToken(req);
-  const payload = parseSectionSyncPayload(req.body, section);
-  await bindJwtSyncIdentity(req, payload.username);
-  assertAllowedUsername(req, payload.username);
+/** Validates and stores the snapshot. */
+export function acceptLeaguesSync(req: Request): Promise<LeaguesSyncPayload> {
+  return acceptSync(req, SECTION_KEYS);
+}
 
-  return enqueueSync(payload.username, async () => {
-    const stored = await loadLeaguesSync(payload.username);
-    const merged = mergeSectionIntoStored(section, payload, stored);
-    await saveLeaguesSync(merged);
-    return merged;
-  });
+/** Validates and stores one section only; other stored sections are preserved. */
+export function acceptSectionSync(req: Request, section: SyncSection): Promise<LeaguesSyncPayload> {
+  return acceptSync(req, [section]);
 }

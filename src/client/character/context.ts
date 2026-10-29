@@ -3,6 +3,8 @@ import type { ApiErrorBody } from '../types.js';
 
 export type CharacterTabContext = {
   statusEl: HTMLElement;
+  /** False once a newer search has started, so this one's late response is dropped. */
+  isCurrent: () => boolean;
 };
 
 export interface SyncedTabOptions<T> {
@@ -18,6 +20,12 @@ export interface SyncedTabOptions<T> {
   render: (data: T) => void;
 }
 
+/** The pill class for a count of done out of total: 'complete', 'started' or nothing. */
+export function progressClass(done: number, total: number): string {
+  if (total > 0 && done >= total) return 'complete';
+  return done > 0 ? 'started' : '';
+}
+
 /**
  * Every Character tab that reads plugin-synced data loads the same way: hide
  * both panels, fetch, treat 404 as "nothing synced yet" and show the setup
@@ -31,6 +39,7 @@ export async function loadSyncedTab<T>({
 
   try {
     const { ok, status, data } = await fetchJson<T & ApiErrorBody>(url);
+    if (!ctx.isCurrent()) return;
 
     if (status === 404) {
       syncHelpEl.innerHTML = syncHelpHtml;
@@ -42,6 +51,7 @@ export async function loadSyncedTab<T>({
     render(data);
     resultEl.hidden = false;
   } catch (err) {
+    if (!ctx.isCurrent()) return;
     ctx.statusEl.textContent = errorMessage(err, errorText);
     ctx.statusEl.classList.add('error');
   }

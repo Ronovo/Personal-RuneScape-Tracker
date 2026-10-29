@@ -2,8 +2,8 @@
 // Skills/bosses/minigames come from Jagex; Quests, Diaries, Combat
 // Achievements, and Collection Log come from the RuneLite plugin sync.
 
-import { fmt, fetchJson, errorMessage, onEnterOrClick } from './format.js';
-import { prefillUsername } from './identity.js';
+import { fmt, fetchJson, errorMessage, onEnterOrClick, latestRequest } from './format.js';
+import { prefillUsername, SESSION_CHANGE_EVENT } from './identity.js';
 import './chrome.js';
 import type { HiscoresData, ApiErrorBody } from './types.js';
 import { renderSkills, renderScored } from './character/hiscores.js';
@@ -63,18 +63,22 @@ document.querySelectorAll<HTMLButtonElement>('#mainTabs button').forEach((btn) =
   btn.addEventListener('click', () => activateTab(btn.dataset.tab!));
 });
 
+const startSearch = latestRequest();
+
 async function search(): Promise<void> {
   const username = usernameInput.value.trim();
   if (!username) return;
+  const isCurrent = startSearch();
 
   statusEl.textContent = 'Loading...';
   statusEl.classList.remove('error');
   resultEl.hidden = true;
 
-  const tabCtx = { statusEl };
+  const tabCtx = { statusEl, isCurrent };
 
   try {
     const { ok, data } = await fetchJson<HiscoresData & ApiErrorBody>(`/api/hiscores/${encodeURIComponent(username)}`);
+    if (!isCurrent()) return;
     if (!ok) throw new Error(data.error || 'Lookup failed');
 
     document.getElementById('combatLevel')!.textContent = String(data.combatLevel);
@@ -96,10 +100,11 @@ async function search(): Promise<void> {
       loadCollectionLog(username, tabCtx),
     ]);
   } catch (err) {
+    if (!isCurrent()) return;
     statusEl.textContent = errorMessage(err, 'Lookup failed');
     statusEl.classList.add('error');
   }
 }
 
 onEnterOrClick(usernameInput, searchBtn, () => void search());
-window.addEventListener('osrs-session-change', () => prefillUsername(usernameInput));
+window.addEventListener(SESSION_CHANGE_EVENT, () => prefillUsername(usernameInput));

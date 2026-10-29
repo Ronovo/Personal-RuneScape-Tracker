@@ -10,8 +10,10 @@ const CURRENT_USER_KEY = 'osrs_current_user';
 const KNOWN_USERS_KEY = 'osrs_known_users';
 const KNOWN_USERS_MAX = 15;
 const GUEST_BUCKET = '_guest_';
-const BANKROLL_PREFIX = 'osrs_bankroll::';
-const BANKROLL_SAVED_PREFIX = 'osrs_bankroll_saved_at::';
+const BANKROLL_KEY = 'osrs_bankroll';
+const BANKROLL_SAVED_KEY = 'osrs_bankroll_saved_at';
+const BANKROLL_PREFIX = `${BANKROLL_KEY}::`;
+const BANKROLL_SAVED_PREFIX = `${BANKROLL_SAVED_KEY}::`;
 
 /** Fired whenever the identity changes; every page re-reads its per-user state. */
 export const SESSION_CHANGE_EVENT = 'osrs-session-change';
@@ -84,15 +86,16 @@ export async function loadWatchlist(): Promise<number[]> {
   }
 
   try {
-    const { data } = await fetchJson<{ itemIds?: number[] }>(`/api/watchlist/${encodeURIComponent(username)}`);
-    watchlistCache = Array.isArray(data.itemIds) ? data.itemIds : [];
+    const { ok, data } = await fetchJson<{ itemIds?: number[] }>(`/api/watchlist/${encodeURIComponent(username)}`);
+    if (ok) watchlistCache = Array.isArray(data.itemIds) ? data.itemIds : [];
   } catch {
     // Server unreachable - keep whatever's cached rather than blanking the list.
   }
   return watchlistCache;
 }
 
-export function toggleWatchlist(id: number): number[] {
+/** `onFail` hears why the server didn't keep the change; the list here has it either way. */
+export function toggleWatchlist(id: number, onFail: (message: string) => void = () => {}): number[] {
   const numId = Number(id);
   watchlistCache = watchlistCache.includes(numId)
     ? watchlistCache.filter((x) => x !== numId)
@@ -104,28 +107,31 @@ export function toggleWatchlist(id: number): number[] {
     return watchlistCache;
   }
 
-  // Fire-and-forget: the cache above already reflects the change, so a
-  // dropped request just means the next loadWatchlist() call re-syncs it.
   fetch(`/api/watchlist/${encodeURIComponent(username)}`, {
     method: 'PUT',
     headers: apiAuthHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({ itemIds: watchlistCache })
-  }).catch(() => {});
+  }).then((res) => {
+    if (res.status === 401 || res.status === 403) onFail('Your watchlist was not saved. Sign in again to keep it.');
+    else if (!res.ok) onFail('Your watchlist was not saved.');
+  }).catch(() => onFail('Your watchlist was not saved: the server could not be reached.'));
 
   return watchlistCache;
 }
 
 // Bankroll for the Flip Helper "Fits My Bankroll" preset, same per-user bucket.
 export function getBankroll(): number {
-  const n = Number(storageGet(localStorage, userKey('osrs_bankroll')));
+  const n = Number(storageGet(localStorage, userKey(BANKROLL_KEY)));
   return Number.isFinite(n) && n > 0 ? n : 0;
 }
 
 export function setBankroll(n: number): number {
   const value = Number(n);
   if (!Number.isFinite(value) || value < 0) return getBankroll();
-  storageSet(localStorage, userKey('osrs_bankroll'), String(value));
-  storageSet(localStorage, userKey('osrs_bankroll_saved_at'), String(Date.now()));
+  // Only a real change is stamped, so opening Flip can't make a stale bankroll look newer than another device's.
+  if (value === getBankroll()) return value;
+  storageSet(localStorage, userKey(BANKROLL_KEY), String(value));
+  storageSet(localStorage, userKey(BANKROLL_SAVED_KEY), String(Date.now()));
   void syncBankrolls();
   return value;
 }

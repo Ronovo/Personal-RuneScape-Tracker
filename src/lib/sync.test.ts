@@ -12,7 +12,8 @@ import path from 'node:path';
 const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'osrs-sync-test-'));
 process.env.SYNC_DATA_DIR = tmpDir;
 
-const { storageKey, requireBearerToken, requirePlayerDataAuth, assertAllowedUsername, parseLeaguesSyncPayload, parseSectionSyncPayload, acceptLeaguesSync, acceptSectionSync, loadLeaguesSync } = await import('./sync.js');
+const { storageKey } = await import('./storageKey.js');
+const { requireBearerToken, requirePlayerDataAuth, assertAllowedUsername, parseLeaguesSyncPayload, parseSectionSyncPayload, acceptLeaguesSync, acceptSectionSync, loadLeaguesSync } = await import('./sync.js');
 // auth reads env per-request, so importing this here (before LAN_MODE is set) is fine.
 const { mintWildcardToken } = await import('./auth.js');
 
@@ -554,7 +555,7 @@ test('LAN wildcard sync ignores accountHash and does not require it', async () =
 test('golden sync-payload.json parses as a full snapshot', async () => {
   const { readFileSync } = await import('node:fs');
   const { fileURLToPath } = await import('node:url');
-  const fixturePath = fileURLToPath(new URL('./fixtures/sync-payload.json', import.meta.url));
+  const fixturePath = fileURLToPath(new URL('../../src/lib/fixtures/sync-payload.json', import.meta.url));
   const body = JSON.parse(readFileSync(fixturePath, 'utf8'));
   const parsed = parseLeaguesSyncPayload(body);
   assert.equal(parsed.username, 'testrsn');

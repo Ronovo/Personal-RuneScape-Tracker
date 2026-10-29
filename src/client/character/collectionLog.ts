@@ -1,6 +1,6 @@
 import { fmt, escapeHtml, fmtSyncedAt, syncSetupStepsHtml } from '../format.js';
 import type { CollectionLogData, CollectionGroup, CollectionCategory } from '../types.js';
-import { loadSyncedTab } from './context.js';
+import { loadSyncedTab, progressClass } from './context.js';
 import type { CharacterTabContext } from './context.js';
 
 const CL_SYNC_HELP_HTML = `
@@ -39,15 +39,9 @@ let categoriesByKey = new Map<string, CollectionCategory>();
 let selectedGroup = '';
 let progressFilter: ProgressFilter = 'all';
 
-function pillProgressClass(c: CollectionCategory): string {
-  if (c.total > 0 && c.obtained >= c.total) return 'complete';
-  if (c.obtained > 0) return 'started';
-  return '';
-}
-
 function matchesProgressFilter(c: CollectionCategory): boolean {
   if (progressFilter === 'all') return true;
-  const progress = pillProgressClass(c);
+  const progress = progressClass(c.obtained, c.total);
   if (progressFilter === 'not-started') return progress === '';
   return progress === progressFilter;
 }
@@ -61,7 +55,7 @@ function renderGroupPills(groupName: string): void {
     return;
   }
   groupsEl.innerHTML = categories.map((c) => {
-    const progress = pillProgressClass(c);
+    const progress = progressClass(c.obtained, c.total);
     const cls = progress ? `cl-pill ${progress}` : 'cl-pill';
     return `<button class="${cls}" data-key="${escapeHtml(c.key)}">${escapeHtml(c.name)} <span class="cl-count">${c.obtained}/${c.total}</span></button>`;
   }).join('');

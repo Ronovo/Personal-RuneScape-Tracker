@@ -4,27 +4,13 @@
 // compiled output rather than in a browser.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { escapeHtml, geTax, fmtGpShort, fmtAgo, fmtAgoSince, safeJsonParse } from './format.js';
+import { escapeHtml, fmtGpShort, fmtAgo, fmtAgoSince, safeJsonParse } from './format.js';
 
 test('escapeHtml neutralizes every HTML-significant character', () => {
   assert.equal(escapeHtml('<script>alert("hi")</script>'), '&lt;script&gt;alert(&quot;hi&quot;)&lt;/script&gt;');
   assert.equal(escapeHtml("it's"), 'it&#39;s');
   assert.equal(escapeHtml('Tom & Jerry'), 'Tom &amp; Jerry');
   assert.equal(escapeHtml(123), '123');
-});
-
-// Pinned against the same fixture values as src/lib/prices.ts's geTax test
-// (prices.test.ts) - the client has no access to TAX_EXEMPT_NAMES, so it
-// takes an explicit taxExempt flag instead of an item name, but the tax
-// math itself must agree with the server's.
-test('geTax: 2% floored, exempt items pay nothing, cheap sales floor to 0, tax caps at 5m', () => {
-  assert.equal(geTax(15000, false), 300);
-  assert.equal(geTax(15000, true), 0);
-  assert.equal(geTax(49, false), 0);
-  assert.equal(geTax(50, false), 1);
-  assert.equal(geTax(300_000_000, false), 5_000_000);
-  assert.equal(geTax(0, false), 0);
-  assert.equal(geTax(null, false), 0);
 });
 
 test('fmtGpShort renders compact k/m/b labels', () => {

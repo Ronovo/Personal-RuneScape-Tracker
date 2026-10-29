@@ -156,4 +156,10 @@ test('bankrolls merge per player with the newer value winning', async () => {
     bankrolls: { zezima: { value: 50, savedAt: 1500 }, _guest_: { value: 9, savedAt: 3000 } },
   }, token)).json() as BankrollReply;
   assert.deepEqual(second.bankrolls, { zezima: { value: 100, savedAt: 2000 }, _guest_: { value: 9, savedAt: 3000 } });
+
+  // A real object literal would set the prototype, so the body is built from JSON text.
+  const odd = JSON.parse('{"__proto__": {"value": 7, "savedAt": 4000}, "toString": {"value": 8, "savedAt": 4000}}');
+  const third = await (await postJson('/api/auth/bankrolls', { bankrolls: odd }, token)).json() as BankrollReply;
+  assert.deepEqual(Object.getOwnPropertyDescriptor(third.bankrolls, '__proto__')?.value, { value: 7, savedAt: 4000 });
+  assert.deepEqual(Object.getOwnPropertyDescriptor(third.bankrolls, 'toString')?.value, { value: 8, savedAt: 4000 });
 });

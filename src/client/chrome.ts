@@ -5,7 +5,7 @@
 // The identity itself, and the watchlist and bankroll keyed by it, live in
 // identity.ts. This module reads that state and re-renders when it changes.
 
-import { escapeHtml } from './format.js';
+import { errorMessage, escapeHtml } from './format.js';
 import {
   SESSION_CHANGE_EVENT, clearUsername, emitSessionChange, getKnownUsers, getUsername, setUsername, syncBankrolls
 } from './identity.js';
@@ -23,6 +23,9 @@ import {
   type AuthStatus,
   type AuthUser,
 } from './auth.js';
+
+/** Phone-width layouts: the GE grid and the Flip cards switch at this width. */
+export const MOBILE_MQ = window.matchMedia('(max-width: 700px)');
 
 type NavLink = { href: string; label: string; blurb: string; alsoActive?: string[] };
 
@@ -164,10 +167,6 @@ function wireAccountButtons(): void {
   });
 }
 
-function errorText(err: unknown, fallback: string): string {
-  return err instanceof Error ? err.message : fallback;
-}
-
 function wireAuthLinks(): void {
   document.getElementById('authLoginBtn')?.addEventListener('click', () => {
     location.href = 'login.html';
@@ -191,7 +190,7 @@ async function consumePortfolioLogin(): Promise<void> {
   try {
     authUser = await portfolioLogin(code);
   } catch (err) {
-    authNotice = { text: errorText(err, 'Portfolio login failed'), isError: true };
+    authNotice = { text: errorMessage(err, 'Portfolio login failed'), isError: true };
   }
 }
 
