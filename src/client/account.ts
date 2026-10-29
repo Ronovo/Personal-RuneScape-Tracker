@@ -119,7 +119,7 @@ function wireLogin(): void {
 // reload or a shared link can't replay it.
 async function wireLinkPage(): Promise<void> {
   const params = new URLSearchParams(location.search);
-  const code = params.get('portfolio') ?? '';
+  const code = params.get('link') ?? '';
   history.replaceState(null, '', location.pathname);
   try {
     const name = await portfolioPending(code);

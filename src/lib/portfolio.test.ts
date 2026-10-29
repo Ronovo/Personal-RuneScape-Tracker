@@ -69,7 +69,8 @@ async function portfolioLogin(sub: string): Promise<{ page: string; code: string
   const res = await callback(state, cookie, await portfolioToken(sub));
   assert.equal(res.status, 302);
   const location = new URL(res.headers.get('location')!, base);
-  return { page: location.pathname, code: location.searchParams.get('portfolio')! };
+  const param = location.pathname === '/link.html' ? 'link' : 'portfolio';
+  return { page: location.pathname, code: location.searchParams.get(param)! };
 }
 
 type LoginReply = { token: string; user: { id: string; username: string }; needsSecurityQuestion: boolean };

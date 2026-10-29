@@ -10,10 +10,11 @@ import type { UserRecord } from './users.js';
 // Log in with a portfolio account. /sso/login sends the browser to the
 // portfolio, which posts a short-lived RS256 token back to /sso/callback. When
 // a tracker account is linked to that portfolio account, the callback hands the
-// page a one-time code in its URL, which the page trades at /api/auth/portfolio
-// for this app's own API token. The first time, it sends the page to
-// link.html with a code instead, where the player links an account they
-// already have or makes a new one.
+// page a one-time code in its URL (?portfolio=), which the page trades at
+// /api/auth/portfolio for this app's own API token. The first time, it sends
+// the page to link.html with a different code (?link=) instead, where the
+// player links an account they already have or makes a new one. The two names
+// differ because every page's chrome script consumes ?portfolio=.
 
 const APP_ID = 'osrs-tracker';
 const ISSUER = 'portfolio';
@@ -126,7 +127,7 @@ export async function ssoCallback(req: Request, res: Response): Promise<void> {
     return;
   }
   const name = typeof payload.name === 'string' ? payload.name : '';
-  res.redirect(`/link.html?portfolio=${newCode(pendingChoices, { sub: payload.sub, name, expires })}`);
+  res.redirect(`/link.html?link=${newCode(pendingChoices, { sub: payload.sub, name, expires })}`);
 }
 
 async function signedIn(res: Response, user: UserRecord, needsSecurityQuestion: boolean): Promise<void> {
