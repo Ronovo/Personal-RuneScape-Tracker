@@ -1,10 +1,11 @@
 import type { Request, Response } from 'express';
-import { requireBearerToken, mintApiToken, mintWildcardToken, lanModeConfigured } from './auth.js';
+import { lanModeConfigured, mintApiToken, mintWildcardToken, publicUser, requireAccount, sendSignedIn } from './auth.js';
 import { jwtAuthConfigured } from './config.js';
 import {
-  getUserById, loginUser, mergeBankrolls, registerUser, resetPassword, securityQuestionFor,
+  MAX_PASSWORD_LENGTH, MAX_USERNAME_LENGTH, loginUser, mergeBankrolls, registerUser, resetPassword,
+  securityQuestionFor,
 } from './users.js';
-import type { SavedBankroll, UserRecord } from './users.js';
+import type { SavedBankroll } from './users.js';
 import { portfolioConfigured, portfolioUrl } from './portfolio.js';
 import { httpError } from './errors.js';
 
@@ -15,23 +16,18 @@ function readBody(body: unknown): Record<string, unknown> {
   return body as Record<string, unknown>;
 }
 
-function readCredentials(body: unknown): { username: string; password: string } {
+export function readCredentials(body: unknown): { username: string; password: string } {
   const { username, password } = readBody(body);
   if (typeof username !== 'string' || typeof password !== 'string') {
     throw httpError('Username and password are required', 400);
   }
   // Reject oversized inputs before they reach scrypt - a multi-MB password
-  // under concurrency is a cheap CPU-exhaustion vector. 254 still fits the
-  // email addresses older accounts use as their username; 200 is well past any
-  // real passphrase.
-  if (username.length > 254 || password.length > 200) {
+  // under concurrency is a cheap CPU-exhaustion vector.
+  const trimmed = username.trim();
+  if (trimmed.length > MAX_USERNAME_LENGTH || password.length > MAX_PASSWORD_LENGTH) {
     throw httpError('Username or password too long', 400);
   }
-  return { username: username.trim(), password };
-}
-
-function publicUser(user: UserRecord): { id: string; username: string; rsns: string[] } {
-  return { id: user.id, username: user.username, rsns: user.rsns };
+  return { username: trimmed, password };
 }
 
 export async function authStatus(_req: Request, res: Response): Promise<void> {
@@ -50,9 +46,7 @@ export async function authRegister(req: Request, res: Response): Promise<void> {
   }
   const { username, password } = readCredentials(req.body);
   const { question, answer } = readBody(req.body);
-  const user = await registerUser(username, password, question, answer);
-  const token = await mintApiToken(user.id, user.tokenVersion);
-  res.status(201).json({ token, user: publicUser(user) });
+  await sendSignedIn(res, await registerUser(username, password, question, answer), 201);
 }
 
 export async function authLogin(req: Request, res: Response): Promise<void> {
@@ -60,9 +54,7 @@ export async function authLogin(req: Request, res: Response): Promise<void> {
     throw httpError('Sign-in is disabled in LAN mode', 403);
   }
   const { username, password } = readCredentials(req.body);
-  const user = await loginUser(username, password);
-  const token = await mintApiToken(user.id, user.tokenVersion);
-  res.json({ token, user: publicUser(user) });
+  await sendSignedIn(res, await loginUser(username, password));
 }
 
 export async function authMintToken(req: Request, res: Response): Promise<void> {
@@ -71,28 +63,12 @@ export async function authMintToken(req: Request, res: Response): Promise<void> 
     res.json({ token: await mintWildcardToken() });
     return;
   }
-  await requireBearerToken(req);
-  if (req.auth?.scope !== 'user' || !req.auth.userId) {
-    throw httpError('Unauthorized', 401);
-  }
-  const user = await getUserById(req.auth.userId);
-  if (!user) {
-    throw httpError('Unauthorized', 401);
-  }
-  const token = await mintApiToken(user.id, user.tokenVersion);
-  res.json({ token });
+  const user = await requireAccount(req);
+  res.json({ token: await mintApiToken(user.id, user.tokenVersion) });
 }
 
 export async function authMe(req: Request, res: Response): Promise<void> {
-  await requireBearerToken(req);
-  if (req.auth?.scope !== 'user' || !req.auth.userId) {
-    throw httpError('Unauthorized', 401);
-  }
-  const user = await getUserById(req.auth.userId);
-  if (!user) {
-    throw httpError('Unauthorized', 401);
-  }
-  res.json(publicUser(user));
+  res.json(publicUser(await requireAccount(req)));
 }
 
 // Bucket names are "Playing as" names (or the guest bucket), so short; a cap
@@ -121,11 +97,8 @@ function readBankrolls(body: unknown): Record<string, SavedBankroll> {
 }
 
 export async function authBankrolls(req: Request, res: Response): Promise<void> {
-  await requireBearerToken(req);
-  if (req.auth?.scope !== 'user' || !req.auth.userId) {
-    throw httpError('Unauthorized', 401);
-  }
-  res.json({ bankrolls: await mergeBankrolls(req.auth.userId, readBankrolls(req.body)) });
+  const user = await requireAccount(req);
+  res.json({ bankrolls: await mergeBankrolls(user.id, readBankrolls(req.body)) });
 }
 
 // Two steps: the username brings up its security question, then the answer
@@ -135,7 +108,7 @@ export async function authResetQuestion(req: Request, res: Response): Promise<vo
     throw httpError('Account auth is not enabled on this server', 501);
   }
   const { username } = readBody(req.body);
-  if (typeof username !== 'string' || !username.trim() || username.length > 254) {
+  if (typeof username !== 'string' || !username.trim() || username.trim().length > MAX_USERNAME_LENGTH) {
     throw httpError('Enter your username', 400);
   }
   res.json({ question: await securityQuestionFor(username.trim()) });
@@ -147,7 +120,7 @@ export async function authResetPassword(req: Request, res: Response): Promise<vo
   }
   const { username, password } = readCredentials(req.body);
   const { answer } = readBody(req.body);
-  if (typeof answer !== 'string' || answer.length > 200) {
+  if (typeof answer !== 'string' || answer.length > MAX_PASSWORD_LENGTH) {
     throw httpError('That answer is wrong', 400);
   }
   await resetPassword(username, answer, password);

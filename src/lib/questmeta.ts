@@ -5,7 +5,6 @@
 
 import { loadJsonAsset } from './jsonStore.js';
 
-export type { QuestKind } from '../shared/api.js';
 import type { QuestKind } from '../shared/api.js';
 
 export interface QuestMeta {

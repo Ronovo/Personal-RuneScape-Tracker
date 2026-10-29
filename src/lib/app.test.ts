@@ -35,6 +35,18 @@ after(async () => {
   delete process.env.LAN_MODE;
 });
 
+test('an empty collection log reads as not synced', async () => {
+  const username = 'empty-log-user';
+  const postRes = await fetch(`${base}/api/sync/collectionlog`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...AUTH },
+    body: JSON.stringify({ username, collectionLog: { groups: [] } })
+  });
+  assert.equal(postRes.status, 200);
+  const clogRes = await fetch(`${base}/api/collectionlog/${username}`, { headers: AUTH });
+  assert.equal(clogRes.status, 404);
+});
+
 test('route round-trip: sync then read back leagues/quests/collectionlog', async () => {
   const username = 'route-test-user';
   const postRes = await fetch(`${base}/api/sync/leagues`, {
@@ -50,7 +62,9 @@ test('route round-trip: sync then read back leagues/quests/collectionlog', async
         { taskId: 'not-a-real-task-id', completedAt: '2024-01-02' }
       ],
       quests: [{ id: 1, name: "Cook's Assistant", state: 'FINISHED' }],
-      collectionLog: { groups: [] },
+      collectionLog: {
+        groups: [{ group: 'Bosses', categories: [{ key: 'giant_mole', name: 'Giant Mole', items: [{ id: 12646, name: 'Baby mole', count: 1 }] }] }]
+      },
       achievementDiary: [{ area: 'ARDOUGNE', tier: 'ELITE', complete: true }],
       combatAchievements: {
         points: 100,

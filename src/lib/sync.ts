@@ -1,12 +1,12 @@
-import path from 'path';
-import { fileURLToPath } from 'url';
 import type { Request } from 'express';
 import { atomicWriteFile } from './atomicWrite.js';
 import { requireBearerToken } from './auth.js';
 import { httpError } from './errors.js';
-import { storagePathFor, readJsonOrDefault } from './jsonStore.js';
+import { dataDir, storagePathFor, readJsonOrDefault } from './jsonStore.js';
+import { serialize } from './serialize.js';
 import { foldName, storageKey } from './storageKey.js';
 import { bindJagexAccountForSync, parseAccountHash } from './users.js';
+import { DIARY_TIERS, QUEST_STATES } from '../shared/api.js';
 
 export interface CompletedTaskRecord {
   taskId: string;
@@ -14,7 +14,6 @@ export interface CompletedTaskRecord {
   source?: 'MANUAL' | 'AUTO';
 }
 
-export type { QuestState, DiaryTier } from '../shared/api.js';
 import type { QuestState, DiaryTier } from '../shared/api.js';
 
 export interface QuestProgress {
@@ -65,8 +64,7 @@ export interface CombatAchievementSnapshot {
 
 // One file per player holds every section the plugin can send. Sections are
 // optional because each sync only carries what the client could read at the
-// time (collection log needs the in-game interface open), and because files
-// written before a section existed still have to load.
+// time (collection log needs the in-game interface open).
 export interface LeaguesSyncPayload {
   username: string;
   syncedAt: string;
@@ -85,30 +83,14 @@ export type SyncSection =
   | 'achievementDiary'
   | 'combatAchievements';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const SYNC_DIR = process.env.SYNC_DATA_DIR || path.join(__dirname, '..', '..', 'data', 'sync');
+const SYNC_DIR = dataDir('sync', 'SYNC_DATA_DIR');
 
 /** One in-flight acceptLeaguesSync per player so concurrent POSTs cannot lose sections. */
 const syncChains = new Map<string, Promise<unknown>>();
 
-// Chain per-user; swallow prior rejection so one failed sync does not block the next.
-function enqueueSync<T>(username: string, work: () => Promise<T>): Promise<T> {
-  const key = storageKey(username);
-  const prev = syncChains.get(key) ?? Promise.resolve();
-  const next = prev.catch(() => {}).then(work);
-  syncChains.set(key, next);
-  return next.finally(() => {
-    if (syncChains.get(key) === next) {
-      syncChains.delete(key);
-    }
-  });
-}
-
 function storagePath(username: string): string {
   return storagePathFor(SYNC_DIR, storageKey(username));
 }
-
-export { requireBearerToken, requirePlayerDataAuth } from './auth.js';
 
 /** Scoped tokens are limited to their claimed RSNs; wildcard tokens honour SYNC_ALLOWED_USERS. */
 export function assertAllowedUsername(req: Request, username: string): void {
@@ -117,7 +99,7 @@ export function assertAllowedUsername(req: Request, username: string): void {
   if (req.auth?.scope === 'user') {
     const rsns = req.auth.rsns ?? [];
     if (!rsns.includes(key)) {
-      throw httpError('Forbidden — claim this RSN on your account first', 403);
+      throw httpError('Forbidden - claim this RSN on your account first', 403);
     }
     return;
   }
@@ -141,20 +123,6 @@ function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0;
 }
 
-function isCompletedTaskRecord(value: unknown): value is CompletedTaskRecord {
-  if (!value || typeof value !== 'object') {
-    return false;
-  }
-
-  const record = value as Record<string, unknown>;
-  return (
-    isNonEmptyString(record.taskId) &&
-    typeof record.completedAt === 'string' &&
-    (record.source === undefined || record.source === 'MANUAL' || record.source === 'AUTO')
-  );
-}
-
-const QUEST_STATES: QuestState[] = ['NOT_STARTED', 'IN_PROGRESS', 'FINISHED'];
 
 // RuneLite's Quest enum has carried placeholder entries in the past; they'd
 // only ever render as noise on the quests tab.
@@ -269,8 +237,6 @@ function parseCollectionLog(value: unknown): CollectionLogSnapshot {
   };
 }
 
-const DIARY_TIERS: DiaryTier[] = ['EASY', 'MEDIUM', 'HARD', 'ELITE'];
-
 function parseAchievementDiary(value: unknown): DiaryProgress[] {
   if (!Array.isArray(value)) {
     throw httpError('Invalid achievementDiary', 400);
@@ -336,12 +302,18 @@ function parseCompletedTasks(value: unknown): CompletedTaskRecord[] {
   if (!Array.isArray(value)) {
     throw httpError('Invalid completedTasks', 400);
   }
-  for (const record of value) {
-    if (!isCompletedTaskRecord(record)) {
+  return value.map((entry): CompletedTaskRecord => {
+    const record = (entry && typeof entry === 'object' ? entry : {}) as Record<string, unknown>;
+    if (!isNonEmptyString(record.taskId) || typeof record.completedAt !== 'string'
+      || (record.source !== undefined && record.source !== 'MANUAL' && record.source !== 'AUTO')) {
       throw httpError('Invalid completedTasks entry', 400);
     }
-  }
-  return value as CompletedTaskRecord[];
+    return {
+      taskId: record.taskId.trim(),
+      completedAt: record.completedAt,
+      ...(record.source ? { source: record.source } : {}),
+    };
+  });
 }
 
 /**
@@ -374,7 +346,7 @@ function mergeSection<K extends SyncSection>(key: K, sent: LeaguesSyncPayload[K]
 }
 
 /** Parses username/syncedAt plus the given sections; rejects any other section key. */
-function parsePayload(body: unknown, sections: readonly SyncSection[]): LeaguesSyncPayload {
+export function parsePayload(body: unknown, sections: readonly SyncSection[] = SECTION_KEYS): LeaguesSyncPayload {
   if (!body || typeof body !== 'object') {
     throw httpError('Invalid JSON body', 400);
   }
@@ -402,14 +374,6 @@ function parsePayload(body: unknown, sections: readonly SyncSection[]): LeaguesS
   return parsed;
 }
 
-export function parseLeaguesSyncPayload(body: unknown): LeaguesSyncPayload {
-  return parsePayload(body, SECTION_KEYS);
-}
-
-export function parseSectionSyncPayload(body: unknown, section: SyncSection): LeaguesSyncPayload {
-  return parsePayload(body, [section]);
-}
-
 /**
  * A sync carries only what the plugin was asked to send, e.g. a quests-only click. A section it left out keeps
  * what is stored, and a section never sent nor stored stays absent.
@@ -429,9 +393,30 @@ export async function saveLeaguesSync(payload: LeaguesSyncPayload): Promise<void
   await atomicWriteFile(storagePath(payload.username), JSON.stringify(payload, null, 2));
 }
 
+/**
+ * The stored file, read leniently: a section that no longer parses (say RuneLite added a quest state) is
+ * dropped with a warning instead of failing every read and every later sync for that player.
+ */
 export async function loadLeaguesSync(username: string): Promise<LeaguesSyncPayload | null> {
-  const raw = await readJsonOrDefault<unknown>(storagePath(username), null);
-  return raw === null ? null : parseLeaguesSyncPayload(raw);
+  const raw = await readJsonOrDefault<Record<string, unknown> | null>(storagePath(username), null);
+  if (raw === null) {
+    return null;
+  }
+  const stored: LeaguesSyncPayload = {
+    username: storageKey(username),
+    syncedAt: typeof raw.syncedAt === 'string' ? raw.syncedAt : '',
+  };
+  for (const key of SECTION_KEYS) {
+    if (raw[key] === undefined) {
+      continue;
+    }
+    try {
+      setSection(stored, key, SECTIONS[key].parse(raw[key]));
+    } catch (err) {
+      console.warn(`[sync] dropped ${username}'s stored ${key}: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+  return stored;
 }
 
 async function bindJwtSyncIdentity(req: Request, username: string): Promise<void> {
@@ -449,7 +434,7 @@ async function acceptSync(req: Request, sections: readonly SyncSection[]): Promi
   await bindJwtSyncIdentity(req, payload.username);
   assertAllowedUsername(req, payload.username);
 
-  return enqueueSync(payload.username, async () => {
+  return serialize(syncChains, payload.username, async () => {
     const merged = mergeIntoStored(payload, await loadLeaguesSync(payload.username));
     await saveLeaguesSync(merged);
     return merged;

@@ -6,7 +6,8 @@ import {
 import { createFilterRow, flipSortDir, sortDirLabel } from './filterRow.js';
 import { MOBILE_MQ } from './chrome.js';
 import { mountF2pToggle } from './f2pToggle.js';
-import type { MoverItem, MoversResult, SearchResult, ApiErrorBody, GeView, SortDir } from './types.js';
+import type { MoverItem, MoversResult, SearchResult, GeView, SortDir } from '../shared/types.js';
+import type { ApiErrorBody } from '../shared/api.js';
 
 const statusEl = el('status');
 const gridEl = el('grid');
@@ -30,8 +31,8 @@ const VIEW_TITLES: Record<GeView, string> = {
 
 // Random ranks by a seeded hash and search results come back scored by
 // relevance, so the Sort field can't apply to either.
-const SORT_DISABLED_HINT = 'Random picks its own order — switch views to sort.';
-const SORT_SEARCH_HINT = 'Search results are ranked by how well they match — clear the search to sort.';
+const SORT_DISABLED_HINT = 'Random picks its own order - switch views to sort.';
+const SORT_SEARCH_HINT = 'Search results are ranked by how well they match - clear the search to sort.';
 
 const FILTERS_KEY = 'osrs_ge_filters';
 
@@ -188,16 +189,9 @@ function renderGrid(items: (MoverItem | SearchResult)[]): void {
 // the server treats it as "no cap" rather than 0. Pure: saving the row is
 // loadMovers' job, not something a query builder should do on the side.
 function filterQuery(): URLSearchParams {
-  const minVolume = el<HTMLInputElement>('minVolume').value;
-  const minPrice = el<HTMLInputElement>('minPrice').value;
-  const maxPrice = el<HTMLInputElement>('maxPrice').value;
-  const maxAgeMinutes = el<HTMLInputElement>('maxAgeMinutes').value;
-  const membersOnly = membersOnlyEl.value;
-  const sort = sortByEl.value;
-  const sortDir = state.sortDir;
-  const hideStale = el<HTMLInputElement>('hideStale').checked ? '1' : '0';
+  const { minVolume, minPrice, maxPrice, maxAgeMinutes, membersOnly, sort, hideStale } = filters.read();
   const params = new URLSearchParams({
-    minVolume, minPrice, membersOnly, sort, sortDir, hideStale,
+    minVolume, minPrice, membersOnly, sort, sortDir: state.sortDir, hideStale: hideStale ? '1' : '0',
     limit: String(currentGridSize()), view: state.view
   });
   if (state.view === 'random') params.set('seed', state.randomSeed);
@@ -280,8 +274,8 @@ function setView(view: GeView): void {
   setViewActive(view);
 }
 
-// Every view but Random honours the Sort select; disable it there rather than
-// letting it look live and do nothing.
+// Random and a name search ignore the Sort select, so it is disabled there
+// rather than left looking live and doing nothing.
 function syncSortAvailability(): void {
   const searching = isSearching();
   const inert = searching || state.view === 'random';

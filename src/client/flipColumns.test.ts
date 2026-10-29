@@ -6,8 +6,8 @@ import {
   columnHeadersHtml, columnsPanelHtml, confidenceDotHtml, sortOptionsHtml, visibleColumnCount,
 } from './flipColumns.js';
 import type { ColumnKey } from './flipColumns.js';
-import { FLIP_SORTS } from './types.js';
-import type { FlipItem } from './types.js';
+import { FLIP_SORTS } from '../shared/types.js';
+import type { FlipItem } from '../shared/types.js';
 
 const ROW: FlipItem = {
   id: 4151, name: 'Abyssal whip', members: true, icon: 'whip.png',

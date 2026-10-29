@@ -471,7 +471,7 @@ main {
   flex-wrap: wrap;
 }
 
-/* The search box is the only field in its row on both pages — grow until the
+/* The search box is the only field in its row on both pages - grow until the
    placeholder fits. */
 #itemSearch,
 #flipSearch {
@@ -668,6 +668,10 @@ select:focus-visible {
   #presetToolbar .page-size {
     align-self: flex-end;
   }
+}
+
+.cl-row-part {
+  display: contents;
 }
 
 .cl-filter-sep {
@@ -1134,7 +1138,7 @@ tr:last-child td { border-bottom: none; }
    the app. Combat Achievements (CA system tasks, separate from Combat/Magic)
    gets its own amber/gold hue. A taskId the imported metadata doesn't
    recognize shows "Unknown" in any of the three slots, always in the same
-   neutral dashed style regardless of which dimension it's in — but Unknown
+   neutral dashed style regardless of which dimension it's in - but Unknown
    is never offered as a filter button. */
 .leagues-task-list li span.task-tag {
   display: inline-flex;
@@ -1567,7 +1571,7 @@ th[data-sort].sort-active { color: var(--gold); }
 th[data-sort].sort-asc::after { content: ' \25B2'; }
 th[data-sort].sort-desc::after { content: ' \25BC'; }
 
-/* Boxed filter panel. Avoid display:contents on <details> — browsers treat
+/* Boxed filter panel. Avoid display:contents on <details> - browsers treat
    it as a block and the fields stack in a single column. */
 .filters:has(.filter-drawer) {
   position: relative;

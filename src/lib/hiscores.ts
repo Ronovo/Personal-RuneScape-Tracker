@@ -46,9 +46,6 @@ const BOSSES = [
   'Yama', 'Zalcano', 'Zulrah'
 ];
 
-// index_lite.ws activity line index 0 is an unidentified legacy column
-// (verified: no valid category_type=1&table=0 page exists). Index 1 onward
-// lines up exactly with category_type=1&table=1 onward.
 const ACTIVITY_ORDER: ActivityOrderEntry[] = [
   { name: null, category: 'unknown' },
   { name: 'League Points', category: 'others' },
@@ -78,7 +75,7 @@ const ACTIVITY_ORDER: ActivityOrderEntry[] = [
 const CACHE_TTL_MS = 60 * 1000;
 const cache = new Map<string, { data: HiscoresData; at: number }>();
 
-// Jagex formula — combat level is not in the CSV. Uses the max(melee, range, mage) branch.
+// Jagex formula - combat level is not in the CSV. Uses the max(melee, range, mage) branch.
 // https://oldschool.runescape.wiki/w/Combat_level#Calculating_combat_level
 export function combatLevel(skills: SkillEntry[]): number {
   const lvl = (name: string) => skills.find((s) => s.name === name)?.level ?? 1;
@@ -96,7 +93,7 @@ export function combatLevel(skills: SkillEntry[]): number {
 export function parseHiscoresCsv(text: string, username: string): HiscoresData {
   const lines = text.trim().split('\n').map((l) => l.trim());
   if (lines.length < SKILLS.length) {
-    throw new Error('Unexpected hiscores response format');
+    throw httpError('Unexpected hiscores response format', 502);
   }
 
   const skills: SkillEntry[] = SKILLS.map((name, i) => {

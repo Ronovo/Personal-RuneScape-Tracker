@@ -3,17 +3,17 @@
 
 import { lookupCombatAchievementMeta } from './combatachievementmeta.js';
 import { titleCaseSlug } from './text.js';
-import { requireSection, requireSyncedFile } from './syncedSection.js';
+import { requireSyncedSection } from './syncedSection.js';
+import { loadJsonAsset } from './jsonStore.js';
+
+// The words a combat achievement slug can end in before its index; shared with the metadata scraper.
+const TYPE_TOKENS = new Set(loadJsonAsset<string[]>(import.meta.url, 'combat-achievement-types.json'));
 import type { CombatAchievementTask } from './sync.js';
 import type {
   CombatAchievementData, CombatAchievementGroup, CombatAchievementSummary,
   CombatAchievementTaskView
 } from '../shared/api.js';
 
-export type {
-  CombatAchievementData, CombatAchievementGroup, CombatAchievementSummary,
-  CombatAchievementTaskView
-};
 
 function taskGroupKey(task: string): string {
   const idx = task.indexOf('_');
@@ -27,7 +27,7 @@ function parseTaskPrefix(task: string): string | null {
   const index = Number(parts.at(-1));
   const typeToken = parts.at(-2);
   if (!Number.isInteger(index) || index < 1 || !typeToken) return null;
-  if (!/^(KILLCOUNT|MECHANICAL|PERFECTION|STAMINA|RESTRICTION|SPEED|ACCURACY|FORTITUDE|DURATION|RESTRAINT|PARTNER|SOLO|TRIO|DUO|QUAD|GROUP|RAID|CHALLENGE|TASK|COMBO|DEFENCE|OFFENCE|OFFENSE|FILTER)$/i.test(typeToken)) {
+  if (!TYPE_TOKENS.has(typeToken.toUpperCase())) {
     return null;
   }
   return parts.slice(0, -2).join('_');
@@ -87,9 +87,8 @@ function buildGroups(tasks: CombatAchievementTaskView[]): CombatAchievementGroup
 }
 
 export async function fetchCombatAchievements(username: string): Promise<CombatAchievementData> {
-  const stored = await requireSyncedFile(username, 'No synced combat achievement data for this player.');
-  const snapshot = requireSection(stored.combatAchievements, 'No synced combat achievement data for this player.');
-  requireSection(snapshot.tasks, 'No synced combat achievement data for this player.');
+  const { stored, section: snapshot } = await requireSyncedSection(
+    username, 'combatAchievements', 'No synced combat achievement data for this player.', (ca) => ca.tasks.length === 0);
 
   const tasks = [...snapshot.tasks]
     .map(withTaskView)

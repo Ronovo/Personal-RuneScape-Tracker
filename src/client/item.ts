@@ -3,10 +3,12 @@
 import './chrome.js';
 import {
   fmt, fmtGp, fmtPct, pctClass, fmtAgoSince, agoClass, escapeHtml, fetchJson,
-  errorMessage, safeJsonParse, el, storageGet, storageSet
+  errorMessage, safeJsonParse, el, storageGet, storageSet, latestRequest
 } from './format.js';
 import { render as renderChart } from './chart.js';
-import type { ItemDetail, PriceRange, ApiErrorBody } from './types.js';
+import { PRICE_RANGES } from '../shared/types.js';
+import type { ItemDetail, PriceRange } from '../shared/types.js';
+import type { ApiErrorBody } from '../shared/api.js';
 
 const statusEl = el('status');
 const resultEl = el('result');
@@ -17,13 +19,12 @@ const flipLink = el<HTMLAnchorElement>('flipLink');
 
 const CACHE_TTL_MS = 60 * 1000;
 const RANGE_KEY = 'osrs_item_range';
-const RANGES: PriceRange[] = ['1d', '1w', '1m', '3m', '1y'];
 // Keep the last payload in memory so series toggles can re-draw without a refetch.
 let lastData: ItemDetail | null = null;
 
 function getRange(): PriceRange {
   const stored = storageGet(localStorage, RANGE_KEY);
-  return (RANGES as string[]).includes(stored ?? '') ? (stored as PriceRange) : '1w';
+  return (PRICE_RANGES as readonly string[]).includes(stored ?? '') ? (stored as PriceRange) : '1w';
 }
 
 function setRange(range: PriceRange): void {
@@ -95,7 +96,7 @@ function render(data: ItemDetail): void {
   document.title = `${data.name} - OSRS Tracker`;
   const name = escapeHtml(data.name);
   const examine = escapeHtml(data.examine ?? '');
-  const r = (data.range ?? getRange()).toUpperCase(); // 1D / 1W / 1M / 3M / 1Y
+  const r = data.range.toUpperCase();
 
   resultEl.innerHTML = `
     <div class="item-header">
@@ -136,14 +137,17 @@ function render(data: ItemDetail): void {
       ${tile(fmtGp(data.alchProfit), 'Alch Profit')}
     </div>
 
-    <p class="status">${data.stale ? 'Prices look stale (&gt;30m since a trade) — treat the margin as indicative.' : ''}</p>
+    <p class="status">${data.stale ? 'Prices look stale (&gt;30m since a trade), so treat the margin as indicative.' : ''}</p>
   `;
   resultEl.hidden = false;
   chartSection.hidden = false;
   drawChart(data);
 }
 
+const startLoad = latestRequest();
+
 async function load(): Promise<void> {
+  const isCurrent = startLoad();
   const id = Number(new URLSearchParams(location.search).get('id'));
   if (!Number.isInteger(id) || id <= 0) {
     statusEl.textContent = 'No item specified.';
@@ -169,12 +173,14 @@ async function load(): Promise<void> {
   statusEl.textContent = 'Loading...';
   try {
     const { ok, data } = await fetchJson<ItemDetail & ApiErrorBody>(`/api/ge/item/${id}?range=${range}`);
+    if (!isCurrent()) return;
     if (!ok) throw new Error(data.error || 'Failed to load item');
 
     setCached(id, range, data);
     statusEl.textContent = '';
     render(data);
   } catch (err) {
+    if (!isCurrent()) return;
     statusEl.textContent = errorMessage(err, 'Failed to load item');
     statusEl.classList.add('error');
   }

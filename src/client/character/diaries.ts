@@ -1,6 +1,6 @@
-import { fmt, escapeHtml, syncSetupStepsHtml, fmtSyncedAt } from '../format.js';
-import type { DiaryProgressData, DiaryTier } from '../types.js';
-import { loadSyncedTab } from './context.js';
+import { fmt, escapeHtml, syncHelpHtml, fmtSyncedAt, el } from '../format.js';
+import type { DiaryProgressData, DiaryTier } from '../../shared/api.js';
+import { loadSyncedTab, pillClass } from './context.js';
 import type { CharacterTabContext } from './context.js';
 
 const TIER_LABELS: Record<DiaryTier, string> = {
@@ -10,11 +10,9 @@ const TIER_LABELS: Record<DiaryTier, string> = {
   ELITE: 'Elite',
 };
 
-const DIARY_SYNC_HELP_HTML = `
-  <p><strong>No synced achievement diary data found for this name.</strong> Diary tier completion comes from the Ronovo&apos;s Sync Tool RuneLite plugin:</p>
-  <ol>${syncSetupStepsHtml('Sync Achievement Diary')}
-  </ol>
-  <p>Then search for your name again here.</p>`;
+const DIARY_SYNC_HELP_HTML = syncHelpHtml(
+  '<strong>No synced achievement diary data found for this name.</strong> Diary tier completion comes from the Ronovo&apos;s Sync Tool RuneLite plugin:',
+  'Sync Achievement Diary');
 
 export interface DiariesTabRefs {
   syncHelpEl: HTMLElement;
@@ -27,14 +25,14 @@ let resultEl: HTMLElement;
 let diaryAreasEl: HTMLElement;
 
 function renderDiaries(data: DiaryProgressData): void {
-  document.getElementById('diariesComplete')!.textContent = fmt(data.summary.complete);
-  document.getElementById('diariesTotal')!.textContent = fmt(data.summary.total);
-  document.getElementById('diariesLastSynced')!.textContent = fmtSyncedAt(data.syncedAt);
+  el('diariesComplete').textContent = fmt(data.summary.complete);
+  el('diariesTotal').textContent = fmt(data.summary.total);
+  el('diariesLastSynced').textContent = fmtSyncedAt(data.syncedAt);
 
   diaryAreasEl.innerHTML = data.areas.map((area) => {
     const isKaramjaPartial = area.area === 'KARAMJA' && area.total < 4;
     const tiers = area.tiers.map((tier) => {
-      const cls = tier.complete ? 'cl-pill complete' : 'cl-pill';
+      const cls = pillClass(tier.complete ? 1 : 0, 1);
       return `<span class="${cls}">${TIER_LABELS[tier.tier]}</span>`;
     }).join('');
     const karamjaNote = isKaramjaPartial

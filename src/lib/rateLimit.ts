@@ -31,8 +31,6 @@ export function rateLimit(options: RateLimitOptions): (req: Request, res: Respon
   const hits: HitLog = new Map();
   const { windowMs, max, keyFn } = options;
 
-  // The per-key arrays are pruned on access, but a key that is never hit
-  // again would linger forever. Sweep fully-stale keys once per window;
   // unref() so this timer never keeps the process alive.
   if (max > 0) {
     const sweep = setInterval(() => pruneStale(hits, Date.now(), windowMs), windowMs);

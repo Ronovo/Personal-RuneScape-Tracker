@@ -2,15 +2,12 @@
 // JSON file per username, same layout as sync.ts's leagues snapshots, so the
 // same character sees the same starred items on any device.
 
-import path from 'path';
-import { fileURLToPath } from 'url';
 import { atomicWriteFile } from './atomicWrite.js';
 import { httpError } from './errors.js';
 import { storageKey } from './storageKey.js';
-import { storagePathFor, readJsonOrDefault } from './jsonStore.js';
+import { dataDir, storagePathFor, readJsonOrDefault } from './jsonStore.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const WATCHLIST_DIR = process.env.WATCHLIST_DATA_DIR || path.join(__dirname, '..', '..', 'data', 'watchlist');
+const WATCHLIST_DIR = dataDir('watchlist', 'WATCHLIST_DATA_DIR');
 const MAX_WATCHLIST_ITEMS = 200;
 
 function storagePath(username: string): string {

@@ -1,15 +1,12 @@
 import {
-  fmt, escapeHtml, syncSetupStepsHtml, wireFilterGroup, markNarrowedDimensions
-} from '../format.js';
-import type { QuestProgressData, QuestWithMeta, QuestState } from '../types.js';
+  fmt, escapeHtml, syncHelpHtml, wireFilterGroup, markNarrowedDimensions, el} from '../format.js';
+import type { QuestProgressData, QuestWithMeta, QuestState } from '../../shared/api.js';
 import { loadSyncedTab } from './context.js';
 import type { CharacterTabContext } from './context.js';
 
-const QUEST_SYNC_HELP_HTML = `
-  <p><strong>No synced quest data found for this name.</strong> Quests come from the Ronovo&apos;s Sync Tool RuneLite plugin, not the hiscores:</p>
-  <ol>${syncSetupStepsHtml('Sync Quests or Sync Everything')}
-  </ol>
-  <p>Then search for your name again here.</p>`;
+const QUEST_SYNC_HELP_HTML = syncHelpHtml(
+  '<strong>No synced quest data found for this name.</strong> Quests come from the Ronovo&apos;s Sync Tool RuneLite plugin, not the hiscores:',
+  'Sync Quests or Sync Everything');
 
 type QuestFilter = 'all' | 'complete' | 'in-progress' | 'not-complete';
 
@@ -115,9 +112,9 @@ function markActiveDimensions(): void {
 
 function renderQuests(data: QuestProgressData): void {
   questsData = data.quests;
-  document.getElementById('questsComplete')!.textContent = fmt(data.summary.complete);
-  document.getElementById('questsInProgress')!.textContent = fmt(data.summary.inProgress);
-  document.getElementById('questsNotStarted')!.textContent = fmt(data.summary.notStarted);
+  el('questsComplete').textContent = fmt(data.summary.complete);
+  el('questsInProgress').textContent = fmt(data.summary.inProgress);
+  el('questsNotStarted').textContent = fmt(data.summary.notStarted);
 
   selectQuestFilter('all');
   selectTypeFilter('all');

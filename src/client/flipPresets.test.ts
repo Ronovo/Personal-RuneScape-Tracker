@@ -2,8 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { DEFAULTS, PRESETS, PRESET_NOTES, presetFilters } from './flipPresets.js';
-import type { PresetName } from './flipPresets.js';
-import { FLIP_SORTS } from './types.js';
+import { FLIP_SORTS } from '../shared/types.js';
 
 test('every preset sorts by a key the server accepts', () => {
   for (const [name, preset] of Object.entries(PRESETS)) {
@@ -32,15 +31,6 @@ test('Penny Arcade scans cheap, heavily traded items by throughput', () => {
 
 test('Watchlist adds no filters of its own', () => {
   assert.deepEqual(presetFilters('watchlist'), { ...DEFAULTS });
-});
-
-// The toolbar grid is sized for exactly six presets plus Watchlist, so the key
-// list is pinned.
-test('the preset list is exactly the six scan methods plus Watchlist', () => {
-  assert.ok(!('volume' in PRESETS));
-  assert.ok(!('widening' in PRESETS));
-  const names: PresetName[] = ['penny', 'margin', 'roi', 'gpPerHour', 'composite', 'bankroll', 'watchlist'];
-  assert.deepEqual(Object.keys(PRESETS), names);
 });
 
 // The heading shows this beside the preset name, so it has to stay short - a

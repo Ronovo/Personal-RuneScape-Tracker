@@ -5,6 +5,7 @@
 // by and username boxes can pre-fill themselves.
 
 import { safeJsonParse, fetchJson, apiAuthHeaders, storageGet, storageRemove, storageSet, API_TOKEN_KEY } from './format.js';
+import { loadAuthStatus } from './auth.js';
 
 const CURRENT_USER_KEY = 'osrs_current_user';
 const KNOWN_USERS_KEY = 'osrs_known_users';
@@ -162,7 +163,8 @@ function localBankrolls(): Record<string, SavedBankroll> {
  * server answers 401 and nothing changes.
  */
 export async function syncBankrolls(): Promise<boolean> {
-  if (!storageGet(localStorage, API_TOKEN_KEY)) return false;
+  // Only an account token has bankrolls; a LAN host's browser holds the wildcard token instead.
+  if (!storageGet(localStorage, API_TOKEN_KEY) || (await loadAuthStatus()).mode !== 'public') return false;
   let changed = false;
   try {
     const local = localBankrolls();

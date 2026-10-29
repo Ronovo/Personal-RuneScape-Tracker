@@ -25,7 +25,7 @@ const metadata: CombatAchievementMetadataFile = loadJsonAsset(
 
 const bySlug = new Map(metadata.tasks.map((t) => [t.slug, t]));
 
-/** Null when the varbit slug isn't in the scraped list — usually a game update since the last scrape. */
+/** Null when the varbit slug isn't in the scraped list - usually a game update since the last scrape. */
 export function lookupCombatAchievementMeta(slug: string): CombatAchievementMeta | null {
   return bySlug.get(slug) ?? null;
 }

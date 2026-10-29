@@ -1,12 +1,9 @@
 import { httpError } from './errors.js';
 import { fetchWithUserAgent, makeCacheSlot } from './http.js';
 import { geTax as computeGeTax } from '../shared/getax.js';
-import type {
-  MappingItem, LatestPrices, DayPrices, DayEntry, TimeseriesPoint,
-  PriceRange, MoverItem, MoversOptions, MoversResult,
-  RangeStats, ItemDetail, SearchResult, Confidence, ConfidenceInfo,
-  FlipRow, FlipItem, FlipCandidatesOptions, FlipsResult, MembersFilter
-} from './types.js';
+import type { MappingItem, LatestPrices, DayPrices, DayEntry, MoversOptions, ConfidenceInfo, FlipCandidatesOptions } from './types.js';
+import type { TimeseriesPoint, PriceRange, MoverItem, MoversResult, RangeStats, ItemDetail, SearchResult, Confidence, FlipRow, FlipItem, FlipsResult, MembersFilter } from '../shared/types.js';
+import { wikiImageUrl } from './http.js';
 
 const BASE = 'https://prices.runescape.wiki/api/v1/osrs';
 
@@ -94,11 +91,9 @@ async function get<T>(path: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-function iconUrl(icon: string): string {
-  return `https://oldschool.runescape.wiki/images/${encodeURIComponent(icon.replace(/ /g, '_'))}`;
-}
+const iconUrl = wikiImageUrl;
 
-function clamp(value: number, min: number, max: number): number {
+export function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
 
@@ -313,7 +308,6 @@ async function getJoinedPriceData(): Promise<MoverItem[]> {
       icon: p.icon,
       currentPrice,
       pastPrice,
-      volume: p.volume24h,
       volume24h: p.volume24h,
       pctChange: ((currentPrice - pastPrice) / pastPrice) * 100,
       pctChange1h: past1hPrice ? ((currentPrice - past1hPrice) / past1hPrice) * 100 : null,
@@ -334,23 +328,12 @@ async function getJoinedPriceData(): Promise<MoverItem[]> {
   return joined;
 }
 
-// Filters the joined list and returns rising / falling pages.
-// Rising/Dropping still split on the sign of pctChange, then that subset is
-// sorted by the requested key so volume/margin sorts the whole set, not just the page.
-// High Volume is the same filter+sort over the unsplit list (the client defaults the
-// Sort field to volume). Random owns its own seeded ranking, so Sort is inert there
-// and the client disables the field to say so.
-// sortDir flips the whole comparison rather than being baked into sortValue, so
-// every key gets both directions - the same shape as getFlipCandidates. The
-// client sends 'asc' for Dropping-by-%-change, which is what makes that view
-// lead with the biggest fallers.
-// Profit-ranked scans live on the Flip Helper.
+// Filters the joined list and returns its pages. The client sends 'asc' for
+// Dropping-by-%-change, which is what makes that view lead with the biggest fallers.
 export async function getMovers({
   minVolume = 500,
   minPrice = 50,
   maxPrice = Infinity,
-  minMargin = 0,
-  minRoi = 0,
   maxAgeMinutes = Infinity,
   hideStale = false,
   membersOnly = 'all',
@@ -365,11 +348,9 @@ export async function getMovers({
   const maxAgeSeconds = Number.isFinite(maxAgeMinutes) ? maxAgeMinutes * 60 : Infinity;
 
   const filtered = joined.filter((item) => {
-    if (item.volume < minVolume) return false;
+    if (item.volume24h < minVolume) return false;
     if (item.currentPrice < minPrice) return false;
     if (Number.isFinite(maxPrice) && item.currentPrice > maxPrice) return false;
-    if (minMargin && (item.marginAfterTax == null || item.marginAfterTax < minMargin)) return false;
-    if (minRoi && (item.roi == null || item.roi < minRoi)) return false;
     if (hideStale || Number.isFinite(maxAgeSeconds)) {
       const last = Math.max(item.highTime ?? 0, item.lowTime ?? 0);
       const cutoff = Math.min(hideStale ? STALE_SECONDS : Infinity, maxAgeSeconds);
@@ -381,11 +362,11 @@ export async function getMovers({
 
   function sortValue(item: MoverItem): number {
     switch (sort) {
-      case 'volume': return item.volume24h ?? 0;
-      case 'price': return item.currentPrice ?? 0;
+      case 'volume': return item.volume24h;
+      case 'price': return item.currentPrice;
       case 'marginAfterTax': return item.marginAfterTax ?? -Infinity;
       case 'profitPerLimit': return item.profitPerLimit ?? -Infinity;
-      default: return item.pctChange ?? 0;
+      default: return item.pctChange;
     }
   }
 
@@ -716,7 +697,7 @@ async function getFlipRows(): Promise<FlipRow[]> {
     const avgHigh = p.dayEntry?.avgHighPrice ?? null;
     const avgLow = p.dayEntry?.avgLowPrice ?? null;
     const avgMargin = avgHigh != null && avgLow != null ? avgHigh - avgLow : null;
-    // >>1 means the current spread is much wider than a typical day — often stale/manipulated.
+    // >>1 means the current spread is much wider than a typical day - often stale/manipulated.
     const marginVsAvg = avgMargin && avgMargin > 0 ? margin / avgMargin : null;
     const { confidence, confidenceWhy } = describeConfidence(p.volume24h, p.age, marginVsAvg);
 
@@ -767,7 +748,7 @@ function realisticProfit(row: FlipRow, bankroll: number | null): number | null {
 
 function withBankrollColumns(row: FlipRow, bankroll: number | null): FlipItem {
   const units = affordableUnits(row, bankroll);
-  return units === null ? { ...row } : { ...row, affordableUnits: units, realisticProfit: row.profit * units };
+  return units === null ? { ...row } : { ...row, affordableUnits: units, realisticProfit: realisticProfit(row, bankroll)! };
 }
 
 // Ranked flip scanner. `ids` (watchlist / deep-link) bypasses the filters so
@@ -823,13 +804,13 @@ export async function getFlipCandidates({
       case 'limit': return item.limit ?? -Infinity;
       case 'capital': return item.capital ?? -Infinity;
       case 'age': return item.age ?? -Infinity;
-      case 'profit': return item.profit ?? -Infinity;
+      case 'profit': return item.profit;
       case 'roi': return item.roi ?? -Infinity;
-      case 'volume': return item.volume24h ?? 0;
+      case 'volume': return item.volume24h;
       case 'realisticProfit': return realisticProfit(item, bankroll) ?? item.profitPerLimit ?? -Infinity;
       case 'margin': return item.margin ?? -Infinity;
       case 'marginVsAvg': return item.marginVsAvg ?? -Infinity;
-      case 'score': return item.score ?? -Infinity;
+      case 'score': return item.score;
       case 'gpPerHour': return item.gpPerHour ?? -Infinity;
       case 'confidence': return CONFIDENCE_RANK[item.confidence];
       default: return item.profitPerLimit ?? -Infinity;
@@ -850,7 +831,7 @@ export async function getFlipCandidates({
   // Clamp defensively: a stale page number (e.g. filters just narrowed the
   // result set out from under it) shouldn't come back empty when page 1 has items.
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const clampedPage = Math.min(Math.max(1, page), totalPages);
+  const clampedPage = clamp(page, 1, totalPages);
   const offset = (clampedPage - 1) * pageSize;
 
   return {

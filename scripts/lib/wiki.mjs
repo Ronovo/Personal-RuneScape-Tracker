@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 
 export const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const LIB_DIR = path.join(ROOT, 'src', 'lib');
-export const SYNC_DIR = path.join(ROOT, 'data', 'sync');
+export const SYNC_DIR = process.env.SYNC_DATA_DIR || path.join(ROOT, 'data', 'sync');
 
 export const WIKI = 'https://oldschool.runescape.wiki';
 export const WIKI_API = `${WIKI}/api.php`;

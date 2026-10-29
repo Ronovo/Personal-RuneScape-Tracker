@@ -45,6 +45,4 @@ export const TASK_DIFFICULTIES: string[] = DIFFICULTY_ORDER
   .filter((tier) => metadata.tasks.some((t) => t.difficulty === tier))
   .map(capitalize);
 
-export function displayDifficulty(difficulty: string): string {
-  return capitalize(difficulty);
-}
+

@@ -5,7 +5,8 @@
 // The identity itself, and the watchlist and bankroll keyed by it, live in
 // identity.ts. This module reads that state and re-renders when it changes.
 
-import { errorMessage, escapeHtml } from './format.js';
+import { errorMessage, escapeHtml, el } from './format.js';
+import { foldName } from '../shared/names.js';
 import {
   SESSION_CHANGE_EVENT, clearUsername, emitSessionChange, getKnownUsers, getUsername, setUsername, syncBankrolls
 } from './identity.js';
@@ -29,14 +30,14 @@ export const MOBILE_MQ = window.matchMedia('(max-width: 700px)');
 
 type NavLink = { href: string; label: string; blurb: string; alsoActive?: string[] };
 
-// Single source of truth for header tabs — add new pages here and in public/*.html.
+// Single source of truth for header tabs - add new pages here and in public/*.html.
 // `blurb` is one line describing the tab; the landing page cards are built from
 // it, so a new tab shows up there without touching index.html.
 const NAV_LINKS: NavLink[] = [
   {
     href: 'character.html',
     label: 'Character',
-    blurb: "Look up a player's hiscores — skills, bosses, minigames — plus synced quests, diaries, combat achievements and collection log."
+    blurb: "Look up a player's hiscores - skills, bosses, minigames - plus synced quests, diaries, combat achievements and collection log."
   },
   {
     href: 'leagues.html',
@@ -82,7 +83,7 @@ function mountNav(): void {
 // Landing page only: the same tabs as cards, so there is somewhere to read
 // what each one is for before clicking into it.
 function mountHomeLinks(): void {
-  const host = document.getElementById('homeLinks');
+  const host = el<HTMLElement | null>('homeLinks');
   if (!host) return;
 
   host.innerHTML = NAV_LINKS.map(({ href, label, blurb }) => `
@@ -93,30 +94,26 @@ function mountHomeLinks(): void {
 }
 
 function showAuthMessage(text: string, isError = false): void {
-  const el = document.getElementById('authMessage');
-  if (!el) return;
-  el.hidden = false;
-  el.textContent = text;
-  el.classList.toggle('error', isError);
+  const box = el<HTMLElement | null>('authMessage');
+  if (!box) return;
+  box.hidden = false;
+  box.textContent = text;
+  box.classList.toggle('error', isError);
 }
 
 // LAN posture: the browser already holds the wildcard token (auto-stored from
 // /api/auth/status). This chip just copies it into RuneLite via the shared
 // #authCopyTokenBtn handler wired in wireAccountButtons().
-function mountLanTokenChip(el: HTMLElement): void {
+function mountLanTokenChip(host: HTMLElement): void {
   const wrap = document.createElement('span');
   wrap.className = 'session-token';
   wrap.innerHTML = '<button id="authCopyTokenBtn" type="button">Copy plugin token</button>';
-  el.appendChild(wrap);
-}
-
-function rsnKey(name: string): string {
-  return name.replace(/\u00a0/g, ' ').trim().toLowerCase();
+  host.appendChild(wrap);
 }
 
 function isPlayingAsClaimed(username: string | null): boolean {
   if (!username || !authUser) return false;
-  const key = rsnKey(username);
+  const key = foldName(username);
   return authUser.rsns.some((rsn) => rsn === key);
 }
 
@@ -137,7 +134,7 @@ function flashCopyButton(btn: HTMLButtonElement, text: string, isError: boolean,
   btn.classList.toggle('error', isError);
   copyLabelTimer = window.setTimeout(() => {
     copyLabelTimer = undefined;
-    if (document.getElementById('authCopyTokenBtn') !== btn) return;
+    if (el<HTMLElement | null>('authCopyTokenBtn') !== btn) return;
     btn.textContent = COPY_BTN_LABEL;
     btn.disabled = false;
     btn.classList.remove('error');
@@ -147,7 +144,7 @@ function flashCopyButton(btn: HTMLButtonElement, text: string, isError: boolean,
 function wireAccountButtons(): void {
   clearCopyTimer();
 
-  const copyBtn = document.getElementById('authCopyTokenBtn') as HTMLButtonElement | null;
+  const copyBtn = el<HTMLButtonElement | null>('authCopyTokenBtn');
   copyBtn?.addEventListener('click', () => void (async () => {
     if (copyBtn.disabled) return;
     copyBtn.disabled = true;
@@ -160,7 +157,7 @@ function wireAccountButtons(): void {
     }
   })());
 
-  document.getElementById('authSignOutBtn')?.addEventListener('click', () => {
+  el<HTMLElement | null>('authSignOutBtn')?.addEventListener('click', () => {
     setStoredToken('');
     authUser = null;
     emitSessionChange();
@@ -168,13 +165,13 @@ function wireAccountButtons(): void {
 }
 
 function wireAuthLinks(): void {
-  document.getElementById('authLoginBtn')?.addEventListener('click', () => {
+  el<HTMLElement | null>('authLoginBtn')?.addEventListener('click', () => {
     location.href = 'login.html';
   });
-  document.getElementById('authRegisterBtn')?.addEventListener('click', () => {
+  el<HTMLElement | null>('authRegisterBtn')?.addEventListener('click', () => {
     location.href = 'register.html';
   });
-  const portfolioBtn = document.getElementById('authPortfolioBtn');
+  const portfolioBtn = el<HTMLElement | null>('authPortfolioBtn');
   if (portfolioBtn) wirePortfolioButton(portfolioBtn, authStatus?.portfolioUrl);
 }
 
@@ -209,23 +206,23 @@ function playingAsHtml(username: string | null): string {
 
 function wirePlayingAs(username: string | null): void {
   if (username) {
-    document.getElementById('sessionSwitchBtn')?.addEventListener('click', () => {
+    el<HTMLElement | null>('sessionSwitchBtn')?.addEventListener('click', () => {
       clearUsername();
     });
     return;
   }
 
-  const input = document.getElementById('sessionUsernameInput') as HTMLInputElement | null;
+  const input = el<HTMLInputElement | null>('sessionUsernameInput');
   const submit = () => setUsername(input?.value ?? '');
-  document.getElementById('sessionSetBtn')?.addEventListener('click', submit);
+  el<HTMLElement | null>('sessionSetBtn')?.addEventListener('click', submit);
   input?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') submit();
   });
 }
 
 async function mountSessionBar(): Promise<void> {
-  const el = document.getElementById('sessionBar');
-  if (!el) return;
+  const box = el<HTMLElement | null>('sessionBar');
+  if (!box) return;
 
   authStatus ??= await loadAuthStatus();
   // LAN host: adopt the wildcard token it minted, unless a token is already set.
@@ -251,14 +248,14 @@ async function mountSessionBar(): Promise<void> {
     else authPanel = authLinksHtml(authStatus.portfolio);
   }
 
-  el.innerHTML = [
+  box.innerHTML = [
     identityParts.length ? `<span class="session-identity">${identityParts.join('')}</span>` : '',
     authPanel,
   ].filter(Boolean).join('');
 
   if (showPlayingAs) wirePlayingAs(username);
 
-  if (authStatus.mode === 'lan') mountLanTokenChip(el);
+  if (authStatus.mode === 'lan') mountLanTokenChip(box);
   wireAuthLinks();
   wireAccountButtons();
   if (authNotice) {
@@ -277,7 +274,7 @@ async function mountChrome(): Promise<void> {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  void mountChrome();
+  mountChrome().catch((err) => console.error('[chrome] could not build the page header:', err));
 });
 
 // Anything that changes the identity - here or on a page - re-renders the bar,

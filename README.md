@@ -37,7 +37,7 @@ See [Plugin sync](#plugin-sync) if any of those tabs have no data.
 ### Leagues Tasks
 
 Browse a player's completed tasks from the Leagues Task Plugin, sent to the
-tracker by Ronovo's Sync Tool the same way as Quests and the Collection Log above:
+tracker by Ronovo's Sync Tool the same way as Quests and the Collection Log above.
 
 The Leagues Task Plugin is a fun way to spice up your OSRS journey by completing tasks from a list compiled from all the previous OSRS Leagues events.
 See [Plugin sync](#plugin-sync) if the page has no data.
@@ -94,26 +94,29 @@ whatever that player last synced for them.
 Configure the URL and token first, in the Sync Tool's **Sync Settings** card
 (see [Authentication](#authentication-two-postures-one-token-type)), then from the Sync Tool's sidebar:
 
-- **Sync Tasks** — posts to `/api/sync/tasks` with only your completed league tasks, read from the Leagues Tasks plugin.
-- **Sync Quests** — posts to `/api/sync/quests` with only your quest states.
-- **Sync Collection Log** — there is no sidebar Collection Log button. Open
+- **Sync Tasks** - posts to `/api/sync/tasks` with only your completed league tasks, read from the Leagues Tasks plugin.
+- **Sync Quests** - posts to `/api/sync/quests` with only your quest states.
+- **Sync Collection Log** - there is no sidebar Collection Log button. Open
   the in-game **Collection Log** and click **Sync** in its top-right corner.
   That posts to `/api/sync/collectionlog`. If the log is not open and nothing
   has ever been captured, the Sync Tool tells you to open it first.
-- **Sync Achievement Diary** — posts to `/api/sync/diaries` with only achievement diary tier completion.
-- **Sync Combat Achievements** — posts to `/api/sync/combatachievements` with only combat achievement task completion
+- **Sync Achievement Diary** - posts to `/api/sync/diaries` with only achievement diary tier completion.
+- **Sync Combat Achievements** - posts to `/api/sync/combatachievements` with only combat achievement task completion
   and total CA points.
-- **Sync Everything** — posts to `/api/sync/leagues` with every section in one request. Collection log
+- **Sync Everything** - posts to `/api/sync/leagues` with every section in one request. Collection log
   is included only if it was already captured (open the log and use its Sync
   button first); otherwise that section is omitted so the server keeps the last dump.
 
 A player who has never synced a given section (or is syncing for the first
 time altogether) simply has that section stay empty/absent until a sync
-includes it — no sync ever wipes a section by leaving it out. The same
-protection covers a re-installed plugin that sends an explicit **empty**
-array for completed tasks (its local store has nothing to send yet): that's
-still treated as "nothing to update," not as "clear what's stored," so a
-reinstall can't silently wipe a player's synced history either.
+includes it: no sync ever wipes a section by leaving it out. The same
+protection covers a list section (completed tasks, quests, diaries) sent as an
+explicit **empty** array, as a re-installed plugin does while its local store
+has nothing to send yet: that's still treated as "nothing to update," not as
+"clear what's stored," so a reinstall can't silently wipe a player's synced
+history either. A stored section the server can no longer read (say RuneLite
+added a quest state) is dropped with a warning in the log instead of blocking
+that player's reads and syncs.
 
 ## Run locally
 
@@ -156,17 +159,17 @@ JWT_SECRET=a-long-random-secret LAN_MODE=1 npm start
 The server prints the token on startup:
 
 ```
-LAN mode — stable plugin/browser API token:
+LAN mode - stable plugin/browser API token:
   eyJhbGciOiJIUzI1NiJ9...
 ```
 
-- **Browser** — open the tracker on the LAN host; it stores the token automatically.
-- **RuneLite** — paste the printed token (or click **Copy plugin token** in the header) into Ronovo's Sync Tool's **Sync Settings → API Token**.
+- **Browser** - open the tracker on the LAN host; it stores the token automatically.
+- **RuneLite** - paste the printed token (or click **Copy plugin token** in the header) into Ronovo's Sync Tool's **Sync Settings → API Token**.
 
 The token is the same every restart as long as `JWT_SECRET` is unchanged.
 `SYNC_ALLOWED_USERS=zezima, other` still limits which RSNs it can sync or read.
 
-**Never set `LAN_MODE` on an internet-exposed host** — `GET /api/auth/status`
+**Never set `LAN_MODE` on an internet-exposed host** - `GET /api/auth/status`
 returns the wildcard token to any caller. Use public posture there.
 
 #### Public website
@@ -178,12 +181,12 @@ npm start
 
 Use HTTPS in production. Registration and sign-in are enabled; the wildcard token
 is not mintable. Sign in stores a personal JWT in the browser automatically. The
-app emits `Strict-Transport-Security` on HTTPS responses automatically — set
+app emits `Strict-Transport-Security` on HTTPS responses automatically - set
 `TRUST_PROXY=1` so it fires when TLS is terminated at a reverse proxy.
 
 Each player:
 
-1. Opens the tracker and uses **Sign in** / **Register** in the header (Playing as is hidden until then). Accounts are a username and password, plus a security question picked when registering; **Forgot password?** resets the password with its answer, and a reset stops every token issued before it.
+1. Opens the tracker and uses **Sign in** / **Register** in the header (Playing as is hidden until then). Accounts are a username (3-20 letters, numbers, `_` or `-`) and password, plus a security question picked when registering; **Forgot password?** resets the password with its answer, and a reset stops every token issued before it. Usernames are public: registering says when one is taken, and **Forgot password?** says when there is no such account.
 2. Clicks **Copy plugin token** and pastes it into Ronovo's Sync Tool's **Sync Settings → API Token** in RuneLite
 3. Logs into OSRS and syncs. The first sync binds that Jagex account and claims the character name. Alts on the same Jagex account claim automatically when you sync them with the same token. A different Jagex account needs a different site login.
 
@@ -195,11 +198,11 @@ new one named after the portfolio username, with a number added if that name is 
 login from any device opens the linked account. A new account has no password of its own, so the portfolio is
 the only way into it. Without those two settings the app runs on its own.
 
-That JWT is scoped to RSNs bound this way — syncing or reading another player's data returns 403. Tokens last ~90 days; sign in again and copy a fresh one from **Copy plugin token**. Playing as only chooses whose data you are viewing; it does not grab a name.
+That JWT is scoped to RSNs bound this way - syncing or reading another player's data returns 403. Tokens last ~90 days; sign in again and copy a fresh one from **Copy plugin token**. Playing as only chooses whose data you are viewing; it does not grab a name.
 
 **RSN ownership is first-come-first-served.** Sync binds a character name using
 the `accountHash` in the request body, which the RuneLite plugin derives from
-the logged-in Jagex account — but the server has no Jagex-side proof of
+the logged-in Jagex account - but the server has no Jagex-side proof of
 ownership. A direct API caller could bind an *unclaimed* name to their own
 login; the real owner would then get a 403 until an admin deletes
 `data/users/rsn-claims/<rsn>.json` (and the `hash-claims` / user record
@@ -208,18 +211,19 @@ tradeoff; a future version may cross-check the name against Jagex hiscores.
 
 #### Ronovo's Sync Tool settings (both postures)
 
-- **Server URL** — base URL only (`http://localhost:4123` or `https://your-host`). Only `http://` and `https://` are accepted.
-- **API Token** — the value from **Copy plugin token** in the tracker header (the printed token on a LAN host; a personal token after sign-in on a public host)
+- **Server URL** - base URL only (`http://localhost:4123` or `https://your-host`). Only `http://` and `https://` are accepted.
+- **API Token** - the value from **Copy plugin token** in the tracker header (the printed token on a LAN host; a personal token after sign-in on a public host)
 
 Hiscores and Grand Exchange stay public. Character plugin tabs, Leagues Tasks, and Flip watchlist require auth when `JWT_SECRET` is configured.
 
 Optional hardening:
 
-- `RATE_LIMIT_MAX` / `RATE_LIMIT_WINDOW_MS` — in-process cap on `/api/*` (default 120/min per IP). Set `RATE_LIMIT_MAX=0` to disable.
-- `AUTH_RATE_LIMIT_MAX` / `AUTH_RATE_LIMIT_WINDOW_MS` — stricter cap on every `/api/auth/*` credential route (default 10/min). Each request counts once per IP, route and submitted username, and once per route and username alone, so guesses at one account spread over many addresses still hit the cap.
-- `TRUST_PROXY` — set to `1` (or a preset like `loopback`) **only** when a reverse proxy actually terminates connections in front of the app. It makes rate limiting key on the real client IP and lets HSTS fire behind the proxy. Leave it unset for a direct LAN host — trusting `X-Forwarded-For` when nothing sets it lets clients spoof their IP.
-- `WIKI_API_CONTACT` — contact string added to the outbound User-Agent on OSRS Wiki API calls. Defaults to the project repo URL.
-- Security headers: `nosniff`, `X-Frame-Options: DENY`, CSP (wiki icons only cross-origin), and `Strict-Transport-Security` on any response served over HTTPS.
+- `RATE_LIMIT_MAX` / `RATE_LIMIT_WINDOW_MS` - in-process cap on `/api/*` (default 120/min per IP). Set `RATE_LIMIT_MAX=0` to disable.
+- `AUTH_RATE_LIMIT_MAX` / `AUTH_RATE_LIMIT_WINDOW_MS` - stricter cap on every `/api/auth/*` credential route (default 10/min). Each request counts once per IP, route and submitted username, and once per route and username alone, so guesses at one account spread over many addresses still hit the cap.
+- `TRUST_PROXY` - set to `1` (or a preset like `loopback`) **only** when a reverse proxy actually terminates connections in front of the app. It makes rate limiting key on the real client IP and lets HSTS fire behind the proxy. Leave it unset for a direct LAN host - trusting `X-Forwarded-For` when nothing sets it lets clients spoof their IP.
+- `WIKI_API_CONTACT` - contact string added to the outbound User-Agent on OSRS Wiki API calls. Defaults to the project repo URL.
+- `SYNC_DATA_DIR` / `WATCHLIST_DATA_DIR` / `USERS_DATA_DIR`: where synced player files, Flip Helper watchlists and accounts are kept. Default to `data/sync`, `data/watchlist` and `data/users`.
+- Security headers: `nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, `X-DNS-Prefetch-Control: off`, a CSP that allows wiki icons and, with portfolio login on, the portfolio's origin for `/sso/me`, and `Strict-Transport-Security` on any response served over HTTPS.
 
 ## API
 
@@ -229,7 +233,7 @@ configured. Sync POSTs always require it.
 Every `/api` response is JSON, including errors: `{ "error": "..." }` with the
 status code. An unexpected server error sends the generic `Internal error`, so internal text
 (filesystem paths, parser messages) never reaches a client; a failed call to the Wiki or Jagex
-says which upstream request failed (501/502).
+says which upstream request failed (502).
 
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
@@ -239,7 +243,6 @@ says which upstream request failed (501/502).
 | POST | `/api/auth/login` | none | Sign in, returns personal JWT (public posture only) |
 | POST | `/api/auth/token` | JWT bearer (public) / none (LAN) | Mint a plugin token |
 | GET | `/api/auth/me` | JWT bearer | Current account + claimed RSNs |
-| POST | `/api/auth/security-question` | JWT bearer | Set the account's security question |
 | POST | `/api/auth/reset-question` | none | The security question for a username |
 | POST | `/api/auth/reset-password` | none | New password, given the security answer |
 | POST | `/api/auth/portfolio` | none | Trade the one-time code from a portfolio login for a JWT |
@@ -299,16 +302,16 @@ code it already has.
 | `BUILD_CMD` | Runs after pulling a commit that hasn't been built yet | `npm ci`, `npm run build`, test files removed |
 
 The image sets `NODE_ENV=production`. Outside Docker, set it too on any host
-that is not a local dev box — the app has its own JSON error handler, but
+that is not a local dev box - the app has its own JSON error handler, but
 `NODE_ENV` is what stops Express's fallback from ever adding a stack trace.
 
 `docker logs osrs-tracker` shows the printed LAN token. Drop `LAN_MODE=1` for a
 public host (accounts instead of a shared token).
 
-The `-v` flag keeps player data — synced tasks, quests, collection log, and
-Flip Helper watchlists — in a named Docker volume, outside the container.
+The `-v` flag keeps player data - synced tasks, quests, collection log, and
+Flip Helper watchlists - in a named Docker volume, outside the container.
 Without it, all of it lives only inside the container and is lost the next
-time it's removed — including by the update steps below.
+time it's removed - including by the update steps below.
 
 To rebuild a checked-out copy after pulling updates:
 
@@ -341,21 +344,21 @@ npm run import:leagues -- <path>   # Refresh leagues-task-metadata.json from the
 ## Data sources
 
 - [Jagex Hiscores](https://secure.runescape.com/m=hiscore_oldschool/) for character data
-- The Ronovo's Sync Tool RuneLite plugin for quests, achievement diaries, combat achievements and the collection log, and for league tasks completed in the Leagues Task Randomizer plugin
+- The Ronovo's Sync Tool RuneLite plugin for quests, achievement diaries, combat achievements and the collection log, and for league tasks completed in the Leagues Task Plugin
 - [OSRS Wiki Real-time Prices](https://oldschool.runescape.wiki/w/RuneScape:Real-time_Prices) for Grand Exchange data
 - [OSRS Wiki](https://oldschool.runescape.wiki/) for collection log item icons
 
 These services are public and keyless; no API keys are required.
 
 The two bundled fonts (Cinzel and Rubik, subset to latin) are self-hosted under
-SIL OFL 1.1 — see [public/fonts/README.md](public/fonts/README.md) and the
+SIL OFL 1.1 - see [public/fonts/README.md](public/fonts/README.md) and the
 `OFL-*.txt` licence files beside them.
 
 ## Security
 
-Report vulnerabilities privately — see [SECURITY.md](SECURITY.md).
+Report vulnerabilities privately - see [SECURITY.md](SECURITY.md).
 
 ## License
 
-BSD 2-Clause — see [LICENSE](LICENSE).
+BSD 2-Clause - see [LICENSE](LICENSE).
 

@@ -1,13 +1,12 @@
 // Collection log contents aren't exposed by any official Jagex API - the
 // OSRS hiscores only give a single aggregate "Collections Logged" count.
-// This reads the snapshot the Ronovo's Sync Tool RuneLite plugin uploads to
-// /api/sync/leagues instead, captured while the in-game interface is open.
-// The game only reports which slots are filled, not duplicate quantities,
-// so every item here has a count of 1 (obtained) or 0.
+// This reads the snapshot the Ronovo's Sync Tool RuneLite plugin uploads
+// (POST /api/sync/collectionlog or /api/sync/leagues), captured while the
+// in-game interface is open.
 
-import { httpError } from './errors.js';
-import { requireSyncedFile } from './syncedSection.js';
+import { requireSyncedSection } from './syncedSection.js';
 import { loadJsonAsset } from './jsonStore.js';
+import { wikiImageUrl } from './http.js';
 import type {
   CollectionCategory, CollectionGroup, CollectionLogData
 } from '../shared/api.js';
@@ -28,16 +27,12 @@ const { auto: AUTO_NAME_CONVERSION, manual: MANUAL_NAME_CONVERSION } = loadJsonA
 }>(import.meta.url, 'image_name_conversion.json').image_name_conversion;
 
 function iconUrl(itemName: string): string {
-  const resolvedName = MANUAL_NAME_CONVERSION[itemName] || AUTO_NAME_CONVERSION[itemName] || itemName;
-  return `https://oldschool.runescape.wiki/images/${encodeURIComponent(resolvedName.replace(/ /g, '_'))}.png`;
+  return wikiImageUrl(`${MANUAL_NAME_CONVERSION[itemName] || AUTO_NAME_CONVERSION[itemName] || itemName}.png`);
 }
 
 export async function fetchCollectionLog(username: string): Promise<CollectionLogData> {
-  const stored = await requireSyncedFile(username, 'No synced collection log found for this player.');
-  const snapshot = stored.collectionLog;
-  if (!snapshot) {
-    throw httpError('No synced collection log found for this player.', 404);
-  }
+  const { stored, section: snapshot } = await requireSyncedSection(
+    username, 'collectionLog', 'No synced collection log found for this player.', (log) => log.groups.length === 0);
 
   const groups: CollectionGroup[] = snapshot.groups.map((group) => ({
     group: group.group,

@@ -3,10 +3,11 @@ import type { Request, Response, NextFunction, Express } from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { fetchHiscores } from './hiscores.js';
-import { getMovers, searchItems, getItemDetail, getFlipCandidates, normalizeRange } from './prices.js';
+import { clamp, getMovers, searchItems, getItemDetail, getFlipCandidates, normalizeRange } from './prices.js';
 import { fetchCollectionLog } from './collectionlog.js';
-import { acceptLeaguesSync, acceptSectionSync, requirePlayerDataAuth, assertAllowedUsername } from './sync.js';
+import { acceptLeaguesSync, acceptSectionSync, assertAllowedUsername } from './sync.js';
 import type { SyncSection } from './sync.js';
+import { requirePlayerDataAuth } from './auth.js';
 import {
   authBankrolls, authLogin, authMe, authMintToken, authRegister, authResetPassword, authResetQuestion,
   authStatus,
@@ -18,8 +19,9 @@ import { fetchCombatAchievements } from './combatachievements.js';
 import { fetchLeaguesTasks } from './leaguetasks.js';
 import { loadWatchlist, saveWatchlist } from './watchlist.js';
 import { errorStatus, errorMessage, isHttpError } from './errors.js';
-import { FLIP_SORTS } from './types.js';
-import type { MembersFilter, MoversSort, SortDir, GeView } from './types.js';
+import { FLIP_SORTS, GE_VIEWS, MEMBERS_FILTERS } from '../shared/types.js';
+import type { SortDir } from '../shared/types.js';
+import { MOVERS_SORTS } from './types.js';
 import { securityHeaders } from './securityHeaders.js';
 import { loadJsonAsset } from './jsonStore.js';
 import { apiRateLimit, authRateLimit } from './rateLimit.js';
@@ -52,12 +54,9 @@ function whitelisted<T>(value: unknown, allowed: readonly T[], fallback: T): T {
   return allowed.includes(value as T) ? (value as T) : fallback;
 }
 
-const MEMBERS_FILTERS: MembersFilter[] = ['all', 'members', 'f2p'];
-const MOVERS_SORTS: MoversSort[] = ['pctChange', 'volume', 'price', 'marginAfterTax', 'profitPerLimit'];
-const GE_VIEWS: GeView[] = ['risers', 'fallers', 'volume', 'random'];
 const PAGE_SIZES = [5, 10, 25, 50];
 
-function membersFilter(value: unknown): MembersFilter {
+function membersFilter(value: unknown): (typeof MEMBERS_FILTERS)[number] {
   return whitelisted(value, MEMBERS_FILTERS, 'all');
 }
 
@@ -67,20 +66,6 @@ function membersFilter(value: unknown): MembersFilter {
 // list, which then gets searched for or parsed as if the caller meant it.
 function queryString(value: unknown): string {
   return typeof value === 'string' ? value : '';
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
-}
-
-// Runs an async handler and passes a rejection to jsonErrors() below, which
-// also shapes errors thrown by middleware.
-function asyncHandler(
-  handler: (req: Request, res: Response) => Promise<void>
-): (req: Request, res: Response, next: NextFunction) => void {
-  return (req, res, next) => {
-    handler(req, res).catch(next);
-  };
 }
 
 // body-parser tags its own failures; without this they reach the client as
@@ -95,8 +80,7 @@ function bodyParserError(err: unknown): { status: number; message: string } | nu
 // The single place an error becomes a response. Registered last, so it also
 // catches middleware that throws before any route runs - Express's own
 // fallback would answer those with an HTML page carrying a stack trace.
-// Exported so its branches can be tested directly: appending a throwing route
-// to a built app would land after this handler and never reach it.
+// Express 5 passes a rejected async handler's error here too.
 export function jsonErrors(err: unknown, _req: Request, res: Response, next: NextFunction): void {
   if (res.headersSent) {
     next(err);
@@ -157,41 +141,31 @@ export function createApp(): Express {
   app.use('/api', apiRateLimit());
 
   const authLimiter = authRateLimit();
-  app.get('/api/auth/status', asyncHandler(authStatus));
-  app.post('/api/auth/register', authLimiter, asyncHandler(authRegister));
-  app.post('/api/auth/login', authLimiter, asyncHandler(authLogin));
-  app.post('/api/auth/token', authLimiter, asyncHandler(authMintToken));
-  app.get('/api/auth/me', asyncHandler(authMe));
-  app.post('/api/auth/portfolio', authLimiter, asyncHandler(authPortfolio));
+  app.get('/api/auth/status', authStatus);
+  app.post('/api/auth/register', authLimiter, authRegister);
+  app.post('/api/auth/login', authLimiter, authLogin);
+  app.post('/api/auth/token', authLimiter, authMintToken);
+  app.get('/api/auth/me', authMe);
+  app.post('/api/auth/portfolio', authLimiter, authPortfolio);
   app.post('/api/auth/portfolio/pending', authLimiter, authPortfolioPending);
-  app.post('/api/auth/portfolio/link', authLimiter, asyncHandler(authPortfolioLink));
-  app.post('/api/auth/portfolio/new', authLimiter, asyncHandler(authPortfolioNew));
-  app.post('/api/auth/bankrolls', asyncHandler(authBankrolls));
-  app.post('/api/auth/reset-question', authLimiter, asyncHandler(authResetQuestion));
-  app.post('/api/auth/reset-password', authLimiter, asyncHandler(authResetPassword));
+  app.post('/api/auth/portfolio/link', authLimiter, authPortfolioLink);
+  app.post('/api/auth/portfolio/new', authLimiter, authPortfolioNew);
+  app.post('/api/auth/bankrolls', authBankrolls);
+  app.post('/api/auth/reset-question', authLimiter, authResetQuestion);
+  app.post('/api/auth/reset-password', authLimiter, authResetPassword);
   app.get('/sso/login', ssoLogin);
-  app.post('/sso/callback', express.urlencoded({ extended: false, limit: '16kb' }), asyncHandler(ssoCallback));
+  app.post('/sso/callback', express.urlencoded({ extended: false, limit: '16kb' }), ssoCallback);
 
-  app.get('/api/hiscores/:username', asyncHandler(async (req, res) => {
+  app.get('/api/hiscores/:username', async (req, res) => {
     const data = await fetchHiscores(String(req.params.username));
     res.json(data);
-  }));
-
-  // Collection log, read from the Ronovo's Sync Tool plugin sync. 404 if the player hasn't synced.
-  app.get('/api/collectionlog/:username', asyncHandler(async (req, res) => {
-    const username = String(req.params.username);
-    await playerDataAuth(req, username);
-    const data = await fetchCollectionLog(username);
-    res.json(data);
-  }));
+  });
 
   // 24h risers/fallers. Enums are whitelisted; empty maxPrice means no cap.
-  app.get('/api/ge/movers', asyncHandler(async (req, res) => {
+  app.get('/api/ge/movers', async (req, res) => {
     const minVolume = num(req.query.minVolume, 500);
     const minPrice = num(req.query.minPrice, 50);
     const maxPrice = numOrFallback(req.query.maxPrice, Infinity);
-    const minMargin = num(req.query.minMargin, 0);
-    const minRoi = num(req.query.minRoi, 0);
     const maxAgeMinutes = numOrFallback(req.query.maxAgeMinutes, Infinity);
     const hideStale = req.query.hideStale === '1' || req.query.hideStale === 'true';
     const membersOnly = membersFilter(req.query.membersOnly);
@@ -201,13 +175,13 @@ export function createApp(): Express {
     const view = whitelisted(req.query.view, GE_VIEWS, 'risers');
     const seed = typeof req.query.seed === 'string' ? req.query.seed.slice(0, 64) : '';
     const data = await getMovers({
-      minVolume, minPrice, maxPrice, minMargin, minRoi, maxAgeMinutes, hideStale, membersOnly, sort, sortDir, limit, view, seed
+      minVolume, minPrice, maxPrice, maxAgeMinutes, hideStale, membersOnly, sort, sortDir, limit, view, seed
     });
     res.json(data);
-  }));
+  });
 
   // Item detail. Unknown range values fall back to 1w via normalizeRange.
-  app.get('/api/ge/item/:id', asyncHandler(async (req, res) => {
+  app.get('/api/ge/item/:id', async (req, res) => {
     const id = Number(req.params.id);
     if (!Number.isInteger(id)) {
       res.status(400).json({ error: 'Invalid item id' });
@@ -215,18 +189,18 @@ export function createApp(): Express {
     }
     const data = await getItemDetail(id, normalizeRange(req.query.range));
     res.json(data);
-  }));
+  });
 
-  app.get('/api/ge/search', asyncHandler(async (req, res) => {
+  app.get('/api/ge/search', async (req, res) => {
     const results = await searchItems(queryString(req.query.q), membersFilter(req.query.membersOnly),
       clamp(num(req.query.limit, 25), 1, 50));
     res.json(results);
-  }));
+  });
 
-  app.post('/api/sync/leagues', asyncHandler(async (req, res) => {
+  app.post('/api/sync/leagues', async (req, res) => {
     await acceptLeaguesSync(req);
     res.status(200).json({ ok: true });
-  }));
+  });
 
   const SECTION_ROUTES: { path: string; section: SyncSection }[] = [
     { path: '/api/sync/tasks', section: 'completedTasks' },
@@ -236,42 +210,30 @@ export function createApp(): Express {
     { path: '/api/sync/combatachievements', section: 'combatAchievements' },
   ];
   for (const { path: routePath, section } of SECTION_ROUTES) {
-    app.post(routePath, asyncHandler(async (req, res) => {
+    app.post(routePath, async (req, res) => {
       await acceptSectionSync(req, section);
       res.status(200).json({ ok: true });
-    }));
+    });
   }
 
-  app.get('/api/quests/:username', asyncHandler(async (req, res) => {
-    const username = String(req.params.username);
-    await playerDataAuth(req, username);
-    const data = await fetchQuestProgress(username);
-    res.json(data);
-  }));
-
-  app.get('/api/diaries/:username', asyncHandler(async (req, res) => {
-    const username = String(req.params.username);
-    await playerDataAuth(req, username);
-    const data = await fetchDiaryProgress(username);
-    res.json(data);
-  }));
-
-  app.get('/api/combatachievements/:username', asyncHandler(async (req, res) => {
-    const username = String(req.params.username);
-    await playerDataAuth(req, username);
-    const data = await fetchCombatAchievements(username);
-    res.json(data);
-  }));
-
-  app.get('/api/leagues/:username', asyncHandler(async (req, res) => {
-    const username = String(req.params.username);
-    await playerDataAuth(req, username);
-    const data = await fetchLeaguesTasks(username);
-    res.json(data);
-  }));
+  // A player's synced data, read from the Ronovo's Sync Tool plugin sync. 404 if the player hasn't synced it.
+  const PLAYER_ROUTES: { path: string; fetch: (username: string) => Promise<unknown> }[] = [
+    { path: '/api/collectionlog/:username', fetch: fetchCollectionLog },
+    { path: '/api/quests/:username', fetch: fetchQuestProgress },
+    { path: '/api/diaries/:username', fetch: fetchDiaryProgress },
+    { path: '/api/combatachievements/:username', fetch: fetchCombatAchievements },
+    { path: '/api/leagues/:username', fetch: fetchLeaguesTasks },
+  ];
+  for (const { path: routePath, fetch } of PLAYER_ROUTES) {
+    app.get(routePath, async (req, res) => {
+      const username = String(req.params.username);
+      await playerDataAuth(req, username);
+      res.json(await fetch(username));
+    });
+  }
 
   // Flip Helper scanner. `ids` bypasses filters (watchlist / GE deep-link).
-  app.get('/api/ge/flips', asyncHandler(async (req, res) => {
+  app.get('/api/ge/flips', async (req, res) => {
     const minVolume = num(req.query.minVolume, 0);
     const minPrice = num(req.query.minPrice, 0);
     const maxPrice = numOrFallback(req.query.maxPrice, Infinity);
@@ -285,7 +247,7 @@ export function createApp(): Express {
     const sortDir: SortDir = req.query.sortDir === 'asc' ? 'asc' : 'desc';
     const pageSizeRaw = num(req.query.pageSize, 50);
     const pageSize = whitelisted(pageSizeRaw, PAGE_SIZES, 50);
-    const page = Math.max(1, num(req.query.page, 1));
+    const page = Math.max(1, Math.floor(num(req.query.page, 1)));
     const idsParam = queryString(req.query.ids);
     const ids = idsParam ? idsParam.split(',').map(Number).filter(Number.isInteger) : null;
     const maxCapital = numOrFallback(req.query.maxCapital, null);
@@ -295,23 +257,23 @@ export function createApp(): Express {
       membersOnly, bankroll, sort, sortDir, page, pageSize, ids, maxCapital, name
     });
     res.json(data);
-  }));
+  });
 
   // Flip Helper watchlist, keyed by character name. Same bearer token as the
   // player GETs above: required once JWT_SECRET is set, open on a guest host.
-  app.get('/api/watchlist/:username', asyncHandler(async (req, res) => {
+  app.get('/api/watchlist/:username', async (req, res) => {
     const username = String(req.params.username);
     await playerDataAuth(req, username);
     const itemIds = await loadWatchlist(username);
     res.json({ itemIds });
-  }));
+  });
 
-  app.put('/api/watchlist/:username', asyncHandler(async (req, res) => {
+  app.put('/api/watchlist/:username', async (req, res) => {
     const username = String(req.params.username);
     await playerDataAuth(req, username);
     const itemIds = await saveWatchlist(username, req.body?.itemIds);
     res.json({ itemIds });
-  }));
+  });
 
   // Anything under /api that no route above matched is a client error, not a
   // static file. Without this it falls through to express.static, misses, and

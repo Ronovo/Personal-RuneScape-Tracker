@@ -1,13 +1,12 @@
-import { fmt, escapeHtml, fmtSyncedAt, syncSetupStepsHtml } from '../format.js';
-import type { CollectionLogData, CollectionGroup, CollectionCategory } from '../types.js';
-import { loadSyncedTab, progressClass } from './context.js';
+import { fmt, escapeHtml, fmtSyncedAt, syncHelpHtml, wireFilterGroup, el } from '../format.js';
+import type { CollectionLogData, CollectionGroup, CollectionCategory } from '../../shared/api.js';
+import { loadSyncedTab, pillClass, progressClass } from './context.js';
 import type { CharacterTabContext } from './context.js';
 
-const CL_SYNC_HELP_HTML = `
-  <p><strong>No synced collection log found for this name.</strong> Unlike quests and tasks, the log can only be read while its interface is open:</p>
-  <ol>${syncSetupStepsHtml('the in-game Collection Log Sync button (open the log first — there is no sidebar Collection Log button)')}
-  </ol>
-  <p>Once you've synced, search for your name again here.</p>`;
+const CL_SYNC_HELP_HTML = syncHelpHtml(
+  '<strong>No synced collection log found for this name.</strong> Unlike quests and tasks, the log can only be read while its interface is open:',
+  'the in-game Collection Log Sync button (open the log first; there is no sidebar Collection Log button)',
+  "Once you've synced, search for your name again here.");
 
 type ProgressFilter = 'all' | 'not-started' | 'started' | 'complete';
 
@@ -29,7 +28,8 @@ export interface CollectionLogTabRefs {
 
 let syncHelpEl: HTMLElement;
 let resultEl: HTMLElement;
-let groupTabsEl: HTMLElement;
+let groupButtonsEl: HTMLElement;
+let selectFilter: (filter: ProgressFilter) => void;
 let groupsEl: HTMLElement;
 let gridTitleEl: HTMLElement;
 let itemGridEl: HTMLElement;
@@ -54,55 +54,35 @@ function renderGroupPills(groupName: string): void {
     groupsEl.innerHTML = '<p class="status">No categories match this filter.</p>';
     return;
   }
-  groupsEl.innerHTML = categories.map((c) => {
-    const progress = progressClass(c.obtained, c.total);
-    const cls = progress ? `cl-pill ${progress}` : 'cl-pill';
-    return `<button class="${cls}" data-key="${escapeHtml(c.key)}">${escapeHtml(c.name)} <span class="cl-count">${c.obtained}/${c.total}</span></button>`;
-  }).join('');
-}
-
-function syncCollectionTabActive(): void {
-  groupTabsEl.querySelectorAll<HTMLButtonElement>('button[data-group]').forEach((b) => {
-    b.classList.toggle('active', b.dataset.group === selectedGroup);
-  });
-  groupTabsEl.querySelectorAll<HTMLButtonElement>('button[data-filter]').forEach((b) => {
-    b.classList.toggle('active', b.dataset.filter === progressFilter);
-  });
+  groupsEl.innerHTML = categories.map((c) =>
+    `<button class="${pillClass(c.obtained, c.total)}" data-key="${escapeHtml(c.key)}">${escapeHtml(c.name)} <span class="cl-count">${c.obtained}/${c.total}</span></button>`
+  ).join('');
 }
 
 function selectGroupTab(groupName: string): void {
   selectedGroup = groupName;
-  syncCollectionTabActive();
+  groupButtonsEl.querySelectorAll<HTMLButtonElement>('button').forEach((b) => {
+    b.classList.toggle('active', b.dataset.group === selectedGroup);
+  });
   renderGroupPills(groupName);
-}
-
-function selectProgressFilter(filter: ProgressFilter): void {
-  progressFilter = filter;
-  syncCollectionTabActive();
-  renderGroupPills(selectedGroup);
 }
 
 function setGroups(groups: CollectionGroup[]): void {
   groupsData = groups;
   categoriesByKey = new Map();
   groups.forEach((g) => g.categories.forEach((c) => categoriesByKey.set(c.key, c)));
-  progressFilter = 'all';
-
-  const groupButtons = groups.map((g, i) => `
-    <button data-group="${escapeHtml(g.group)}" class="${i === 0 ? 'active' : ''}">${escapeHtml(g.group)}</button>
-  `);
-  const filterButtons = CL_FILTER_TABS.map((f) => `
-    <button data-filter="${f.key}">${f.label}</button>
-  `);
-  groupTabsEl.innerHTML = [...groupButtons, '<span class="cl-filter-sep" aria-hidden="true"></span>', ...filterButtons].join('');
-
-  selectGroupTab(groups[0]!.group);
+  groupButtonsEl.innerHTML = groups
+    .map((g) => `<button data-group="${escapeHtml(g.group)}">${escapeHtml(g.group)}</button>`)
+    .join('');
+  selectedGroup = groups[0]!.group;
+  selectFilter('all');
+  selectGroupTab(selectedGroup);
 }
 
 function renderCategoryGrid(category: CollectionCategory): void {
   gridTitleEl.textContent = `${category.name} (${category.obtained}/${category.total})`;
 
-  document.querySelectorAll<HTMLButtonElement>('.cl-pill').forEach((b) => b.classList.toggle('active', b.dataset.key === category.key));
+  groupsEl.querySelectorAll<HTMLButtonElement>('.cl-pill').forEach((b) => b.classList.toggle('active', b.dataset.key === category.key));
 
   itemGridEl.innerHTML = category.items.map((item) => `
     <div class="cl-slot ${item.count > 0 ? 'obtained' : 'missing'}">
@@ -117,19 +97,21 @@ function renderCategoryGrid(category: CollectionCategory): void {
 export function initCollectionLogTab(refs: CollectionLogTabRefs): void {
   syncHelpEl = refs.syncHelpEl;
   resultEl = refs.resultEl;
-  groupTabsEl = refs.groupTabsEl;
   groupsEl = refs.groupsEl;
   gridTitleEl = refs.gridTitleEl;
   itemGridEl = refs.itemGridEl;
 
-  groupTabsEl.addEventListener('click', (e) => {
-    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('button');
-    if (!btn) return;
-    if (btn.dataset.filter) {
-      selectProgressFilter(btn.dataset.filter as ProgressFilter);
-      return;
-    }
-    if (btn.dataset.group) selectGroupTab(btn.dataset.group);
+  // Group buttons and progress filters share one row, split by a separator.
+  refs.groupTabsEl.innerHTML =
+    '<span class="cl-row-part"></span><span class="cl-filter-sep" aria-hidden="true"></span><span class="cl-row-part"></span>';
+  const [groupPart, filterPart] = refs.groupTabsEl.querySelectorAll<HTMLElement>('.cl-row-part');
+  groupButtonsEl = groupPart!;
+  selectFilter = wireFilterGroup(filterPart!, CL_FILTER_TABS, (key) => { progressFilter = key; },
+    () => renderGroupPills(selectedGroup)).select;
+
+  groupButtonsEl.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-group]');
+    if (btn?.dataset.group) selectGroupTab(btn.dataset.group);
   });
 
   groupsEl.addEventListener('click', (e) => {
@@ -141,9 +123,9 @@ export function initCollectionLogTab(refs: CollectionLogTabRefs): void {
 }
 
 function renderCollectionLog(data: CollectionLogData): void {
-  document.getElementById('itemsObtained')!.textContent = `${fmt(data.itemsObtained)} / ${fmt(data.itemsAvailable)}`;
-  document.getElementById('categoriesFinished')!.textContent = `${fmt(data.categoriesFinished)} / ${fmt(data.categoriesAvailable)}`;
-  document.getElementById('lastSynced')!.textContent = fmtSyncedAt(data.syncedAt);
+  el('itemsObtained').textContent = `${fmt(data.itemsObtained)} / ${fmt(data.itemsAvailable)}`;
+  el('categoriesFinished').textContent = `${fmt(data.categoriesFinished)} / ${fmt(data.categoriesAvailable)}`;
+  el('lastSynced').textContent = fmtSyncedAt(data.syncedAt);
 
   setGroups(data.groups);
 

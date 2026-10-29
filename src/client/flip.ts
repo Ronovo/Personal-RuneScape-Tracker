@@ -2,15 +2,16 @@
 
 import {
   fmtGp, fmtPct, escapeHtml, geTax, fetchJson, errorMessage, safeJsonParse, el,
-  storageGet, storageRemove, storageSet
+  storageGet, storageRemove, storageSet, latestRequest
 } from './format.js';
 import { createFilterRow, flipSortDir, sortDirLabel } from './filterRow.js';
 import { getWatchlist, loadWatchlist, toggleWatchlist, getBankroll, setBankroll, SESSION_CHANGE_EVENT } from './identity.js';
 import { MOBILE_MQ } from './chrome.js';
-import { FLIP_SORTS } from './types.js';
-import type { FlipItem, FlipsResult, ApiErrorBody, FlipSort, SortDir, MembersFilter } from './types.js';
+import { FLIP_SORTS } from '../shared/types.js';
+import type { FlipItem, FlipsResult, FlipSort, SortDir, MembersFilter } from '../shared/types.js';
+import type { ApiErrorBody } from '../shared/api.js';
 import { mountF2pToggle } from './f2pToggle.js';
-import { DEFAULTS, PRESETS, PRESET_NOTES } from './flipPresets.js';
+import { DEFAULTS, PRESETS, PRESET_NOTES, presetFilters } from './flipPresets.js';
 import type { PresetName, FilterValues } from './flipPresets.js';
 import {
   ALL_COLUMN_KEYS, FACTORY_DEFAULT_COLUMNS, cardCellsHtml, columnCellsHtml,
@@ -19,11 +20,11 @@ import {
 } from './flipColumns.js';
 import type { ColumnKey } from './flipColumns.js';
 
-const statusEl = document.getElementById('status')!;
-const bodyEl = document.getElementById('flipBody')!;
-const cardsEl = document.getElementById('flipCards')!;
-const presetToolbar = document.getElementById('presetToolbar')!;
-const resultsTitleEl = document.getElementById('resultsTitle')!;
+const statusEl = el('status');
+const bodyEl = el('flipBody');
+const cardsEl = el('flipCards');
+const presetToolbar = el('presetToolbar');
+const resultsTitleEl = el('resultsTitle');
 const FILTERS_KEY = 'osrs_flip_filters';
 
 // The drawer's controls. sort/sortDir are page state and ride along on
@@ -172,7 +173,7 @@ function applyFiltersToForm(filters: FilterValues, bankroll?: number | string | 
 }
 
 function syncSortSelect(): void {
-  const sel = document.getElementById('flipSort') as HTMLSelectElement | null;
+  const sel = el<HTMLSelectElement | null>('flipSort');
   if (sel) sel.value = state.sort;
 }
 
@@ -184,7 +185,7 @@ function updateSortUi(): void {
     th.classList.toggle('sort-asc', active && state.sortDir === 'asc');
     th.classList.toggle('sort-desc', active && state.sortDir === 'desc');
   });
-  const dirBtn = document.getElementById('sortDirBtn');
+  const dirBtn = el<HTMLElement | null>('sortDirBtn');
   if (dirBtn) dirBtn.textContent = sortDirLabel(state.sortDir);
 }
 
@@ -247,7 +248,7 @@ function applyPreset(name: PresetName): void {
   const preset = PRESETS[name];
   if (!preset) return;
   const membersOnly = preset.membersOnly ?? (el<HTMLSelectElement>('membersOnly').value as MembersFilter);
-  applyFiltersToForm({ ...DEFAULTS, ...preset, membersOnly }, el<HTMLInputElement>('bankroll').value || getBankroll());
+  applyFiltersToForm({ ...presetFilters(name), membersOnly }, el<HTMLInputElement>('bankroll').value || getBankroll());
   f2p.sync();
   setPresetActive(name);
   persistFilters();
@@ -363,7 +364,10 @@ function renderRows(items: FlipItem[], bankrollOn: boolean): void {
   cardsEl.innerHTML = items.map((item) => renderCard(item, watched, ctx)).join('');
 }
 
+const startScan = latestRequest();
+
 async function load(): Promise<boolean> {
+  const isCurrent = startScan();
   persistFilters();
   // Set before the empty-watchlist bail-out, so the heading never describes a
   // scan that is no longer on screen.
@@ -371,7 +375,7 @@ async function load(): Promise<boolean> {
   const params = buildQuery();
   if (!params) {
     lastItems = null;
-    renderEmpty('Watchlist is empty — star items to pin them here.');
+    renderEmpty('Watchlist is empty. Star items to pin them here.');
     renderPagination(1, 1);
     statusEl.textContent = '';
     activeResultView = null;
@@ -393,8 +397,9 @@ async function load(): Promise<boolean> {
   statusEl.classList.remove('error');
   try {
     const { ok, data } = await fetchJson<FlipsResult & ApiErrorBody>(`/api/ge/flips?${params}`);
+    if (!isCurrent()) return false;
     if (!ok) throw new Error(data.error || 'Scan failed');
-    const bankrollOn = Number(el<HTMLInputElement>('bankroll').value) > 0;
+    const bankrollOn = Number(requestedView.bankroll) > 0;
     const items = data.items || [];
     renderRows(items, bankrollOn);
     renderPagination(data.page, data.totalPages);
@@ -408,6 +413,7 @@ async function load(): Promise<boolean> {
     }
     return true;
   } catch (err) {
+    if (!isCurrent()) return false;
     statusEl.textContent = errorMessage(err, 'Scan failed');
     statusEl.classList.add('error');
     return false;
@@ -417,7 +423,7 @@ async function load(): Promise<boolean> {
 // Pure client-side; uses geTax so the numbers agree with the table.
 // calcTaxExempt carries the exemption flag from the item the calculator was
 // opened with, and stays in effect while its buy/sell fields are edited by
-// hand — exemption is a property of the item, not of the current price.
+// hand - exemption is a property of the item, not of the current price.
 function updateCalc(): void {
   const buy = Number(el<HTMLInputElement>('calcBuy').value);
   const sell = Number(el<HTMLInputElement>('calcSell').value);
@@ -438,7 +444,7 @@ function updateCalc(): void {
 }
 
 // "Use in calculator" copies an item's buy/sell into the calc fields and
-// scrolls the calculator into view. Qty is left as-is — clobbering a
+// scrolls the calculator into view. Qty is left as-is - clobbering a
 // quantity the user is mid-typing would be more surprising than useful.
 function loadIntoCalculator(id: number, name: string, buy: number, sell: number, taxExempt: boolean): void {
   calcTaxExempt = taxExempt;
@@ -452,7 +458,7 @@ function loadIntoCalculator(id: number, name: string, buy: number, sell: number,
     : null;
   el<HTMLInputElement>('calcBuy').value = String(buy);
   el<HTMLInputElement>('calcSell').value = String(sell);
-  el('calcSelectedLabel').textContent = name ? ` — ${name}` : '';
+  el('calcSelectedLabel').textContent = name ? ` - ${name}` : '';
   el<HTMLButtonElement>('returnToItemBtn').hidden = !calculatorSelection;
   updateCalc();
   el('calcHeading').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -643,7 +649,7 @@ el('resetDefaultBtn').addEventListener('click', () => {
 // Star toggles the per-user watchlist on table and cards. Watchlist preset
 // reloads so unstars drop out of the list. Calc button loads that item's
 // buy/sell into the Flip calculator below.
-document.getElementById('flipResults')!.addEventListener('click', (ev) => {
+el('flipResults').addEventListener('click', (ev) => {
   const target = ev.target as HTMLElement;
   const starBtn = target.closest<HTMLButtonElement>('.star-btn');
   if (starBtn) {

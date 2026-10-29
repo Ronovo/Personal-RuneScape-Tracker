@@ -24,7 +24,7 @@ import {
   rangeStats, matchScore, describeConfidence,
   getMovers, getItemDetail, searchItems, getFlipCandidates
 } from './prices.js';
-import type { TimeseriesPoint } from './types.js';
+import type { TimeseriesPoint } from '../shared/types.js';
 
 // ---------------------------------------------------------------------------
 // 1. Pure formula checks

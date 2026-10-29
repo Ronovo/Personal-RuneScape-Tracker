@@ -31,9 +31,14 @@ export interface HiscoresData {
 // The plugin forwards RuneLite's own enums verbatim; both sides check against
 // these, so they can't live on one side only.
 
-export type QuestState = 'NOT_STARTED' | 'IN_PROGRESS' | 'FINISHED';
+/** The label a task gets for a region, difficulty or activity type the metadata doesn't know. */
+export const UNKNOWN_LABEL = 'Unknown';
+
+export const QUEST_STATES = ['NOT_STARTED', 'IN_PROGRESS', 'FINISHED'] as const;
+export type QuestState = typeof QUEST_STATES[number];
 export type QuestKind = 'quest' | 'miniquest';
-export type DiaryTier = 'EASY' | 'MEDIUM' | 'HARD' | 'ELITE';
+export const DIARY_TIERS = ['EASY', 'MEDIUM', 'HARD', 'ELITE'] as const;
+export type DiaryTier = typeof DIARY_TIERS[number];
 
 // ---- Collection log ----
 

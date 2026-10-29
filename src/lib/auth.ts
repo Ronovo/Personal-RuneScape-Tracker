@@ -1,9 +1,10 @@
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 import type { JWTPayload } from 'jose';
 import { SignJWT, jwtVerify } from 'jose';
 import { jwtAuthConfigured } from './config.js';
 import { httpError } from './errors.js';
 import { getUserById } from './users.js';
+import type { UserRecord } from './users.js';
 
 // Every credential is a JWT signed with JWT_SECRET. Two kinds:
 //   - wildcard ({ scope: 'all' }, no sub): any-player access, no account, no
@@ -15,6 +16,7 @@ export type AuthScope = 'all' | 'user';
 
 export interface AuthContext {
   scope: AuthScope;
+  user?: UserRecord; // scope === 'user' only
   userId?: string; // scope === 'user' only
   rsns?: string[]; // scope === 'user' only
 }
@@ -63,24 +65,24 @@ async function resolveScopedAuth(payload: JWTPayload): Promise<AuthContext> {
   if ((payload.ver ?? 0) !== (user.tokenVersion ?? 0)) {
     throw httpError('Unauthorized', 401);
   }
-  return { scope: 'user', userId: user.id, rsns: [...user.rsns] };
+  return { scope: 'user', user, userId: user.id, rsns: [...user.rsns] };
 }
 
 let warnedAuthNotConfigured = false;
 
 /** Sync POSTs: fail closed unless JWT_SECRET is configured. */
 export async function requireBearerToken(req: Request): Promise<void> {
-  if (!jwtAuthConfigured()) {
+  const secret = jwtSecretKey();
+  if (!secret) {
     if (!warnedAuthNotConfigured) {
-      console.error('[auth] JWT_SECRET is not set — sync requests are rejected as Unauthorized.');
+      console.error('[auth] JWT_SECRET is not set - sync requests are rejected as Unauthorized.');
       warnedAuthNotConfigured = true;
     }
     throw httpError('Unauthorized', 401);
   }
 
   const token = extractBearerToken(req);
-  const secret = jwtSecretKey();
-  if (!token || !secret) {
+  if (!token) {
     throw httpError('Unauthorized', 401);
   }
 
@@ -132,7 +134,7 @@ export async function mintApiToken(userId: string, version = 0): Promise<string>
 
 /**
  * The LAN wildcard token. No `iat`/`exp`, so every mint is byte-identical for a
- * given JWT_SECRET — the value printed on startup stays stable across restarts.
+ * given JWT_SECRET, so the value printed on startup stays stable across restarts.
  * Gated only on the secret (not LAN_MODE) so startup and tests can mint freely;
  * requireBearerToken is what enforces LAN posture on the way in.
  */
@@ -142,4 +144,23 @@ export async function mintWildcardToken(): Promise<string> {
     throw httpError('JWT_SECRET is not set', 501);
   }
   return new SignJWT(WILDCARD_CLAIMS).setProtectedHeader({ alg: 'HS256' }).sign(secret);
+}
+
+/** The account an account token belongs to; 401 for any other kind of request. */
+export async function requireAccount(req: Request): Promise<UserRecord> {
+  await requireBearerToken(req);
+  if (req.auth?.scope !== 'user' || !req.auth.user) {
+    throw httpError('Unauthorized', 401);
+  }
+  return req.auth.user;
+}
+
+export function publicUser(user: UserRecord): { id: string; username: string; rsns: string[] } {
+  return { id: user.id, username: user.username, rsns: user.rsns };
+}
+
+/** Answers a login with a fresh API token and the account. */
+export async function sendSignedIn(res: Response, user: UserRecord, status = 200): Promise<void> {
+  const token = await mintApiToken(user.id, user.tokenVersion);
+  res.status(status).json({ token, user: publicUser(user) });
 }

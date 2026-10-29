@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  lookupTaskMeta, displayDifficulty, TASK_REGIONS, TASK_DIFFICULTIES, TASK_ACTIVITY_TYPES
+  lookupTaskMeta, TASK_REGIONS, TASK_DIFFICULTIES, TASK_ACTIVITY_TYPES
 } from './leaguetaskmeta.js';
 
 test('lookupTaskMeta finds a real task id and returns null for an unknown one', () => {
@@ -17,11 +17,6 @@ test('lookupTaskMeta finds a real task id and returns null for an unknown one', 
   // data, not a hypothetical.
   assert.equal(lookupTaskMeta('25-million-attack-xp'), null);
   assert.equal(lookupTaskMeta('not-a-real-task-id'), null);
-});
-
-test('displayDifficulty capitalizes the raw lowercase tier', () => {
-  assert.equal(displayDifficulty('beginner'), 'Beginner');
-  assert.equal(displayDifficulty('elite'), 'Elite');
 });
 
 test('canonical filter option lists cover every real value, in the right order', () => {

@@ -1,5 +1,5 @@
 import { errorMessage, fetchJson } from '../format.js';
-import type { ApiErrorBody } from '../types.js';
+import type { ApiErrorBody } from '../../shared/api.js';
 
 export type CharacterTabContext = {
   statusEl: HTMLElement;
@@ -24,6 +24,12 @@ export interface SyncedTabOptions<T> {
 export function progressClass(done: number, total: number): string {
   if (total > 0 && done >= total) return 'complete';
   return done > 0 ? 'started' : '';
+}
+
+/** A progress pill's whole class list. */
+export function pillClass(done: number, total: number): string {
+  const progress = progressClass(done, total);
+  return progress ? `cl-pill ${progress}` : 'cl-pill';
 }
 
 /**

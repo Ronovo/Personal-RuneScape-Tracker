@@ -10,7 +10,7 @@
 // Broad market views (Rising, Dropping, High Volume, Random) live on the
 // Grand Exchange page; everything here ranks by profit you would actually make.
 
-import type { FlipSort, SortDir, MembersFilter } from './types.js';
+import type { FlipSort, SortDir, MembersFilter } from '../shared/types.js';
 
 export type PresetName =
   | 'penny' | 'margin' | 'roi' | 'gpPerHour' | 'composite' | 'bankroll' | 'watchlist';

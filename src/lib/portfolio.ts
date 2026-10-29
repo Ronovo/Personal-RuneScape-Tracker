@@ -2,11 +2,11 @@ import { createPublicKey, randomBytes, timingSafeEqual } from 'crypto';
 import type { KeyObject } from 'crypto';
 import type { Request, Response } from 'express';
 import { jwtVerify } from 'jose';
-import { lanModeConfigured, mintApiToken } from './auth.js';
+import { lanModeConfigured, sendSignedIn } from './auth.js';
+import { readCredentials } from './authRoutes.js';
 import { jwtAuthConfigured } from './config.js';
 import { httpError } from './errors.js';
 import { getUserById, getUserByPortfolioSub, linkPortfolio, loginUser, portfolioUser } from './users.js';
-import type { UserRecord } from './users.js';
 
 // Log in with a portfolio account. /sso/login sends the browser to the
 // portfolio, which posts a short-lived RS256 token back to /sso/callback. When
@@ -131,11 +131,6 @@ export async function ssoCallback(req: Request, res: Response): Promise<void> {
   res.redirect(`/link.html?link=${newCode(pendingChoices, { sub: payload.sub, name, expires })}`);
 }
 
-async function signedIn(res: Response, user: UserRecord): Promise<void> {
-  const token = await mintApiToken(user.id, user.tokenVersion);
-  res.json({ token, user: { id: user.id, username: user.username, rsns: user.rsns } });
-}
-
 export async function authPortfolio(req: Request, res: Response): Promise<void> {
   requireConfigured();
   const code = readCode(req);
@@ -148,7 +143,7 @@ export async function authPortfolio(req: Request, res: Response): Promise<void> 
   if (!user) {
     throw httpError('Unauthorized', 401);
   }
-  await signedIn(res, user);
+  await sendSignedIn(res, user);
 }
 
 function heldChoice(req: Request): { code: string; choice: PendingChoice } {
@@ -168,20 +163,16 @@ export function authPortfolioPending(req: Request, res: Response): void {
 
 export async function authPortfolioLink(req: Request, res: Response): Promise<void> {
   const { code, choice } = heldChoice(req);
-  const { username, password } = (req.body ?? {}) as Record<string, unknown>;
-  if (typeof username !== 'string' || typeof password !== 'string' || username.length > 254 || password.length > 200) {
-    throw httpError('Invalid username or password', 401);
-  }
-  const user = await loginUser(username.trim(), password);
-  const linked = await linkPortfolio(user, choice.sub);
+  const { username, password } = readCredentials(req.body);
+  const user = await loginUser(username, password);
+  const linked = await linkPortfolio(user.id, choice.sub);
   pendingChoices.delete(code);
-  await signedIn(res, linked);
+  await sendSignedIn(res, linked);
 }
 
 export async function authPortfolioNew(req: Request, res: Response): Promise<void> {
   const { code, choice } = heldChoice(req);
   // Used up before the first await, so a second click can't make a second account.
   pendingChoices.delete(code);
-  const user = await portfolioUser(choice.sub, choice.name);
-  await signedIn(res, user);
+  await sendSignedIn(res, await portfolioUser(choice.sub, choice.name));
 }

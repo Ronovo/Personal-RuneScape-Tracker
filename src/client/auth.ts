@@ -18,7 +18,8 @@ export type AuthUser = {
 
 let cachedStatus: AuthStatus | null = null;
 
-const LEGACY_OPEN: AuthStatus = { mode: 'guest', accounts: false };
+// What a page assumes when /api/auth/status can't be read.
+const GUEST_STATUS: AuthStatus = { mode: 'guest', accounts: false };
 
 export async function loadAuthStatus(): Promise<AuthStatus> {
   if (cachedStatus) return cachedStatus;
@@ -26,19 +27,15 @@ export async function loadAuthStatus(): Promise<AuthStatus> {
     const res = await fetch('/api/auth/status');
     const contentType = res.headers.get('content-type') ?? '';
     if (!res.ok || !contentType.includes('application/json')) {
-      cachedStatus = LEGACY_OPEN;
+      cachedStatus = GUEST_STATUS;
       return cachedStatus;
     }
     cachedStatus = (await res.json()) as AuthStatus;
     return cachedStatus;
   } catch {
-    cachedStatus = LEGACY_OPEN;
+    cachedStatus = GUEST_STATUS;
     return cachedStatus;
   }
-}
-
-export function clearAuthStatusCache(): void {
-  cachedStatus = null;
 }
 
 export function getStoredToken(): string {

@@ -26,14 +26,14 @@ const server = app.listen(Number(PORT), '0.0.0.0', () => {
   }
 
   if (process.env.LAN_MODE?.trim() && !jwtAuthConfigured()) {
-    console.warn('[auth] LAN_MODE is set but JWT_SECRET is missing — auth is disabled (guest mode).');
+    console.warn('[auth] LAN_MODE is set but JWT_SECRET is missing - auth is disabled (guest mode).');
   }
   if (lanModeConfigured()) {
     // Printing the token is a convenience, not a reason to lose the server:
     // an unhandled rejection here would take the process down at startup.
     mintWildcardToken()
       .then((token) => {
-        console.log(`\nLAN mode — stable plugin/browser API token:\n  ${token}\n`);
+        console.log(`\nLAN mode - stable plugin/browser API token:\n  ${token}\n`);
       })
       .catch((err: unknown) => {
         console.error('[auth] could not mint the LAN token:', err);
@@ -53,7 +53,7 @@ for (const sig of ['SIGTERM', 'SIGINT'] as const) {
 
 server.on('error', (err: NodeJS.ErrnoException) => {
   if (err.code === 'EADDRINUSE') {
-    console.error(`Port ${PORT} is already in use — an old tracker process is probably still running.`);
+    console.error(`Port ${PORT} is already in use - an old tracker process is probably still running.`);
     console.error('Run "npm run stop" to free the port, then "npm start" again.');
   } else {
     console.error(err);

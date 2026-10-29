@@ -5,7 +5,7 @@
 // flips to F2P, and flipping back restores whatever was selected before rather
 // than always snapping to "All".
 
-import type { MembersFilter } from './types.js';
+import type { MembersFilter } from '../shared/types.js';
 
 // Pure core, kept separate from the DOM wiring so it can be unit-tested.
 // `remembered` is what the select held before F2P was switched on; the guard

@@ -1,6 +1,7 @@
 import fs from 'fs/promises';
 import { randomUUID } from 'crypto';
 import path from 'path';
+import { serialize } from './serialize.js';
 
 // One in-flight write per target path.
 //
@@ -29,17 +30,6 @@ async function writeOnce(filePath: string, data: string): Promise<void> {
 }
 
 /** Writes via a temp file in the same directory, then renames into place. */
-export async function atomicWriteFile(filePath: string, data: string): Promise<void> {
-  const key = path.resolve(filePath);
-  const prev = writeChains.get(key) ?? Promise.resolve();
-  // Swallow the previous rejection so one failed write doesn't fail the next.
-  const next = prev.catch(() => {}).then(() => writeOnce(filePath, data));
-  writeChains.set(key, next);
-  try {
-    await next;
-  } finally {
-    if (writeChains.get(key) === next) {
-      writeChains.delete(key);
-    }
-  }
+export function atomicWriteFile(filePath: string, data: string): Promise<void> {
+  return serialize(writeChains, path.resolve(filePath), () => writeOnce(filePath, data));
 }

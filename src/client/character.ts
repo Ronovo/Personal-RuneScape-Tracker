@@ -2,56 +2,56 @@
 // Skills/bosses/minigames come from Jagex; Quests, Diaries, Combat
 // Achievements, and Collection Log come from the RuneLite plugin sync.
 
-import { fmt, fetchJson, errorMessage, onEnterOrClick, latestRequest } from './format.js';
+import { fmt, fetchJson, errorMessage, onEnterOrClick, latestRequest, el } from './format.js';
 import { prefillUsername, SESSION_CHANGE_EVENT } from './identity.js';
 import './chrome.js';
-import type { HiscoresData, ApiErrorBody } from './types.js';
+import type { HiscoresData, ApiErrorBody } from '../shared/api.js';
 import { renderSkills, renderScored } from './character/hiscores.js';
 import { initQuestsTab, loadQuests } from './character/quests.js';
 import { initDiariesTab, loadDiaries } from './character/diaries.js';
 import { initCombatAchievementsTab, loadCombatAchievements } from './character/combatAchievements.js';
 import { initCollectionLogTab, loadCollectionLog } from './character/collectionLog.js';
 
-const usernameInput = document.getElementById('username') as HTMLInputElement;
-const searchBtn = document.getElementById('searchBtn')!;
-const statusEl = document.getElementById('status')!;
-const resultEl = document.getElementById('result') as HTMLElement;
+const usernameInput = el<HTMLInputElement>('username');
+const searchBtn = el('searchBtn');
+const statusEl = el('status');
+const resultEl = el('result');
 
 prefillUsername(usernameInput);
 
 initQuestsTab({
-  syncHelpEl: document.getElementById('questSyncHelp') as HTMLElement,
-  resultEl: document.getElementById('questResult') as HTMLElement,
-  filterTabsEl: document.getElementById('questFilterTabs')!,
-  stateFiltersEl: document.getElementById('questStateFilters')!,
-  typeFiltersEl: document.getElementById('questTypeFilters')!,
-  memberFiltersEl: document.getElementById('questMemberFilters')!,
-  listEl: document.getElementById('questList')!,
+  syncHelpEl: el('questSyncHelp'),
+  resultEl: el('questResult'),
+  filterTabsEl: el('questFilterTabs'),
+  stateFiltersEl: el('questStateFilters'),
+  typeFiltersEl: el('questTypeFilters'),
+  memberFiltersEl: el('questMemberFilters'),
+  listEl: el('questList'),
 });
 
 initDiariesTab({
-  syncHelpEl: document.getElementById('diarySyncHelp') as HTMLElement,
-  resultEl: document.getElementById('diaryResult') as HTMLElement,
-  areasEl: document.getElementById('diaryAreas')!,
+  syncHelpEl: el('diarySyncHelp'),
+  resultEl: el('diaryResult'),
+  areasEl: el('diaryAreas'),
 });
 
 initCombatAchievementsTab({
-  syncHelpEl: document.getElementById('caSyncHelp') as HTMLElement,
-  resultEl: document.getElementById('caResult') as HTMLElement,
-  groupToggleEl: document.getElementById('caGroupToggle') as HTMLButtonElement,
-  groupPanelEl: document.getElementById('caGroupPanel') as HTMLElement,
-  groupPillsEl: document.getElementById('caGroupPills')!,
-  completionFiltersEl: document.getElementById('caCompletionFilters')!,
-  taskListEl: document.getElementById('caTaskList')!,
+  syncHelpEl: el('caSyncHelp'),
+  resultEl: el('caResult'),
+  groupToggleEl: el<HTMLButtonElement>('caGroupToggle'),
+  groupPanelEl: el('caGroupPanel'),
+  groupPillsEl: el('caGroupPills'),
+  completionFiltersEl: el('caCompletionFilters'),
+  taskListEl: el('caTaskList'),
 });
 
 initCollectionLogTab({
-  syncHelpEl: document.getElementById('clSyncHelp') as HTMLElement,
-  resultEl: document.getElementById('clResult') as HTMLElement,
-  groupTabsEl: document.getElementById('groupTabs')!,
-  groupsEl: document.getElementById('groups')!,
-  gridTitleEl: document.getElementById('gridTitle')!,
-  itemGridEl: document.getElementById('itemGrid')!,
+  syncHelpEl: el('clSyncHelp'),
+  resultEl: el('clResult'),
+  groupTabsEl: el('groupTabs'),
+  groupsEl: el('groups'),
+  gridTitleEl: el('gridTitle'),
+  itemGridEl: el('itemGrid'),
 });
 
 function activateTab(tab: string): void {
@@ -81,14 +81,14 @@ async function search(): Promise<void> {
     if (!isCurrent()) return;
     if (!ok) throw new Error(data.error || 'Lookup failed');
 
-    document.getElementById('combatLevel')!.textContent = String(data.combatLevel);
-    document.getElementById('totalLevel')!.textContent = fmt(data.totalLevel);
-    document.getElementById('totalXp')!.textContent = fmt(data.totalXp);
+    el('combatLevel').textContent = String(data.combatLevel);
+    el('totalLevel').textContent = fmt(data.totalLevel);
+    el('totalXp').textContent = fmt(data.totalXp);
 
-    document.getElementById('tab-skills')!.innerHTML = renderSkills(data.skills);
-    document.getElementById('tab-bosses')!.innerHTML = renderScored(data.bosses, 'Boss');
-    document.getElementById('tab-minigames')!.innerHTML = renderScored(data.minigames, 'Minigame');
-    document.getElementById('tab-clues')!.innerHTML = renderScored(data.others, 'Activity');
+    el('tab-skills').innerHTML = renderSkills(data.skills);
+    el('tab-bosses').innerHTML = renderScored(data.bosses, 'Boss');
+    el('tab-minigames').innerHTML = renderScored(data.minigames, 'Minigame');
+    el('tab-clues').innerHTML = renderScored(data.others, 'Activity');
 
     statusEl.textContent = '';
     resultEl.hidden = false;

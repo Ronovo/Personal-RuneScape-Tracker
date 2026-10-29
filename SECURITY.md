@@ -7,7 +7,7 @@ line is the only supported version.
 
 ## Reporting a vulnerability
 
-Please report suspected vulnerabilities privately — do **not** open a public
+Please report suspected vulnerabilities privately - do **not** open a public
 issue.
 
 - Preferred: open a [private security advisory](https://github.com/Ronovo/Personal-RuneScape-Tracker/security/advisories/new)
@@ -28,5 +28,5 @@ instance. Notes that matter for a public deployment:
   README "Authentication" section.
 - Run behind HTTPS and set `TRUST_PROXY` so rate limiting keys on the real
   client IP.
-- Never set `LAN_MODE` on an internet-exposed host — it hands the wildcard
+- Never set `LAN_MODE` on an internet-exposed host - it hands the wildcard
   token to any caller of `GET /api/auth/status`.

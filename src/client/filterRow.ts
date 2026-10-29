@@ -3,7 +3,7 @@
 // what a preset means, when to reload).
 
 import { el, safeJsonParse, storageGet, storageRemove, storageSet } from './format.js';
-import type { SortDir } from './types.js';
+import type { SortDir } from '../shared/types.js';
 
 export interface FieldSpec {
   /** Element id. Also the key in the stored object unless `key` says otherwise. */
@@ -72,19 +72,11 @@ export function createFilterRow<V extends Record<string, FilterValue>>(
 
       // An absent value takes the default; a blank one is kept only where the
       // field says blank means something.
-      let next: string;
-      if (incoming === undefined || incoming === null) {
-        next = String(defaults[key as keyof V] ?? '');
-      } else if (incoming === '' && !field.blankable) {
-        next = String(defaults[key as keyof V] ?? '');
-      } else {
-        next = String(incoming);
-      }
-
-      if (control instanceof HTMLSelectElement && !isRealOption(control, next)) {
-        next = String(defaults[key as keyof V] ?? '');
-      }
-      control.value = next;
+      const fallback = String(defaults[key as keyof V] ?? '');
+      const next = incoming === undefined || incoming === null || (incoming === '' && !field.blankable)
+        ? fallback
+        : String(incoming);
+      control.value = control instanceof HTMLSelectElement && !isRealOption(control, next) ? fallback : next;
     }
   }
 

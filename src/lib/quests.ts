@@ -6,11 +6,10 @@
 // the wiki metadata the plugin can't send (see questmeta.ts).
 
 import { lookupQuestMeta } from './questmeta.js';
-import { requireSection, requireSyncedFile } from './syncedSection.js';
+import { requireSyncedSection } from './syncedSection.js';
 import type { QuestProgress } from './sync.js';
 import type { QuestProgressData, QuestSummary, QuestWithMeta } from '../shared/api.js';
 
-export type { QuestProgressData, QuestSummary, QuestWithMeta };
 
 // A quest the wiki hasn't been scraped for yet is almost certainly a new
 // members quest, and treating it as one keeps it visible under the default
@@ -41,8 +40,8 @@ export function summarize(quests: QuestWithMeta[]): QuestSummary {
 }
 
 export async function fetchQuestProgress(username: string): Promise<QuestProgressData> {
-  const stored = await requireSyncedFile(username, 'No synced quest data for this player.');
-  const questsRaw = requireSection(stored.quests, 'No synced quest data for this player.');
+  const { stored, section: questsRaw } = await requireSyncedSection(
+    username, 'quests', 'No synced quest data for this player.');
 
   const quests = [...questsRaw]
     .sort((a, b) => a.name.localeCompare(b.name))

@@ -1,13 +1,11 @@
-import { fmt, escapeHtml, syncSetupStepsHtml } from '../format.js';
-import type { CombatAchievementData, CombatAchievementTaskView, CombatAchievementGroup } from '../types.js';
-import { loadSyncedTab, progressClass } from './context.js';
+import { fmt, escapeHtml, syncHelpHtml, wireFilterGroup, el } from '../format.js';
+import type { CombatAchievementData, CombatAchievementTaskView, CombatAchievementGroup } from '../../shared/api.js';
+import { loadSyncedTab, pillClass } from './context.js';
 import type { CharacterTabContext } from './context.js';
 
-const CA_SYNC_HELP_HTML = `
-  <p><strong>No synced combat achievement data found for this name.</strong> Combat achievements come from the Ronovo&apos;s Sync Tool RuneLite plugin:</p>
-  <ol>${syncSetupStepsHtml('Sync Combat Achievements')}
-  </ol>
-  <p>Then search for your name again here.</p>`;
+const CA_SYNC_HELP_HTML = syncHelpHtml(
+  '<strong>No synced combat achievement data found for this name.</strong> Combat achievements come from the Ronovo&apos;s Sync Tool RuneLite plugin:',
+  'Sync Combat Achievements');
 
 type CaCompletionFilter = 'all' | 'complete' | 'incomplete';
 const CA_COMPLETION_TABS: { key: CaCompletionFilter; label: string }[] = [
@@ -80,34 +78,20 @@ function renderCaTaskList(): void {
       <span class="task-meta">
         <span class="quest-tag quest">${escapeHtml(task.group)}</span>
         ${task.tier ? `<span class="quest-tag members">${escapeHtml(task.tier)}</span>` : ''}
-        <span class="${task.complete ? 'quest-state cl-pill complete' : 'quest-state cl-pill'}">${task.complete ? 'Complete' : 'Incomplete'}</span>
+        <span class="quest-state ${pillClass(task.complete ? 1 : 0, 1)}">${task.complete ? 'Complete' : 'Incomplete'}</span>
       </span>
     </li>
   `).join('');
 }
 
-function syncCaTabsActive(): void {
-  caGroupPillsEl.querySelectorAll<HTMLButtonElement>('button[data-group]').forEach((b) => {
-    b.classList.toggle('active', b.dataset.group === caSelectedGroup);
-  });
-  caCompletionFiltersEl.querySelectorAll<HTMLButtonElement>('button[data-filter]').forEach((b) => {
-    b.classList.toggle('active', b.dataset.filter === caCompletionFilter);
-  });
-}
-
 function renderCaGroupPills(): void {
   const allComplete = caGroupsData.reduce((sum, g) => sum + g.complete, 0);
   const allTotal = caGroupsData.reduce((sum, g) => sum + g.total, 0);
-  const allProgress = progressClass(allComplete, allTotal);
-  const allCls = allProgress ? `cl-pill ${allProgress}` : 'cl-pill';
-
   const pills = [
-    `<button class="${allCls}${caSelectedGroup === 'all' ? ' active' : ''}" data-group="all">All <span class="cl-count">${allComplete}/${allTotal}</span></button>`,
+    `<button class="${pillClass(allComplete, allTotal)}${caSelectedGroup === 'all' ? ' active' : ''}" data-group="all">All <span class="cl-count">${allComplete}/${allTotal}</span></button>`,
     ...caGroupsData.map((group) => {
-      const progress = progressClass(group.complete, group.total);
-      const cls = progress ? `cl-pill ${progress}` : 'cl-pill';
       const active = group.key === caSelectedGroup ? ' active' : '';
-      return `<button class="${cls}${active}" data-group="${escapeHtml(group.key)}">${escapeHtml(group.name)} <span class="cl-count">${group.complete}/${group.total}</span></button>`;
+      return `<button class="${pillClass(group.complete, group.total)}${active}" data-group="${escapeHtml(group.key)}">${escapeHtml(group.name)} <span class="cl-count">${group.complete}/${group.total}</span></button>`;
     }),
   ];
   caGroupPillsEl.innerHTML = pills.join('');
@@ -115,36 +99,26 @@ function renderCaGroupPills(): void {
 
 function selectCaGroup(group: string): void {
   caSelectedGroup = group;
-  syncCaTabsActive();
   renderCaGroupPills();
   renderCaTaskList();
   updateCaGroupToggle();
 }
 
-function selectCaCompletionFilter(filter: CaCompletionFilter): void {
-  caCompletionFilter = filter;
-  syncCaTabsActive();
-  renderCaTaskList();
-}
+let selectCaCompletionFilter: (filter: CaCompletionFilter) => void;
 
 function renderCombatAchievements(data: CombatAchievementData): void {
   caTasksData = data.tasks;
   caGroupsData = data.groups;
-  document.getElementById('caPoints')!.textContent = fmt(data.summary.points);
-  document.getElementById('caComplete')!.textContent = fmt(data.summary.complete);
-  document.getElementById('caTotal')!.textContent = fmt(data.summary.total);
+  el('caPoints').textContent = fmt(data.summary.points);
+  el('caComplete').textContent = fmt(data.summary.complete);
+  el('caTotal').textContent = fmt(data.summary.total);
 
   caSelectedGroup = 'all';
-  caCompletionFilter = 'all';
   caGroupPanelOpen = false;
-
-  caCompletionFiltersEl.innerHTML = CA_COMPLETION_TABS.map((f, i) =>
-    `<button data-filter="${f.key}"${i === 0 ? ' class="active"' : ''}>${f.label}</button>`
-  ).join('');
 
   syncCaGroupPanel();
   renderCaGroupPills();
-  renderCaTaskList();
+  selectCaCompletionFilter('all');
   updateCaGroupToggle();
 }
 
@@ -164,10 +138,8 @@ export function initCombatAchievementsTab(refs: CombatAchievementsTabRefs): void
     if (btn?.dataset.group) selectCaGroup(btn.dataset.group);
   });
 
-  caCompletionFiltersEl.addEventListener('click', (e) => {
-    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-filter]');
-    if (btn?.dataset.filter) selectCaCompletionFilter(btn.dataset.filter as CaCompletionFilter);
-  });
+  selectCaCompletionFilter = wireFilterGroup(caCompletionFiltersEl, CA_COMPLETION_TABS,
+    (key) => { caCompletionFilter = key; }, renderCaTaskList).select;
 }
 
 export function loadCombatAchievements(username: string, ctx: CharacterTabContext): Promise<void> {

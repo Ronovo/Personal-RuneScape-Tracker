@@ -1,11 +1,19 @@
-// Shared "one JSON file per key" storage shape used by both sync.ts (synced
-// player data) and watchlist.ts (Flip Helper watchlists), plus a loader for
-// the static JSON assets that copy-assets.mjs places next to the compiled output.
+// Shared "one JSON file per key" storage shape used by sync.ts (synced player
+// data), watchlist.ts (Flip Helper watchlists) and users.ts (accounts), plus a
+// loader for the static JSON assets that copy-assets.mjs places next to the
+// compiled output.
 
 import fs from 'fs/promises';
 import { readFileSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+/** A data folder: the environment variable when it is set, else data/<name> at the repo root. */
+export function dataDir(name: string, envVar: string): string {
+  return process.env[envVar] || path.join(__dirname, '..', '..', 'data', name);
+}
 
 export function storagePathFor(dir: string, key: string): string {
   return path.join(dir, `${key}.json`);

@@ -1,6 +1,6 @@
 // Stops whatever is listening on the tracker port. Orphaned `node dist/server.js`
 // processes are common after closing a terminal without Ctrl+C or killing a
-// background shell — this gives npm run stop a single command to clear them.
+// background shell - this gives npm run stop a single command to clear them.
 
 import { execSync } from 'child_process';
 

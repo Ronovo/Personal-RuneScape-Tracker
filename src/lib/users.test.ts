@@ -10,7 +10,8 @@ process.env.USERS_DATA_DIR = usersTmp;
 process.env.JWT_SECRET = 'users-test-secret';
 
 const {
-  registerUser, loginUser, bindJagexAccountForSync, getUserById, portfolioUser, resetPassword, securityQuestionFor,
+  registerUser, loginUser, bindJagexAccountForSync, getUserById, mergeBankrolls, portfolioUser, resetPassword,
+  securityQuestionFor,
 } = await import('./users.js');
 const { SECURITY_QUESTIONS } = await import('../shared/securityQuestions.js');
 
@@ -131,11 +132,35 @@ test('wrong answers lock resets for a while', async () => {
   await assert.rejects(() => resetPassword('locked', 'rex', 'newpassword'), /Too many wrong answers/);
 });
 
-test('an unknown username gets a steady stand-in question and cannot be reset', async () => {
-  const question = await securityQuestionFor('ghost');
-  assert.ok(SECURITY_QUESTIONS.includes(question));
-  assert.equal(await securityQuestionFor('GHOST'), question);
-  await assert.rejects(() => resetPassword('ghost', 'anything', 'newpassword'), /That answer is wrong/);
+test('an unknown username says there is no such account', async () => {
+  await assert.rejects(() => securityQuestionFor('ghost'), /no account with that username/);
+  await assert.rejects(() => resetPassword('ghost', 'anything', 'newpassword'), /no account with that username/);
+  await register('shown');
+  assert.equal(await securityQuestionFor('SHOWN'), QUESTION);
+});
+
+test('wrong answers sent together still lock resets after five', async () => {
+  await register('racer');
+  const results = await Promise.allSettled(
+    Array.from({ length: 10 }, () => resetPassword('racer', 'cat', 'newpassword')));
+  assert.equal(results.filter((r) => r.status === 'rejected' && /That answer is wrong/.test(String(r.reason))).length, 5);
+  await assert.rejects(() => resetPassword('racer', 'rex', 'newpassword'), /Too many wrong answers/);
+});
+
+test('a bankroll merge and a sync at the same moment keep both changes', async () => {
+  const user = await register('busy');
+  await Promise.all([
+    mergeBankrolls(user.id, { busy: { value: 100, savedAt: 1 } }),
+    bindJagexAccountForSync(user.id, 'BusyAlt', '555'),
+  ]);
+  const saved = (await getUserById(user.id))!;
+  assert.deepEqual(saved.rsns, ['busyalt']);
+  assert.equal(saved.bankrolls?.busy?.value, 100);
+});
+
+test('one name registered twice at once makes one account', async () => {
+  const results = await Promise.allSettled([register('twin'), register('twin')]);
+  assert.equal(results.filter((r) => r.status === 'fulfilled').length, 1);
 });
 
 test('a new portfolio account login makes one account, named after it, that has no reset', async () => {
@@ -144,5 +169,5 @@ test('a new portfolio account login makes one account, named after it, that has 
   assert.equal((await portfolioUser('42', 'ronovo')).id, first.id);
   await register('taken2');
   assert.equal((await portfolioUser('43', 'taken2')).username, 'taken22');
-  await assert.rejects(() => resetPassword('ronovo', '', 'newpassword'), /That answer is wrong/);
+  await assert.rejects(() => resetPassword('ronovo', '', 'newpassword'), /logs in with the portfolio/);
 });

@@ -4,7 +4,7 @@
 // tooltip still reports the raw wiki value (price n/a, volume 0) per bucket.
 
 import { fmtGp, fmtGpShort, fmtTime } from './format.js';
-import type { TimeseriesPoint, PriceRange } from './types.js';
+import type { TimeseriesPoint, PriceRange } from '../shared/types.js';
 
 const W = 800;
 const H = 280;

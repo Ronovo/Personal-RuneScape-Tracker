@@ -17,11 +17,9 @@
 
 import { readFileSync, writeFileSync, readdirSync } from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
+import { LIB_DIR, ROOT, SYNC_DIR } from './lib/wiki.mjs';
 
-const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
-const OUT_FILE = path.join(ROOT, 'src', 'lib', 'leagues-task-metadata.json');
-const SYNC_DIR = path.join(ROOT, 'data', 'sync');
+const OUT_FILE = path.join(LIB_DIR, 'leagues-task-metadata.json');
 
 const [, , srcArg, ...flags] = process.argv;
 const check = flags.includes('--check');

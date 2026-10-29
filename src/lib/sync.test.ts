@@ -13,7 +13,8 @@ const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'osrs-sync-test-'));
 process.env.SYNC_DATA_DIR = tmpDir;
 
 const { storageKey } = await import('./storageKey.js');
-const { requireBearerToken, requirePlayerDataAuth, assertAllowedUsername, parseLeaguesSyncPayload, parseSectionSyncPayload, acceptLeaguesSync, acceptSectionSync, loadLeaguesSync } = await import('./sync.js');
+const { assertAllowedUsername, parsePayload, acceptLeaguesSync, acceptSectionSync, loadLeaguesSync } = await import('./sync.js');
+const { requireBearerToken, requirePlayerDataAuth } = await import('./auth.js');
 // auth reads env per-request, so importing this here (before LAN_MODE is set) is fine.
 const { mintWildcardToken } = await import('./auth.js');
 
@@ -65,8 +66,8 @@ test('storageKey folds non-breaking spaces', () => {
   assert.equal(storageKey('Zezima\u00A02'), 'zezima 2');
 });
 
-test('parseLeaguesSyncPayload canonicalizes username to storage key form', () => {
-  const result = parseLeaguesSyncPayload({ username: 'Zezima\u00A02' });
+test('parsePayload canonicalizes username to storage key form', () => {
+  const result = parsePayload({ username: 'Zezima\u00A02' });
   assert.equal(result.username, 'zezima 2');
 });
 
@@ -93,24 +94,24 @@ test('requireBearerToken rejects a bad token and accepts the wildcard token', as
   });
 });
 
-test('parseLeaguesSyncPayload rejects missing/invalid fields', () => {
-  assert.throws(() => parseLeaguesSyncPayload({ completedTasks: [] }), /username/i);
-  assert.throws(() => parseLeaguesSyncPayload({ username: 'a', completedTasks: 'nope' }), /completedTasks/i);
+test('parsePayload rejects missing/invalid fields', () => {
+  assert.throws(() => parsePayload({ completedTasks: [] }), /username/i);
+  assert.throws(() => parsePayload({ username: 'a', completedTasks: 'nope' }), /completedTasks/i);
   assert.throws(() =>
-    parseLeaguesSyncPayload({
+    parsePayload({
       username: 'a',
       completedTasks: [{ taskId: 't1', completedAt: '2024-01-01' }, { taskId: 42 }]
     })
   );
 });
 
-test('parseLeaguesSyncPayload accepts a payload that omits completedTasks entirely', () => {
-  const result = parseLeaguesSyncPayload({ username: 'a' });
+test('parsePayload accepts a payload that omits completedTasks entirely', () => {
+  const result = parsePayload({ username: 'a' });
   assert.equal(result.completedTasks, undefined);
 });
 
-test('parseLeaguesSyncPayload filters fake/placeholder quests', () => {
-  const result = parseLeaguesSyncPayload({
+test('parsePayload filters fake/placeholder quests', () => {
+  const result = parsePayload({
     username: 'a',
     completedTasks: [],
     quests: [
@@ -122,9 +123,9 @@ test('parseLeaguesSyncPayload filters fake/placeholder quests', () => {
   assert.deepEqual(result.quests?.map((q) => q.name), ["Cook's Assistant"]);
 });
 
-test('parseLeaguesSyncPayload rejects a collection log missing groups', () => {
+test('parsePayload rejects a collection log missing groups', () => {
   assert.throws(() =>
-    parseLeaguesSyncPayload({
+    parsePayload({
       username: 'a',
       completedTasks: [],
       collectionLog: { itemsObtained: 0, itemsAvailable: 0 }
@@ -134,25 +135,25 @@ test('parseLeaguesSyncPayload rejects a collection log missing groups', () => {
 
 test('completedTasks accepts a valid source, omitted source, and rejects an invalid one', () => {
   assert.doesNotThrow(() =>
-    parseLeaguesSyncPayload({
+    parsePayload({
       username: 'a',
       completedTasks: [{ taskId: 't1', completedAt: '2024-01-01', source: 'MANUAL' }]
     })
   );
   assert.doesNotThrow(() =>
-    parseLeaguesSyncPayload({
+    parsePayload({
       username: 'a',
       completedTasks: [{ taskId: 't1', completedAt: '2024-01-01', source: 'AUTO' }]
     })
   );
   assert.doesNotThrow(() =>
-    parseLeaguesSyncPayload({
+    parsePayload({
       username: 'a',
       completedTasks: [{ taskId: 't1', completedAt: '2024-01-01' }]
     })
   );
   assert.throws(() =>
-    parseLeaguesSyncPayload({
+    parsePayload({
       username: 'a',
       completedTasks: [{ taskId: 't1', completedAt: '2024-01-01', source: 'bogus' }]
     })
@@ -238,23 +239,23 @@ test('acceptLeaguesSync keeps completedTasks when a later sync sends an empty ar
   });
 });
 
-test('parseLeaguesSyncPayload rejects invalid achievement diary and combat achievements', () => {
+test('parsePayload rejects invalid achievement diary and combat achievements', () => {
   assert.throws(() =>
-    parseLeaguesSyncPayload({ username: 'a', achievementDiary: 'nope' })
+    parsePayload({ username: 'a', achievementDiary: 'nope' })
   );
   assert.throws(() =>
-    parseLeaguesSyncPayload({
+    parsePayload({
       username: 'a',
       achievementDiary: [{ area: 'ARDOUGNE', tier: 'INVALID', complete: true }]
     })
   );
   assert.throws(() =>
-    parseLeaguesSyncPayload({ username: 'a', combatAchievements: { points: 'nope', tasks: [] } })
+    parsePayload({ username: 'a', combatAchievements: { points: 'nope', tasks: [] } })
   );
 });
 
-test('parseLeaguesSyncPayload accepts achievement diary and combat achievements', () => {
-  const result = parseLeaguesSyncPayload({
+test('parsePayload accepts achievement diary and combat achievements', () => {
+  const result = parsePayload({
     username: 'a',
     achievementDiary: [{ area: 'ARDOUGNE', tier: 'ELITE', complete: true }],
     combatAchievements: {
@@ -346,29 +347,25 @@ test('acceptLeaguesSync serializes concurrent writes for the same player', async
   });
 });
 
-test('parseSectionSyncPayload rejects unexpected section keys', () => {
+test('parsePayload rejects unexpected section keys', () => {
   assert.throws(
     () =>
-      parseSectionSyncPayload(
+      parsePayload(
         {
           username: 'a',
           quests: [{ id: 1, name: "Cook's Assistant", state: 'FINISHED' }],
           completedTasks: [{ taskId: 't1', completedAt: '2024-01-01' }]
-        },
-        'quests'
-      ),
+        }, ['quests']),
     /Unexpected field: completedTasks/
   );
 });
 
-test('parseSectionSyncPayload accepts a quests-only body for the quests section', () => {
-  const result = parseSectionSyncPayload(
+test('parsePayload accepts a quests-only body for the quests section', () => {
+  const result = parsePayload(
     {
       username: 'a',
       quests: [{ id: 1, name: "Cook's Assistant", state: 'FINISHED' }]
-    },
-    'quests'
-  );
+    }, ['quests']);
   assert.equal(result.quests?.length, 1);
   assert.equal(result.completedTasks, undefined);
 });
@@ -552,12 +549,31 @@ test('LAN wildcard sync ignores accountHash and does not require it', async () =
   });
 });
 
+test('a stored section that no longer parses is dropped instead of blocking reads and syncs', async () => {
+  await fs.writeFile(path.join(tmpDir, 'stale.json'), JSON.stringify({
+    username: 'stale',
+    syncedAt: 'then',
+    quests: [{ id: 1, name: "Cook's Assistant", state: 'SOME_NEW_STATE' }],
+    achievementDiary: [{ area: 'LUMBRIDGE_DRAYNOR', tier: 'EASY', complete: true }],
+  }));
+  const stored = await loadLeaguesSync('stale');
+  assert.equal(stored?.quests, undefined);
+  assert.equal(stored?.achievementDiary?.length, 1);
+  await withLanMode(async (token) => {
+    const merged = await acceptSectionSync(
+      fakeSectionSyncReq({ username: 'stale', quests: [{ id: 1, name: "Cook's Assistant", state: 'FINISHED' }] }, token),
+      'quests',
+    );
+    assert.equal(merged.quests?.length, 1);
+  });
+});
+
 test('golden sync-payload.json parses as a full snapshot', async () => {
   const { readFileSync } = await import('node:fs');
   const { fileURLToPath } = await import('node:url');
   const fixturePath = fileURLToPath(new URL('../../src/lib/fixtures/sync-payload.json', import.meta.url));
   const body = JSON.parse(readFileSync(fixturePath, 'utf8'));
-  const parsed = parseLeaguesSyncPayload(body);
+  const parsed = parsePayload(body);
   assert.equal(parsed.username, 'testrsn');
   assert.equal(parsed.completedTasks?.length, 1);
   assert.equal(parsed.quests?.length, 1);

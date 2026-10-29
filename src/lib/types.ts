@@ -1,18 +1,7 @@
-// Server-side shapes for the wiki prices API: prices.ts's derived objects plus
-// app.ts's query-enum types. Shapes identical on the client side live in
-// src/shared/types.ts and are re-exported below.
+// Server-only shapes: what the OSRS Wiki prices API returns, and the options prices.ts takes. Shapes the
+// client sees too live in src/shared/types.ts.
 
-import type {
-  MembersFilter, PriceRange, Confidence, SortDir, FlipSort, FlipRow, FlipItem, GeView, TimeseriesPoint, SearchResult,
-  MoverItem, MoversResult, RangeStats, ItemDetail, FlipsResult,
-} from '../shared/types.js';
-import { FLIP_SORTS } from '../shared/types.js';
-
-export type {
-  MembersFilter, PriceRange, Confidence, SortDir, FlipSort, FlipRow, FlipItem, GeView, TimeseriesPoint, SearchResult,
-  MoverItem, MoversResult, RangeStats, ItemDetail, FlipsResult,
-};
-export { FLIP_SORTS };
+import type { Confidence, FlipSort, GeView, MembersFilter, SortDir } from '../shared/types.js';
 
 // ---- OSRS Wiki prices API (https://prices.runescape.wiki/api/v1/osrs) ----
 
@@ -48,14 +37,13 @@ export type DayPrices = Record<string, DayEntry>;
 
 // ---- Movers ("Hot or Not") ----
 
-export type MoversSort = 'pctChange' | 'volume' | 'price' | 'marginAfterTax' | 'profitPerLimit';
+export const MOVERS_SORTS = ['pctChange', 'volume', 'price', 'marginAfterTax', 'profitPerLimit'] as const;
+export type MoversSort = typeof MOVERS_SORTS[number];
 
 export interface MoversOptions {
   minVolume?: number;
   minPrice?: number;
   maxPrice?: number;
-  minMargin?: number;
-  minRoi?: number;
   maxAgeMinutes?: number;
   hideStale?: boolean;
   membersOnly?: MembersFilter;
@@ -65,8 +53,6 @@ export interface MoversOptions {
   view?: GeView;
   seed?: string;
 }
-
-// ---- Item detail page ----
 
 // ---- Flip Helper ----
 

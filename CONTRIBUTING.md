@@ -17,7 +17,7 @@ commit; CI runs `typecheck`, `lint`, `test` and `npm audit --omit=dev` on every
 push.
 
 There is **no watch script**. After changing anything under `src/client/`, run
-`npm run build:client` before reloading the page — the browser loads the
+`npm run build:client` before reloading the page - the browser loads the
 compiled output in `public/client/`, not the TypeScript.
 
 ## Where code goes
@@ -66,7 +66,7 @@ corrupt file, an empty section).
 access is guarded rather than asserted. Don't turn them off to make an error go
 away.
 
-`eslint.config.mjs` is deliberately narrow — tsc already covers dead code and
+`eslint.config.mjs` is deliberately narrow - tsc already covers dead code and
 unchecked indexing, so lint carries the rules it can't express, chiefly
 `no-floating-promises`. A page script that drops a promise drops the error with
 it. Where firing and forgetting is the intent, say so with `void`.

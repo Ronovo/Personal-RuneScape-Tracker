@@ -1,21 +1,18 @@
-// Type unions/shapes that are identical on both sides of the wire. src/lib/types.ts
-// and src/client/types.ts both re-export everything here.
+// Type unions/shapes that are identical on both sides of the wire.
 
-export type MembersFilter = 'all' | 'members' | 'f2p';
-export type PriceRange = '1d' | '1w' | '1m' | '3m' | '1y';
+export const MEMBERS_FILTERS = ['all', 'members', 'f2p'] as const;
+export type MembersFilter = typeof MEMBERS_FILTERS[number];
+export const PRICE_RANGES = ['1d', '1w', '1m', '3m', '1y'] as const;
+export type PriceRange = typeof PRICE_RANGES[number];
 export type Confidence = 'high' | 'medium' | 'low';
 export type SortDir = 'asc' | 'desc';
-
-export type FlipSort =
-  | 'profitPerLimit' | 'profit' | 'roi' | 'volume' | 'realisticProfit' | 'margin' | 'confidence'
-  | 'name' | 'buy' | 'sell' | 'tax' | 'limit' | 'capital' | 'age' | 'marginVsAvg' | 'score'
-  | 'gpPerHour';
 
 export const FLIP_SORTS = [
   'profitPerLimit', 'profit', 'roi', 'volume', 'realisticProfit', 'margin', 'confidence',
   'name', 'buy', 'sell', 'tax', 'limit', 'capital', 'age', 'marginVsAvg', 'score',
   'gpPerHour'
-] as const satisfies readonly FlipSort[];
+] as const;
+export type FlipSort = typeof FLIP_SORTS[number];
 
 export interface FlipRow {
   id: number;
@@ -52,7 +49,8 @@ export interface FlipItem extends FlipRow {
   realisticProfit?: number;
 }
 
-export type GeView = 'risers' | 'fallers' | 'volume' | 'random';
+export const GE_VIEWS = ['risers', 'fallers', 'volume', 'random'] as const;
+export type GeView = typeof GE_VIEWS[number];
 
 export interface TimeseriesPoint {
   timestamp: number;
@@ -80,7 +78,6 @@ export interface MoverItem {
   icon: string;
   currentPrice: number;
   pastPrice: number;
-  volume: number;
   volume24h: number;
   pctChange: number;
   pctChange1h: number | null;

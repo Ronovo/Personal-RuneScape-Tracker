@@ -3,7 +3,7 @@
 // generated from this table.
 
 import { fmt, fmtGp, fmtGpShort, fmtPct, fmtAgo, pctClass, escapeHtml } from './format.js';
-import type { FlipItem } from './types.js';
+import type { FlipItem } from '../shared/types.js';
 
 export type ColumnKey =
   | 'buy' | 'sell' | 'margin' | 'tax' | 'profit' | 'roi' | 'limit' | 'profitPerLimit'
@@ -39,8 +39,6 @@ export interface FlipColumn {
   format: (item: FlipItem, ctx: CellContext) => string;
 }
 
-const gpOrNa = (value: number | null | undefined): string => fmtGp(value);
-
 /**
  * The confidence dot. Exported because the mobile card shows it in its header
  * rather than as a field. The only value here derived from item text, so the
@@ -57,7 +55,7 @@ export const COLUMNS: FlipColumn[] = [
     title: 'Price to buy at - the insta-sell (low) price.',
     factoryDefault: true,
     onCard: true,
-    format: (item) => gpOrNa(item.buy),
+    format: (item) => fmtGp(item.buy),
   },
   {
     key: 'sell',
@@ -65,7 +63,7 @@ export const COLUMNS: FlipColumn[] = [
     title: 'Price to sell at - the insta-buy (high) price.',
     factoryDefault: true,
     onCard: true,
-    format: (item) => gpOrNa(item.sell),
+    format: (item) => fmtGp(item.sell),
   },
   {
     key: 'margin',
@@ -73,20 +71,20 @@ export const COLUMNS: FlipColumn[] = [
     title: 'Sell minus Buy, before GE tax.',
     factoryDefault: true,
     onCard: true,
-    format: (item) => gpOrNa(item.margin),
+    format: (item) => fmtGp(item.margin),
   },
   {
     key: 'tax',
     label: 'Tax',
     title: 'GE tax on the sale: 2% of the sell price, floored, capped at 5,000,000 gp. Some items are tax-exempt.',
-    format: (item) => gpOrNa(item.tax),
+    format: (item) => fmtGp(item.tax),
   },
   {
     key: 'profit',
     label: 'Profit',
     title: 'Margin minus GE tax - profit per single item flipped.',
     factoryDefault: true,
-    format: (item) => gpOrNa(item.profit),
+    format: (item) => fmtGp(item.profit),
   },
   {
     key: 'roi',
@@ -108,7 +106,7 @@ export const COLUMNS: FlipColumn[] = [
     label: 'Profit/limit',
     title: 'Profit if you buy and sell up to the buy limit (Profit x Limit).',
     onCard: true,
-    format: (item) => gpOrNa(item.profitPerLimit),
+    format: (item) => fmtGp(item.profitPerLimit),
   },
   {
     key: 'gpPerHour',
@@ -122,7 +120,7 @@ export const COLUMNS: FlipColumn[] = [
     label: 'Capital',
     title: 'gp needed to buy up to the buy limit (Buy x Limit).',
     onCard: true,
-    format: (item) => gpOrNa(item.capital),
+    format: (item) => fmtGp(item.capital),
   },
   {
     key: 'volume',

@@ -5,7 +5,7 @@
 //   node scripts/scrape-combat-achievement-metadata.mjs
 //   node scripts/scrape-combat-achievement-metadata.mjs --check
 //
-// Not part of `npm run build` — same offline pattern as scrape-quest-metadata.mjs.
+// Not part of `npm run build` - same offline pattern as scrape-quest-metadata.mjs.
 
 import { execSync } from 'child_process';
 import { homedir } from 'os';
@@ -16,11 +16,8 @@ import { LIB_DIR, USER_AGENT } from './lib/wiki.mjs';
 
 const OUT_FILE = join(LIB_DIR, 'combat-achievement-metadata.json');
 
-// Keep in sync with parseTaskPrefix() in src/lib/combatachievements.ts, which
-// applies the same token list at runtime to slugs this scrape didn't match.
-// The two cannot share a module across the .mjs/.ts boundary without a build
-// step the scrapers deliberately avoid.
-const TYPE_RE = /^(KILLCOUNT|MECHANICAL|PERFECTION|STAMINA|RESTRICTION|SPEED|ACCURACY|FORTITUDE|DURATION|RESTRAINT|PARTNER|SOLO|TRIO|DUO|QUAD|GROUP|RAID|CHALLENGE|TASK|COMBO|DEFENCE|OFFENCE|OFFENSE|FILTER)$/i;
+// The same token list parseTaskPrefix() in src/lib/combatachievements.ts reads.
+const TYPE_TOKENS = new Set(JSON.parse(readFileSync(join(LIB_DIR, 'combat-achievement-types.json'), 'utf8')));
 
 // Varbit monster prefix → wiki bucket `monster` field. Codenames differ from
 // display names and from a naive slug of the wiki title.
@@ -126,7 +123,7 @@ function parseVarbitSlug(slug) {
   const parts = slug.split('_');
   const index = Number(parts.at(-1));
   const typeToken = parts.at(-2);
-  if (!Number.isInteger(index) || index < 1 || !typeToken || !TYPE_RE.test(typeToken)) {
+  if (!Number.isInteger(index) || index < 1 || !typeToken || !TYPE_TOKENS.has(typeToken.toUpperCase())) {
     return null;
   }
   const prefix = parts.slice(0, -2).join('_');
@@ -221,7 +218,7 @@ async function scrape() {
   if (tasks.length < 350) {
     const unmatchedPrefixes = [...new Set(unmatched.map((s) => parseVarbitSlug(s)?.prefix).filter(Boolean))].sort();
     throw new Error(
-      `Only mapped ${tasks.length}/${slugs.length} varbit slugs — refusing to write a partial file. ` +
+      `Only mapped ${tasks.length}/${slugs.length} varbit slugs - refusing to write a partial file. ` +
       `Unmatched prefixes: ${unmatchedPrefixes.join(', ')}`
     );
   }

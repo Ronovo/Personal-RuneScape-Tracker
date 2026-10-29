@@ -5,33 +5,32 @@
 // to "All".
 
 import {
-  fmt, onEnterOrClick, escapeHtml, syncSetupStepsHtml, latestRequest,
-  fmtSyncedAt, wireFilterGroup, markNarrowedDimensions
-} from './format.js';
+  fmt, onEnterOrClick, escapeHtml, syncHelpHtml, latestRequest,
+  fmtSyncedAt, wireFilterGroup, markNarrowedDimensions, el} from './format.js';
 import { prefillUsername, SESSION_CHANGE_EVENT } from './identity.js';
 import { loadSyncedTab } from './character/context.js';
 import './chrome.js';
-import type { LeaguesTasksData, CompletedTaskWithMeta } from './types.js';
+import type { LeaguesTasksData, CompletedTaskWithMeta } from '../shared/api.js';
+import { UNKNOWN_LABEL } from '../shared/api.js';
 import { matchesTaskFilters, TASK_FILTER_ALL } from './leaguesFilters.js';
 
-const usernameInput = document.getElementById('username') as HTMLInputElement;
-const refreshBtn = document.getElementById('refreshBtn')!;
-const statusEl = document.getElementById('status')!;
-const syncHelpEl = document.getElementById('syncHelp') as HTMLElement;
-const resultEl = document.getElementById('result') as HTMLElement;
-const taskListEl = document.getElementById('taskList')!;
-const taskFilterTabsEl = document.getElementById('taskFilterTabs')!;
-const taskRegionFiltersEl = document.getElementById('taskRegionFilters')!;
-const taskDifficultyFiltersEl = document.getElementById('taskDifficultyFilters')!;
-const taskActivityTypeFiltersEl = document.getElementById('taskActivityTypeFilters')!;
+const usernameInput = el<HTMLInputElement>('username');
+const refreshBtn = el('refreshBtn');
+const statusEl = el('status');
+const syncHelpEl = el('syncHelp');
+const resultEl = el('result');
+const taskListEl = el('taskList');
+const taskFilterTabsEl = el('taskFilterTabs');
+const taskRegionFiltersEl = el('taskRegionFilters');
+const taskDifficultyFiltersEl = el('taskDifficultyFilters');
+const taskActivityTypeFiltersEl = el('taskActivityTypeFilters');
 
 prefillUsername(usernameInput);
 
-const SYNC_HELP_HTML = `
-  <p><strong>No synced leagues data found for this name.</strong> Tasks are completed in the Leagues Tasks RuneLite plugin and sent here by the Ronovo&apos;s Sync Tool plugin, so progress only appears after syncing at least once:</p>
-  <ol>${syncSetupStepsHtml('Sync Tasks or Sync Everything')}
-  </ol>
-  <p>Then click <strong>Update</strong> here to load the latest snapshot.</p>`;
+const SYNC_HELP_HTML = syncHelpHtml(
+  '<strong>No synced leagues data found for this name.</strong> Tasks are completed in the Leagues Tasks RuneLite plugin and sent here by the Ronovo&apos;s Sync Tool plugin, so progress only appears after syncing at least once:',
+  'Sync Tasks or Sync Everything',
+  'Then click <strong>Update</strong> here to load the latest snapshot.');
 
 // ---- Region / Difficulty / Activity Type filters ----
 // A top strip picks which dimension's options are showing. All three filters
@@ -39,7 +38,6 @@ const SYNC_HELP_HTML = `
 // The option buttons come from the server response, so they are rebuilt after
 // every load.
 
-const ALL = TASK_FILTER_ALL;
 type TaskFilterDimension = 'region' | 'difficulty' | 'activityType';
 
 const TASK_DIMENSION_TABS: { key: TaskFilterDimension; label: string }[] = [
@@ -49,7 +47,9 @@ const TASK_DIMENSION_TABS: { key: TaskFilterDimension; label: string }[] = [
 ];
 
 let tasksData: CompletedTaskWithMeta[] = [];
-const activeFilter: Record<TaskFilterDimension, string> = { region: ALL, difficulty: ALL, activityType: ALL };
+const activeFilter: Record<TaskFilterDimension, string> = {
+  region: TASK_FILTER_ALL, difficulty: TASK_FILTER_ALL, activityType: TASK_FILTER_ALL
+};
 
 // One filter row per dimension. Options here are whatever the server returned,
 // so each row is rebuilt on every load - hence setOptions rather than a fixed
@@ -70,8 +70,8 @@ const filterGroups: Record<TaskFilterDimension, ReturnType<typeof makeFilterGrou
 // Rebuilding a row resets its selection to "All" and reruns the list.
 function setFilterOptions(dimension: TaskFilterDimension, values: string[]): void {
   const group = filterGroups[dimension];
-  group.setOptions([ALL, ...values].map((v) => ({ key: v, label: v })));
-  group.select(ALL);
+  group.setOptions([TASK_FILTER_ALL, ...values].map((v) => ({ key: v, label: v })));
+  group.select(TASK_FILTER_ALL);
 }
 
 const TASK_OPTION_ROWS: Record<TaskFilterDimension, HTMLElement> = {
@@ -80,10 +80,8 @@ const TASK_OPTION_ROWS: Record<TaskFilterDimension, HTMLElement> = {
   activityType: taskActivityTypeFiltersEl
 };
 
-// Gold dot on a top-tier tab whose filter isn't 'All', so a narrowed row
-// that's currently hidden doesn't look like the list is just unfiltered.
 function markActiveDimensions(): void {
-  markNarrowedDimensions<TaskFilterDimension>(taskFilterTabsEl, (dimension) => activeFilter[dimension] !== ALL);
+  markNarrowedDimensions<TaskFilterDimension>(taskFilterTabsEl, (dimension) => activeFilter[dimension] !== TASK_FILTER_ALL);
 }
 
 const selectFilterDimension = wireFilterGroup(taskFilterTabsEl, TASK_DIMENSION_TABS, (key) => {
@@ -91,10 +89,6 @@ const selectFilterDimension = wireFilterGroup(taskFilterTabsEl, TASK_DIMENSION_T
     TASK_OPTION_ROWS[dimension].hidden = dimension !== key;
   }
 }, renderTaskList).select;
-
-function matchesFilters(task: CompletedTaskWithMeta): boolean {
-  return matchesTaskFilters(task, activeFilter, ALL);
-}
 
 // Turns "Combat/Magic" -> "combat-magic" to match the modifier class names
 // in style.css (.task-tag.activity-combat-magic etc).
@@ -107,13 +101,13 @@ function slug(value: string): string {
 // the imported metadata doesn't recognize) always gets the shared neutral
 // style, in any of the three slots.
 function regionTagClass(region: string): string {
-  return region === 'Unknown' ? 'unknown' : 'region';
+  return region === UNKNOWN_LABEL ? 'unknown' : 'region';
 }
 function difficultyTagClass(difficulty: string): string {
-  return difficulty === 'Unknown' ? 'unknown' : `difficulty-${slug(difficulty)}`;
+  return difficulty === UNKNOWN_LABEL ? 'unknown' : `difficulty-${slug(difficulty)}`;
 }
 function activityTagClass(activityType: string): string {
-  return activityType === 'Unknown' ? 'unknown' : `activity-${slug(activityType)}`;
+  return activityType === UNKNOWN_LABEL ? 'unknown' : `activity-${slug(activityType)}`;
 }
 
 // Row pills use short labels where the full activity type is too long.
@@ -122,7 +116,7 @@ function activityTagLabel(activityType: string): string {
 }
 
 function renderTaskList(): void {
-  const tasks = tasksData.filter(matchesFilters);
+  const tasks = tasksData.filter((task) => matchesTaskFilters(task, activeFilter));
 
   if (!tasks.length) {
     taskListEl.innerHTML = '<li class="status">No completed tasks match this filter.</li>';
@@ -142,13 +136,11 @@ function renderTaskList(): void {
 }
 
 function renderTasks(data: LeaguesTasksData): void {
-  document.getElementById('completedCount')!.textContent = fmt(data.completedTasks.length);
-  document.getElementById('lastSynced')!.textContent = fmtSyncedAt(data.syncedAt);
+  el('completedCount').textContent = fmt(data.completedTasks.length);
+  el('lastSynced').textContent = fmtSyncedAt(data.syncedAt);
 
   tasksData = data.completedTasks;
 
-  // Rebuilding each row resets its selection to "All" and reruns the list,
-  // so this alone is enough to reset filters and render for a fresh search.
   setFilterOptions('region', data.filters.regions);
   setFilterOptions('difficulty', data.filters.difficulties);
   setFilterOptions('activityType', data.filters.activityTypes);

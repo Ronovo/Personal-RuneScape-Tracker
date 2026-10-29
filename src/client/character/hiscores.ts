@@ -1,5 +1,5 @@
 import { fmt, escapeHtml } from '../format.js';
-import type { SkillEntry, ScoredEntry } from '../types.js';
+import type { SkillEntry, ScoredEntry } from '../../shared/api.js';
 
 export function renderSkills(skills: SkillEntry[]): string {
   const rows = skills.map((s) => `

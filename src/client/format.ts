@@ -6,13 +6,17 @@ export { geTax } from '../shared/getax.js';
 
 type Num = number | null | undefined;
 
+function isMissing(n: Num): n is null | undefined {
+  return n === null || n === undefined || Number.isNaN(n);
+}
+
 export function fmt(n: Num): string {
-  if (n === null || n === undefined || Number.isNaN(n)) return 'n/a';
+  if (isMissing(n)) return 'n/a';
   return Number(n).toLocaleString('en-US');
 }
 
 export function fmtGp(n: Num): string {
-  if (n === null || n === undefined || Number.isNaN(n)) return 'n/a';
+  if (isMissing(n)) return 'n/a';
   return `${fmt(Math.round(n))} gp`;
 }
 
@@ -22,7 +26,7 @@ function trimOne(v: number): string {
 
 // Compact labels for dense tables and chart axes: 1.2m / 450k / 1.2b.
 export function fmtGpShort(n: Num): string {
-  if (n === null || n === undefined || Number.isNaN(n)) return 'n/a';
+  if (isMissing(n)) return 'n/a';
   const sign = n < 0 ? '-' : '';
   const abs = Math.abs(n);
   if (abs >= 1_000_000_000) {
@@ -41,13 +45,15 @@ export function fmtGpShort(n: Num): string {
 }
 
 export function fmtPct(n: Num): string {
-  if (n === null || n === undefined || Number.isNaN(n)) return 'n/a';
+  if (isMissing(n)) return 'n/a';
   return `${n >= 0 ? '+' : ''}${n.toFixed(1)}%`;
 }
 
+const DATE_TIME: Intl.DateTimeFormatOptions = { dateStyle: 'short', timeStyle: 'short' };
+
 export function fmtTime(unixSec: Num): string {
   if (!unixSec) return 'n/a';
-  return new Date(unixSec * 1000).toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' });
+  return new Date(unixSec * 1000).toLocaleString('en-US', DATE_TIME);
 }
 
 // Same date formatting as fmtTime, but for the ISO syncedAt string the sync
@@ -58,7 +64,7 @@ export function fmtSyncedAt(iso: string): string {
   const date = new Date(iso);
   return Number.isNaN(date.getTime())
     ? iso
-    : date.toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' });
+    : date.toLocaleString('en-US', DATE_TIME);
 }
 
 function ageSeconds(unixSec: Num): number | null {
@@ -68,7 +74,7 @@ function ageSeconds(unixSec: Num): number | null {
 
 // "7m ago", from a duration already measured in seconds - what flip rows carry.
 export function fmtAgo(seconds: Num): string {
-  if (seconds === null || seconds === undefined || Number.isNaN(seconds)) return 'n/a';
+  if (isMissing(seconds)) return 'n/a';
   const sec = Math.max(0, Math.floor(seconds));
   if (sec < 60) return `${sec}s ago`;
   if (sec < 3600) return `${Math.floor(sec / 60)}m ago`;
@@ -91,7 +97,7 @@ export function agoClass(unixSec: Num): string {
 }
 
 export function pctClass(n: Num): string {
-  return n === null || n === undefined || Number.isNaN(n) ? '' : n >= 0 ? 'up' : 'down';
+  return isMissing(n) ? '' : n >= 0 ? 'up' : 'down';
 }
 
 // Everything in this app renders via innerHTML, so interpolated names
@@ -146,9 +152,9 @@ export function apiAuthHeaders(extra?: Record<string, string>): Record<string, s
   return headers;
 }
 
-// Fetch + parse, leaving the ok/error decision to the caller - some pages
-// (collection log) treat a particular status code as a non-error case rather
-// than throwing, so this can't own that decision itself.
+// Fetch + parse, leaving the ok/error decision to the caller - every synced tab
+// (through loadSyncedTab) treats a 404 as "nothing synced yet" rather than an
+// error, so this can't own that decision itself.
 export async function fetchJson<T>(url: string, init?: RequestInit): Promise<{ ok: boolean; status: number; data: T }> {
   const res = await fetch(url, {
     ...init,
@@ -268,11 +274,16 @@ export function markNarrowedDimensions<K extends string>(tabsEl: HTMLElement, is
 }
 
 // The "set up plugin sync" steps shared by sync-help blocks on Character and
-// Leagues pages - identical everywhere except what the Sync URL points at.
-export function syncSetupStepsHtml(syncButtonLabel = 'Sync Everything'): string {
+// Leagues pages - identical everywhere except the sync button to press.
+function syncSetupStepsHtml(syncButtonLabel: string): string {
   return `
     <li>In RuneLite, open the <strong>Ronovo&apos;s Sync Tool</strong> sidebar and go to <strong>Sync Settings</strong>.</li>
     <li>Set <strong>Server URL</strong> to this tracker&apos;s base URL (for example <code>http://localhost:4123</code>, or HTTPS / your LAN address).</li>
     <li>Set <strong>API Token</strong> to the value from <strong>Copy plugin token</strong> in the tracker header (LAN hosts fill the browser in automatically; public hosts show it after sign-in).</li>
     <li>Under <strong>Sync to Website</strong>, click <strong>${syncButtonLabel}</strong> while logged in on that character.</li>`;
+}
+
+/** The panel a synced tab shows when the player has never synced: what is missing, the setup steps, then what to do. */
+export function syncHelpHtml(intro: string, syncButtonLabel: string, outro = 'Then search for your name again here.'): string {
+  return `<p>${intro}</p><ol>${syncSetupStepsHtml(syncButtonLabel)}</ol><p>${outro}</p>`;
 }

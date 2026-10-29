@@ -1,16 +1,14 @@
 // Achievement diary tier completion comes from the Ronovo's Sync Tool plugin sync,
 // not Jagex - the plugin reads tier-complete varbits when the user syncs.
 
-import { requireSection, requireSyncedFile } from './syncedSection.js';
+import { requireSyncedSection } from './syncedSection.js';
 import { titleCaseSlug } from './text.js';
-import type { DiaryProgress, DiaryTier } from './sync.js';
+import type { DiaryProgress } from './sync.js';
+import { DIARY_TIERS } from '../shared/api.js';
 import type {
-  DiaryAreaProgress, DiaryProgressData, DiarySummary, DiaryTierProgress
+  DiaryAreaProgress, DiaryProgressData, DiarySummary, DiaryTier, DiaryTierProgress
 } from '../shared/api.js';
 
-export type { DiaryAreaProgress, DiaryProgressData, DiarySummary, DiaryTierProgress };
-
-const TIER_ORDER: DiaryTier[] = ['EASY', 'MEDIUM', 'HARD', 'ELITE'];
 
 const AREA_DISPLAY_NAMES: Record<string, string> = {
   LUMBRIDGE_DRAYNOR: 'Lumbridge & Draynor',
@@ -23,7 +21,7 @@ function displayAreaName(area: string): string {
 }
 
 function tierSort(a: DiaryTier, b: DiaryTier): number {
-  return TIER_ORDER.indexOf(a) - TIER_ORDER.indexOf(b);
+  return DIARY_TIERS.indexOf(a) - DIARY_TIERS.indexOf(b);
 }
 
 export function groupDiaries(entries: DiaryProgress[]): DiaryAreaProgress[] {
@@ -56,8 +54,8 @@ export function summarizeDiaries(areas: DiaryAreaProgress[]): DiarySummary {
 }
 
 export async function fetchDiaryProgress(username: string): Promise<DiaryProgressData> {
-  const stored = await requireSyncedFile(username, 'No synced achievement diary data for this player.');
-  const achievementDiary = requireSection(stored.achievementDiary, 'No synced achievement diary data for this player.');
+  const { stored, section: achievementDiary } = await requireSyncedSection(
+    username, 'achievementDiary', 'No synced achievement diary data for this player.');
 
   const areas = groupDiaries(achievementDiary);
   return {

@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { withMeta, summarize } from './quests.js';
 import type { QuestProgress } from './sync.js';
-import type { QuestWithMeta } from './quests.js';
+import type { QuestWithMeta } from '../shared/api.js';
 
 function progress(name: string, state: QuestProgress['state']): QuestProgress {
   return { id: 1, name, state };
