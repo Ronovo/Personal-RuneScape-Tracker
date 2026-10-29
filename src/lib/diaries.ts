@@ -1,4 +1,4 @@
-// Achievement diary tier completion comes from the Leagues Tasks plugin sync,
+// Achievement diary tier completion comes from the Ronovo's Sync Tool plugin sync,
 // not Jagex - the plugin reads tier-complete varbits when the user syncs.
 
 import { requireSection, requireSyncedFile } from './syncedSection.js';
@@ -34,7 +34,6 @@ export function groupDiaries(entries: DiaryProgress[]): DiaryAreaProgress[] {
     byArea.set(entry.area, tiers);
   }
 
-  // Resolve the display name once per area rather than twice per comparison.
   return [...byArea.entries()]
     .map(([area, tiers]): DiaryAreaProgress => {
       const sorted = [...tiers].sort((x, y) => tierSort(x.tier, y.tier));

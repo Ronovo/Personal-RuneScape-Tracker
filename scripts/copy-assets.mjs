@@ -1,6 +1,5 @@
-// tsc only emits .ts -> .js; non-TS assets read at runtime with readFileSync
-// (lib/image_name_conversion.json, lib/quest-metadata.json,
-// lib/leagues-task-metadata.json) have to be copied into dist/ by hand.
+// tsc only emits .ts -> .js; the JSON assets read at runtime with readFileSync
+// have to be copied into dist/ by hand.
 import { copyFileSync, mkdirSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';

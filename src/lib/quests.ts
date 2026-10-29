@@ -1,4 +1,4 @@
-// Quest progress comes from the Leagues Tasks plugin sync, not Jagex - the
+// Quest progress comes from the Ronovo's Sync Tool plugin sync, not Jagex - the
 // hiscores expose a quest-point total but never which quests are done. The
 // plugin reads every RuneLite Quest state when the user clicks Sync (never
 // automatically, e.g. not on login) and posts it with the rest of its

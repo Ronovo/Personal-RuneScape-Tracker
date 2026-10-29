@@ -1,7 +1,5 @@
-// Type unions/shapes that are identical on both sides of the wire and were
-// previously hand-duplicated in src/lib/types.ts and src/client/types.ts.
-// Both of those files re-export everything here, so existing imports of
-// FlipSort/SortDir/etc. from './types.js' on either side are unaffected.
+// Type unions/shapes that are identical on both sides of the wire. src/lib/types.ts
+// and src/client/types.ts both re-export everything here.
 
 export type MembersFilter = 'all' | 'members' | 'f2p';
 export type PriceRange = '1d' | '1w' | '1m' | '3m' | '1y';

@@ -80,9 +80,8 @@ interface CalculatorSelection extends ResultViewSnapshot {
   id: number;
 }
 
-// First-click direction per key: numeric columns lead with "best/highest
-// first" (matches the table's original single-direction behavior); the name
-// column leads with A-Z since that's what "alphabetical" means to most people.
+// First-click direction per key: numeric columns lead with the highest first;
+// the name column leads with A-Z.
 function defaultSortDir(key: FlipSort): SortDir {
   return key === 'name' ? 'asc' : 'desc';
 }
@@ -123,10 +122,7 @@ function loadVisibleColumns(): Set<ColumnKey> {
 
 let visibleColumns = loadVisibleColumns();
 
-// Realistic Profit is only ever meaningful with a bankroll set, so it's
-// gated by both the checkbox AND this flag (set from renderRows each render).
-// Tracked here rather than re-checked only at render time so toggling the
-// checkbox itself (no re-render involved) still respects it.
+// Set from renderRows each render; see isColumnVisible.
 let bankrollOnForColumns = false;
 
 // The last rendered page, so toggling a column re-renders from memory instead
@@ -393,7 +389,6 @@ async function load(): Promise<boolean> {
     idsFromUrl: state.idsFromUrl ? [...state.idsFromUrl] : null
   };
   // No "Scanning..." label: the request is short enough that it only flickers.
-  // #status is now purely an error slot.
   statusEl.textContent = '';
   statusEl.classList.remove('error');
   try {
@@ -592,10 +587,8 @@ el('columnsBtn').addEventListener('click', () => {
   panel.hidden = !panel.hidden;
 });
 
-// Checking/unchecking a column just hides/shows already-rendered cells -
-// no re-fetch, no page reset. This is scratch state for the current page
-// load only; nothing is saved unless Set as Default is used below, so a
-// refresh always lands back on whichever default is currently active.
+// Checking/unchecking a column re-renders the current page from memory - no
+// re-fetch, no page reset. Nothing is saved unless Set as Default is used below.
 el('columnsPanel').addEventListener('change', (ev) => {
   const cb = ev.target as HTMLInputElement;
   if (cb.type !== 'checkbox') return;

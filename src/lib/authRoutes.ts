@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import { requireBearerToken, mintApiToken, mintWildcardToken, jwtAuthConfigured, lanModeConfigured } from './auth.js';
 import {
-  getUserById, loginUser, mergeBankrolls, registerUser, resetPassword, securityQuestionFor, setSecurityQuestion,
+  getUserById, loginUser, mergeBankrolls, registerUser, resetPassword, securityQuestionFor,
 } from './users.js';
 import type { SavedBankroll, UserRecord } from './users.js';
 import { portfolioConfigured, portfolioUrl } from './portfolio.js';
@@ -61,8 +61,7 @@ export async function authLogin(req: Request, res: Response): Promise<void> {
   const { username, password } = readCredentials(req.body);
   const user = await loginUser(username, password);
   const token = await mintApiToken(user.id, user.tokenVersion);
-  // Accounts made before security questions are asked to set one straight after signing in.
-  res.json({ token, user: publicUser(user), needsSecurityQuestion: !user.securityAnswerHash && !user.portfolioSub });
+  res.json({ token, user: publicUser(user) });
 }
 
 export async function authMintToken(req: Request, res: Response): Promise<void> {
@@ -125,16 +124,6 @@ export async function authBankrolls(req: Request, res: Response): Promise<void> 
     throw httpError('Unauthorized', 401);
   }
   res.json({ bankrolls: await mergeBankrolls(req.auth.userId, readBankrolls(req.body)) });
-}
-
-export async function authSecurityQuestion(req: Request, res: Response): Promise<void> {
-  await requireBearerToken(req);
-  if (req.auth?.scope !== 'user' || !req.auth.userId) {
-    throw httpError('Unauthorized', 401);
-  }
-  const { question, answer } = readBody(req.body);
-  await setSecurityQuestion(req.auth.userId, question, answer);
-  res.json({ saved: true });
 }
 
 // Two steps: the username brings up its security question, then the answer

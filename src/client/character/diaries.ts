@@ -11,7 +11,7 @@ const TIER_LABELS: Record<DiaryTier, string> = {
 };
 
 const DIARY_SYNC_HELP_HTML = `
-  <p><strong>No synced achievement diary data found for this name.</strong> Diary tier completion comes from the Leagues Tasks RuneLite plugin:</p>
+  <p><strong>No synced achievement diary data found for this name.</strong> Diary tier completion comes from the Ronovo&apos;s Sync Tool RuneLite plugin:</p>
   <ol>${syncSetupStepsHtml('Sync Achievement Diary')}
   </ol>
   <p>Then search for your name again here.</p>`;

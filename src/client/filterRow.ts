@@ -1,14 +1,6 @@
-// The filter drawer both the Grand Exchange and Flip Helper pages carry.
-//
-// Each page used to own a private copy of the same six functions -
-// readFiltersFromForm, applyFiltersToForm, persistFilters, restoreFilters, a
-// defaults table and a sort-direction label - around 150 lines apiece, and the
-// copies had already diverged: only the GE side checked that a value restored
-// from localStorage was still a real <option>, so a renamed option silently
-// blanked the control on the Flip Helper.
-//
-// A page declares its fields here and keeps whatever is genuinely its own
-// (which sorts exist, what a preset means, when to reload).
+// The filter drawer both the Grand Exchange and Flip Helper pages carry. A page
+// declares its fields here and keeps whatever is its own (which sorts exist,
+// what a preset means, when to reload).
 
 import { safeJsonParse, storageGet, storageRemove, storageSet } from './format.js';
 import type { SortDir } from './types.js';

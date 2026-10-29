@@ -1,6 +1,6 @@
 // Collection log contents aren't exposed by any official Jagex API - the
 // OSRS hiscores only give a single aggregate "Collections Logged" count.
-// This reads the snapshot the Leagues Tasks RuneLite plugin uploads to
+// This reads the snapshot the Ronovo's Sync Tool RuneLite plugin uploads to
 // /api/sync/leagues instead, captured while the in-game interface is open.
 // The game only reports which slots are filled, not duplicate quantities,
 // so every item here has a count of 1 (obtained) or 0.
@@ -47,8 +47,6 @@ export async function fetchCollectionLog(username: string): Promise<CollectionLo
         count: item.count,
         icon: iconUrl(item.name)
       }));
-      // Category progress counts obtained slots; the plugin can't report
-      // duplicate quantities, so this is also the sum of the counts.
       return {
         key: category.key,
         name: category.name,

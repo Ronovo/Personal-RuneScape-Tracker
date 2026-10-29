@@ -23,28 +23,28 @@ Look up a player's Jagex hiscores by username:
 
 The **Quests**, **Diaries**, **Combat Achievements**, and **Collection Log**
 tabs are the exception: Jagex's hiscores don't expose any of them, so all four
-read the state the RuneLite plugin syncs instead.
+read the state the Ronovo's Sync Tool RuneLite plugin syncs instead.
 
 - **Hiscores**
 - **Boss Kills**
-- **Quests** 
-- **Achievement Diaries** 
-- **Combat Achievements** 
+- **Quests**
+- **Achievement Diaries**
+- **Combat Achievements**
 - **Collection Log**
 
 See [Plugin sync](#plugin-sync) if any of those tabs have no data.
 
 ### Leagues Tasks
 
-Browse a player's completed tasks from the Leagues Task Plugin (Coming Soon), synced the same
-way as Quests and the Collection Log above:
+Browse a player's completed tasks from the Leagues Task Plugin, sent to the
+tracker by Ronovo's Sync Tool the same way as Quests and the Collection Log above:
 
-The Leagues Task Plugin is a fun way to spice up your OSRS journey by completing tasks from a list compiled from all the previous OSRS Leagues events. 
+The Leagues Task Plugin is a fun way to spice up your OSRS journey by completing tasks from a list compiled from all the previous OSRS Leagues events.
 See [Plugin sync](#plugin-sync) if the page has no data.
 
 ### Grand Exchange
 
-Browse and filter Wiki market data. 
+Browse and filter Wiki market data.
 
 - 24-hour risers and fallers with clearly labeled price changes
 - High Volume and Random quick views
@@ -58,13 +58,13 @@ capital requirements, and alchemy values.
 
 ### Flip Helper
 
-Scan the market for buy-low/sell-high opportunities. Mark items on a wishlist that you want to Every scan method here
-ranks by profit, so this is where the more specific searching happens:
+Scan the market for buy-low/sell-high opportunities, and star items to keep them on your watchlist. Every scan
+method here ranks by profit, so this is where the more specific searching happens:
 
 - After-tax profit, ROI, buy-limit profit, GP/hr, capital, volume, age, and confidence
 - Penny Arcade, High Margin, Best ROI, GP / Hour, Best Overall, Fits My Bankroll, and Watchlist presets
 - F2P toggle on the preset toolbar, and a collapsible filter drawer
-  - Bankroll, pPice, Volume, Profit, ROI, Margin Vs. 24h Average, Trade Age, Membership)
+  - Bankroll, Price, Volume, Profit, ROI, Margin Vs. 24h Average, Trade Age and Membership
 - A calculator that can load any result and return to its original page
 
 GE tax is 2% of the sale price, floored and capped at 5,000,000 gp. Known
@@ -80,22 +80,26 @@ is compared with its 24-hour average.
 
 Jagex publishes skills and kill counts, but not which quests you have finished,
 what achievement diary tiers you've completed, your combat achievement tasks,
-or what is in your collection log. All of those come from the Leagues Tasks
-RuneLite plugin, which posts to dedicated `/api/sync/*` endpoints. **Sync
+or what is in your collection log. All of those come from the
+[Ronovo's Sync Tool](https://github.com/Ronovo/Ronovos-Sync-Tool) RuneLite
+plugin, which posts to dedicated `/api/sync/*` endpoints. Completed Leagues
+tasks are tracked in the [Leagues Tasks](https://github.com/Ronovo/Leagues-Task-Plugin)
+plugin; the Sync Tool reads them from it and sends them, and the Leagues Tasks
+start menu's **Sync Progress** button asks the Sync Tool to do that. **Sync
 Everything** uses `/api/sync/leagues` and may include every section; each
 other sync button posts to its own route and carries only that section.
 Whichever sections a full-sync request omits are left untouched, keeping
 whatever that player last synced for them.
 
-Configure the URL and token first, in the plugin's **Sync Settings** card
-(see [Authentication](#authentication-two-postures-one-token-type)), then from the **Sync Progress** panel:
+Configure the URL and token first, in the Sync Tool's **Sync Settings** card
+(see [Authentication](#authentication-two-postures-one-token-type)), then from the Sync Tool's sidebar:
 
-- **Sync Tasks** — posts to `/api/sync/tasks` with only your completed league tasks.
+- **Sync Tasks** — posts to `/api/sync/tasks` with only your completed league tasks, read from the Leagues Tasks plugin.
 - **Sync Quests** — posts to `/api/sync/quests` with only your quest states.
 - **Sync Collection Log** — there is no sidebar Collection Log button. Open
   the in-game **Collection Log** and click **Sync** in its top-right corner.
   That posts to `/api/sync/collectionlog`. If the log is not open and nothing
-  has ever been captured, the plugin tells you to open it first.
+  has ever been captured, the Sync Tool tells you to open it first.
 - **Sync Achievement Diary** — posts to `/api/sync/diaries` with only achievement diary tier completion.
 - **Sync Combat Achievements** — posts to `/api/sync/combatachievements` with only combat achievement task completion
   and total CA points.
@@ -120,8 +124,8 @@ npm start
 
 Node 24+ (see `.nvmrc`; `nvm use` picks it up). Open `http://localhost:4123`.
 
-The server binds to `0.0.0.0`, so another device on the same LAN or Tailscale
-network can open `http://<computer-address>:4123`.
+The server binds to `0.0.0.0`, so another device on the same network
+can open `http://<computer-address>:4123`.
 
 `npm start` builds both TypeScript targets and then runs `dist/server.js`. Set
 the `PORT` environment variable to override port 4123.
@@ -157,7 +161,7 @@ LAN mode — stable plugin/browser API token:
 ```
 
 - **Browser** — open the tracker on the LAN host; it stores the token automatically.
-- **RuneLite** — paste the printed token (or click **Copy plugin token** in the header) into **Sync Settings → API Token**.
+- **RuneLite** — paste the printed token (or click **Copy plugin token** in the header) into Ronovo's Sync Tool's **Sync Settings → API Token**.
 
 The token is the same every restart as long as `JWT_SECRET` is unchanged.
 `SYNC_ALLOWED_USERS=zezima, other` still limits which RSNs it can sync or read.
@@ -179,11 +183,11 @@ app emits `Strict-Transport-Security` on HTTPS responses automatically — set
 
 Each player:
 
-1. Opens the tracker and uses **Sign in** / **Register** in the header (Playing as is hidden until then). Accounts are a username and password, plus a security question picked when registering; **Forgot password?** resets the password with its answer, and a reset stops every token issued before it. Accounts made with an email address log in with that address as their username.
-2. Clicks **Copy plugin token** and pastes it into RuneLite **Sync Settings → API Token**
+1. Opens the tracker and uses **Sign in** / **Register** in the header (Playing as is hidden until then). Accounts are a username and password, plus a security question picked when registering; **Forgot password?** resets the password with its answer, and a reset stops every token issued before it.
+2. Clicks **Copy plugin token** and pastes it into Ronovo's Sync Tool's **Sync Settings → API Token** in RuneLite
 3. Logs into OSRS and syncs. The first sync binds that Jagex account and claims the character name. Alts on the same Jagex account claim automatically when you sync them with the same token. A different Jagex account needs a different site login.
 
-With `PORTFOLIO_SSO_URL` (the portfolio's address, such as `http://ronovo.lan`) and `PORTFOLIO_SSO_PUBLIC_KEY`
+With `PORTFOLIO_SSO_URL` (the portfolio's address) and `PORTFOLIO_SSO_PUBLIC_KEY`
 (printed by the portfolio's `python sso.py`) set, the header offers to log in with a portfolio account. It reads
 **Log in as** and the portfolio username when this browser is logged in to the portfolio. The first portfolio
 login here asks whether to link a tracker account the player already has, by logging in to it once, or to make a
@@ -202,7 +206,7 @@ login; the real owner would then get a 403 until an admin deletes
 entries). Claimed names are safe. If you run a public instance, know this
 tradeoff; a future version may cross-check the name against Jagex hiscores.
 
-#### Plugin settings (both postures)
+#### Ronovo's Sync Tool settings (both postures)
 
 - **Server URL** — base URL only (`http://localhost:4123` or `https://your-host`). Only `http://` and `https://` are accepted.
 - **API Token** — the value from **Copy plugin token** in the tracker header (the printed token on a LAN host; a personal token after sign-in on a public host)
@@ -212,7 +216,7 @@ Hiscores and Grand Exchange stay public. Character plugin tabs, Leagues Tasks, a
 Optional hardening:
 
 - `RATE_LIMIT_MAX` / `RATE_LIMIT_WINDOW_MS` — in-process cap on `/api/*` (default 120/min per IP). Set `RATE_LIMIT_MAX=0` to disable.
-- `AUTH_RATE_LIMIT_MAX` / `AUTH_RATE_LIMIT_WINDOW_MS` — stricter cap on `/api/auth/{login,register,token}` (default 10/min), keyed by IP + submitted username so login guessing is throttled per account.
+- `AUTH_RATE_LIMIT_MAX` / `AUTH_RATE_LIMIT_WINDOW_MS` — stricter cap on every `/api/auth/*` credential route (default 10/min). Each request counts once per IP, route and submitted username, and once per route and username alone, so guesses at one account spread over many addresses still hit the cap.
 - `TRUST_PROXY` — set to `1` (or a preset like `loopback`) **only** when a reverse proxy actually terminates connections in front of the app. It makes rate limiting key on the real client IP and lets HSTS fire behind the proxy. Leave it unset for a direct LAN host — trusting `X-Forwarded-For` when nothing sets it lets clients spoof their IP.
 - `WIKI_API_CONTACT` — contact string added to the outbound User-Agent on OSRS Wiki API calls. Defaults to the project repo URL.
 - Security headers: `nosniff`, `X-Frame-Options: DENY`, CSP (wiki icons only cross-origin), and `Strict-Transport-Security` on any response served over HTTPS.
@@ -223,8 +227,9 @@ Player GETs and watchlist writes require Bearer auth when `JWT_SECRET` is
 configured. Sync POSTs always require it.
 
 Every `/api` response is JSON, including errors: `{ "error": "..." }` with the
-status code. 5xx bodies are always the generic `Internal error` — internal text
-(filesystem paths, parser messages) is never sent to a client.
+status code. An unexpected server error sends the generic `Internal error`, so internal text
+(filesystem paths, parser messages) never reaches a client; a failed call to the Wiki or Jagex
+says which upstream request failed (501/502).
 
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
@@ -242,6 +247,8 @@ status code. 5xx bodies are always the generic `Internal error` — internal tex
 | POST | `/api/auth/portfolio/link` | none | Link an existing account to that portfolio login, given its password, and sign in |
 | POST | `/api/auth/portfolio/new` | none | Make a new account for that portfolio login and sign in |
 | POST | `/api/auth/bankrolls` | JWT bearer | Merge this browser's Flip bankrolls with the account's |
+| GET | `/sso/login` | none | Start a portfolio login (only when portfolio login is set up) |
+| POST | `/sso/callback` | none | Where the portfolio posts its signed login token back |
 | GET | `/api/hiscores/:username` | none | Jagex hiscores lookup |
 | GET | `/api/collectionlog/:username` | bearer if auth configured | Collection log from the last plugin sync |
 | GET | `/api/ge/movers` | none | 24h GE risers/fallers |
@@ -276,6 +283,21 @@ docker run -d \
   osrs-tracker
 ```
 
+### Updates in Docker
+
+On every start the container runs `docker/git-sync.sh` before the app. It fetches the latest
+commit on GitHub `main`, so a pushed commit goes live on the next restart without rebuilding the
+image. When that commit hasn't been built yet it runs `npm ci` and `npm run build` first, and a
+failed build is tried again on the next start. If GitHub can't be reached the app starts on the
+code it already has.
+
+| Variable | What it does | Default in the image |
+|---|---|---|
+| `REPO_URL` | The repo to pull. Set it empty to run exactly what is in the image. | This repo on GitHub |
+| `REPO_BRANCH` | Branch to pull | `main` |
+| `SYNC_DIR` | Folder the code is pulled into | The app folder |
+| `BUILD_CMD` | Runs after pulling a commit that hasn't been built yet | `npm ci`, `npm run build`, test files removed |
+
 The image sets `NODE_ENV=production`. Outside Docker, set it too on any host
 that is not a local dev box — the app has its own JSON error handler, but
 `NODE_ENV` is what stops Express's fallback from ever adding a stack trace.
@@ -305,7 +327,7 @@ npm run typecheck      # Check server and client without writing output
 npm run lint           # ESLint, type-aware (see eslint.config.mjs)
 npm run build          # Build dist/ and browser JavaScript
 npm run build:server   # Build the Express server and copy its JSON asset
-npm run build:client   # Compile src/client/*.ts into public/client/*.js
+npm run build:client   # Compile src/client and src/shared into public/client and public/shared
 npm test               # Build server and client, run both node:test suites
 npm run test:coverage  # Same, with a per-file coverage report
 npm start              # Build, then run the server (see npm run stop below)
@@ -319,7 +341,7 @@ npm run import:leagues -- <path>   # Refresh leagues-task-metadata.json from the
 ## Data sources
 
 - [Jagex Hiscores](https://secure.runescape.com/m=hiscore_oldschool/) for character data
-- The Leagues Task Randomizer RuneLite plugin for quests, league tasks, and the collection log
+- The Ronovo's Sync Tool RuneLite plugin for quests, achievement diaries, combat achievements and the collection log, and for league tasks completed in the Leagues Task Randomizer plugin
 - [OSRS Wiki Real-time Prices](https://oldschool.runescape.wiki/w/RuneScape:Real-time_Prices) for Grand Exchange data
 - [OSRS Wiki](https://oldschool.runescape.wiki/) for collection log item icons
 

@@ -91,7 +91,7 @@ export function combatLevel(skills: SkillEntry[]): number {
   return Math.floor(base + Math.max(melee, range, mage));
 }
 
-// Lines 0–24: skills. Remaining lines follow ACTIVITY_ORDER (others / minigames / bosses interleaved).
+// Lines 0-24: skills. Remaining lines follow ACTIVITY_ORDER (others / minigames / bosses interleaved).
 // Unmapped trailing lines are ignored.
 export function parseHiscoresCsv(text: string, username: string): HiscoresData {
   const lines = text.trim().split('\n').map((l) => l.trim());

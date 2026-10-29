@@ -4,8 +4,8 @@ Two self-hosted variable fonts, wired up in `style.css` via `@font-face`:
 
 | File | Family | Axis | Used for |
 |---|---|---|---|
-| `cinzel-latin.woff2` | Cinzel | `wght` 400–900 | headings, section labels, the OSRS Tracker wordmark (`--font-display`) |
-| `rubik-latin.woff2` | Rubik | `wght` 300–900 | body, labels, tables, buttons (`--font-ui`) |
+| `cinzel-latin.woff2` | Cinzel | `wght` 400-900 | headings, section labels, the OSRS Tracker wordmark (`--font-display`) |
+| `rubik-latin.woff2` | Rubik | `wght` 300-900 | body, labels, tables, buttons (`--font-ui`) |
 
 Both are the **latin subset** variable woff2 from Google Fonts — one file per family
 covers every weight the CSS asks for (~61 KB total).

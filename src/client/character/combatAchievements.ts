@@ -4,7 +4,7 @@ import { loadSyncedTab } from './context.js';
 import type { CharacterTabContext } from './context.js';
 
 const CA_SYNC_HELP_HTML = `
-  <p><strong>No synced combat achievement data found for this name.</strong> Combat achievements come from the Leagues Tasks RuneLite plugin:</p>
+  <p><strong>No synced combat achievement data found for this name.</strong> Combat achievements come from the Ronovo&apos;s Sync Tool RuneLite plugin:</p>
   <ol>${syncSetupStepsHtml('Sync Combat Achievements')}
   </ol>
   <p>Then search for your name again here.</p>`;

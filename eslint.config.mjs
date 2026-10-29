@@ -24,9 +24,7 @@ export default tseslint.config(
       },
     },
     rules: {
-      // The one this was added for: an unawaited promise in a page script is
-      // a dropped error, and flip.ts had eight of them sitting next to call
-      // sites that did spell out `void`.
+      // An unawaited promise in a page script is a dropped error.
       '@typescript-eslint/no-floating-promises': 'error',
       '@typescript-eslint/no-misused-promises': 'error',
 

@@ -11,7 +11,6 @@ process.env.JWT_SECRET = 'users-test-secret';
 
 const {
   registerUser, loginUser, bindJagexAccountForSync, getUserById, portfolioUser, resetPassword, securityQuestionFor,
-  setSecurityQuestion,
 } = await import('./users.js');
 const { SECURITY_QUESTIONS } = await import('../shared/securityQuestions.js');
 
@@ -79,38 +78,8 @@ test('the username index is stored under a hash, not the name itself', async () 
   assert.ok(!entries.includes('Indexed.json'));
 });
 
-// Accounts from before usernames registered with an email address, indexed under
-// by-email. That address is now their username: it still logs in, and the
-// index moves onto by-username.
-test('an email account from before usernames logs in with its address', async () => {
-  const user = await register('willmove');
-  const digest = createHash('sha256').update('old@example.com').digest('hex');
-  const byEmail = path.join(usersTmp, 'by-email');
-  await fs.mkdir(byEmail, { recursive: true });
-  await fs.writeFile(path.join(byEmail, `${digest}.json`), JSON.stringify({ userId: user.id }), 'utf8');
-  const record = JSON.parse(await fs.readFile(path.join(usersTmp, `${user.id}.json`), 'utf8'));
-  delete record.username;
-  await fs.writeFile(path.join(usersTmp, `${user.id}.json`), JSON.stringify({ ...record, email: 'old@example.com' }), 'utf8');
-
-  const loggedIn = await loginUser('Old@Example.com', 'longpassword');
-  assert.equal(loggedIn.id, user.id);
-  assert.equal(loggedIn.username, 'old@example.com');
-  assert.ok(!(await fs.readdir(byEmail)).includes(`${digest}.json`), 'moved off by-email');
-  assert.equal((await loginUser('old@example.com', 'longpassword')).id, user.id);
-});
-
-test('a plaintext index from before hashing is honoured once, then migrated', async () => {
-  const user = await register('plainlegacy');
-  const byEmail = path.join(usersTmp, 'by-email');
-  await fs.mkdir(byEmail, { recursive: true });
-  await fs.writeFile(path.join(byEmail, 'legacy@example.com.json'), JSON.stringify({ userId: user.id }), 'utf8');
-
-  assert.equal((await loginUser('legacy@example.com', 'longpassword')).id, user.id);
-  assert.ok(!(await fs.readdir(byEmail)).includes('legacy@example.com.json'), 'plaintext index removed');
-});
-
-// A lookup that isn't address-shaped never builds a plaintext path, so a login
-// attempt can't read outside the users directory.
+// Usernames are hashed into the index path, so a login attempt can't read
+// outside the users directory.
 test('loginUser rejects path-shaped names with the same 401 as a wrong password', async () => {
   await assert.rejects(
     () => loginUser('a@x.co/../../sync-decoy/victim', 'longpassword'),
@@ -136,26 +105,6 @@ test('an index entry pointing at a missing account does not block registration',
 test('a live account still blocks a second registration on the same name', async () => {
   await register('taken');
   await assert.rejects(() => register('TAKEN'), /That username is taken/);
-});
-
-// The stored format now carries its own cost parameters. Records written
-// before it did must keep working, or every existing password breaks.
-test('a password hashed in the pre-parameters format still verifies', async () => {
-  const { scrypt } = await import('node:crypto');
-  const { promisify } = await import('node:util');
-  const scryptAsync = promisify(scrypt) as (p: string, s: string, l: number) => Promise<Buffer>;
-
-  const user = await register('legacyhash');
-  const legacy = `scrypt:fixed-salt:${(await scryptAsync('longpassword', 'fixed-salt', 64)).toString('base64')}`;
-  const record = JSON.parse(await fs.readFile(path.join(usersTmp, `${user.id}.json`), 'utf8'));
-  await fs.writeFile(
-    path.join(usersTmp, `${user.id}.json`),
-    JSON.stringify({ ...record, passwordHash: legacy }),
-    'utf8',
-  );
-
-  assert.equal((await loginUser('legacyhash', 'longpassword')).id, user.id);
-  await assert.rejects(() => loginUser('legacyhash', 'wrongpassword'), /Invalid username or password/);
 });
 
 test('a new hash records its scrypt cost parameters', async () => {
@@ -187,13 +136,6 @@ test('an unknown username gets a steady stand-in question and cannot be reset', 
   assert.ok(SECURITY_QUESTIONS.includes(question));
   assert.equal(await securityQuestionFor('GHOST'), question);
   await assert.rejects(() => resetPassword('ghost', 'anything', 'newpassword'), /That answer is wrong/);
-});
-
-test('an account without a question can set one', async () => {
-  const user = await register('later');
-  await assert.rejects(() => setSecurityQuestion(user.id, 'nope', 'x'), /Pick a security question/);
-  await setSecurityQuestion(user.id, SECURITY_QUESTIONS[0], 'smith');
-  assert.equal(await securityQuestionFor('later'), SECURITY_QUESTIONS[0]);
 });
 
 test('a new portfolio account login makes one account, named after it, that has no reset', async () => {

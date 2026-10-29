@@ -35,8 +35,7 @@ test('Watchlist adds no filters of its own', () => {
 });
 
 // The toolbar grid is sized for exactly six presets plus Watchlist, so the key
-// list is pinned: High Volume moved to the Grand Exchange and Widening Spread
-// was dropped (still reachable by hand via Min. margin vs avg + the x-avg sort).
+// list is pinned.
 test('the preset list is exactly the six scan methods plus Watchlist', () => {
   assert.ok(!('volume' in PRESETS));
   assert.ok(!('widening' in PRESETS));

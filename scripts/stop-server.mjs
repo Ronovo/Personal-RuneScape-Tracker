@@ -6,11 +6,9 @@ import { execSync } from 'child_process';
 
 const port = String(process.env.PORT || 4123);
 
-// This kills whatever it finds, so the port has to match exactly. `findstr
-// :4123` matched by substring, so :41230-:41239 came back too and an unrelated
-// LISTENING process could be taskkill'd. Parse the local-address column
-// instead: "TCP  0.0.0.0:4123  0.0.0.0:0  LISTENING  1234", or "[::]:4123" on
-// IPv6 - both end with exactly ":<port>".
+// This kills whatever it finds, so the port has to match exactly; a substring
+// match would also catch :41230. The local-address column ends with exactly
+// ":<port>": "TCP  0.0.0.0:4123  0.0.0.0:0  LISTENING  1234", or "[::]:4123".
 function pidsOnPortWin32() {
   let out;
   try {

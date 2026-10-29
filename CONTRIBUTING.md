@@ -22,7 +22,7 @@ compiled output in `public/client/`, not the TypeScript.
 
 ## Where code goes
 
-See [docs/architecture.md](docs/architecture.md). The short version:
+Where a file belongs:
 
 - Both sides need it → `src/shared/`
 - Server only → `src/lib/`
@@ -38,7 +38,7 @@ See [docs/architecture.md](docs/architecture.md). The short version:
   came from data goes through `escapeHtml`.
 - **Never build a filesystem path from user input** without a validator that
   rejects separators and dot-segments. `storageKey()` does this for player
-  names; email addresses are hashed instead.
+  names; usernames are hashed instead.
 - **Errors carry a status.** Throw `httpError(message, status)`; `jsonErrors` in
   `app.ts` turns it into a response. 4xx messages reach the client, 5xx never do.
 - **A new column, filter or tab is one declaration.** `flipColumns.ts`,
@@ -79,6 +79,7 @@ npm run scrape:combatachievements
 npm run import:leagues -- <path to the plugin's leagues_tasks.json>
 ```
 
-Each script has a `--check` mode that verifies the current data still decodes
-every name in `data/sync/`. They are deliberately not part of `npm run build`,
+Each script has a `--check` mode. The quest and leagues scripts check the current data
+still decodes every name in `data/sync/` (the leagues one writes its output first); the combat
+achievement script checks against the RuneLite jar instead. They are deliberately not part of `npm run build`,
 which stays offline.

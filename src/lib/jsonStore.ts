@@ -1,7 +1,6 @@
 // Shared "one JSON file per key" storage shape used by both sync.ts (synced
 // player data) and watchlist.ts (Flip Helper watchlists), plus a loader for
-// the static JSON assets (leaguetaskmeta.ts, questmeta.ts, collectionlog.ts)
-// that copy-assets.mjs places next to the compiled output.
+// the static JSON assets that copy-assets.mjs places next to the compiled output.
 
 import fs from 'fs/promises';
 import { readFileSync } from 'fs';

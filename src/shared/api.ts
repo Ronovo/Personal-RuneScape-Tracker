@@ -1,17 +1,5 @@
-// The shapes the /api/* routes actually return, shared by the code that builds
-// them and the code that renders them.
-//
-// These used to be written twice: once as local interfaces in src/lib/*.ts and
-// again by hand in src/client/types.ts, on the reasoning that the browser build
-// must not depend on server source. It doesn't have to - src/shared is compiled
-// into both builds, which is where the prices types already lived. The sync
-// types never made the move, and had started to drift: `CompletedTaskRecord`
-// named two different shapes depending on which side you were on (the raw sync
-// record server-side, the metadata-decorated row client-side), and one payload
-// answered to both `MoversResult` and `MoversResponse`.
-//
-// A field renamed here is now a compile error on both sides instead of an
-// `undefined` at runtime.
+// The shapes the /api/* sync and character routes return, shared by the code that builds them and
+// the code that renders them.
 
 // ---- Hiscores (Jagex) ----
 

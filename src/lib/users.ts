@@ -11,7 +11,7 @@ import fs from 'fs/promises';
 import { MAX_SECURITY_ANSWER, SECURITY_QUESTIONS, normalizeAnswer } from '../shared/securityQuestions.js';
 
 // promisify() picks the no-options overload, which drops the cost parameters
-// this module now passes explicitly.
+// this module passes.
 const scryptAsync = promisify(scrypt) as (
   password: string,
   salt: string,
@@ -29,9 +29,6 @@ function usersDir(): string {
 export interface UserRecord {
   id: string;
   username: string;
-  // Accounts made before usernames hold the address they registered with here
-  // instead, and that address is now their username (see getUserById).
-  email?: string;
   passwordHash: string;
   securityQuestion?: string;
   securityAnswerHash?: string;
@@ -62,21 +59,6 @@ function usernameIndexPath(username: string): string {
   return path.join(usersDir(), 'by-username', `${digest}.json`);
 }
 
-// Accounts made before usernames are indexed here by the hashed address they
-// registered with, which is normalized the same way a username is.
-// findUserIdByUsername() moves a hit onto by-username.
-function emailIndexPath(email: string): string {
-  const digest = createHash('sha256').update(normalizeUsername(email)).digest('hex');
-  return path.join(usersDir(), 'by-email', `${digest}.json`);
-}
-
-// Pre-hash installs wrote `<address>.json` here. Read-only, and only ever built
-// from an address that passes isLegacyEmail(), so it cannot traverse. Safe to
-// delete once no deployment still holds a plaintext index file.
-function legacyEmailIndexPath(email: string): string {
-  return path.join(usersDir(), 'by-email', `${normalizeUsername(email)}.json`);
-}
-
 function rsnClaimPath(rsn: string): string {
   return path.join(usersDir(), 'rsn-claims', `${rsn}.json`);
 }
@@ -95,21 +77,8 @@ function normalizeUsername(username: string): string {
 
 const USERNAME_RE = /^[A-Za-z0-9_-]{3,20}$/;
 
-// Shape check, plus an explicit ban on anything that could act as a path
-// segment. The shape regex alone accepts `/`, `\` and `..`.
-const EMAIL_SHAPE_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PATH_UNSAFE_RE = /[/\\]|\.\./;
-
-function isLegacyEmail(value: string): boolean {
-  const normalized = normalizeUsername(value);
-  return EMAIL_SHAPE_RE.test(normalized) && !PATH_UNSAFE_RE.test(normalized);
-}
-
-// Node's own scrypt defaults, written into the hash rather than assumed. The
-// original format was `scrypt:<salt>:<hash>`, which left nowhere to record the
-// cost - so raising N later would have invalidated every existing password
-// instead of just the ones not yet re-hashed. Records written in that format
-// still verify, under the defaults they were made with.
+// Node's own scrypt defaults, written into the hash rather than assumed, so the
+// cost can be raised later without invalidating existing passwords.
 const SCRYPT_KEY_LEN = 64;
 const SCRYPT_PARAMS = { N: 16_384, r: 8, p: 1 } as const;
 
@@ -124,18 +93,11 @@ function parseStoredHash(stored: string): StoredHash | null {
   // A salt is a UUID, so no part can contain a colon of its own.
   if (parts[0] !== 'scrypt') return null;
 
-  if (parts.length === 6) {
-    const [, n, r, p, salt, hashB64] = parts;
-    const params = { N: Number(n), r: Number(r), p: Number(p) };
-    if (!salt || !hashB64 || !Object.values(params).every(Number.isInteger)) return null;
-    return { params, salt, hashB64 };
-  }
-  if (parts.length === 3) {
-    const [, salt, hashB64] = parts;
-    if (!salt || !hashB64) return null;
-    return { params: { ...SCRYPT_PARAMS }, salt, hashB64 };
-  }
-  return null;
+  if (parts.length !== 6) return null;
+  const [, n, r, p, salt, hashB64] = parts;
+  const params = { N: Number(n), r: Number(r), p: Number(p) };
+  if (!salt || !hashB64 || !Object.values(params).every(Number.isInteger)) return null;
+  return { params, salt, hashB64 };
 }
 
 async function hashPassword(password: string): Promise<string> {
@@ -171,31 +133,12 @@ export function parseAccountHash(value: unknown): string {
 }
 
 export async function getUserById(userId: string): Promise<UserRecord | null> {
-  const user = await readJsonOrDefault<UserRecord | null>(userPath(userId), null);
-  return user && { ...user, username: user.username ?? user.email ?? '' };
+  return readJsonOrDefault<UserRecord | null>(userPath(userId), null);
 }
 
 async function findUserIdByUsername(username: string): Promise<string | null> {
   const index = await readJsonOrDefault<{ userId?: string } | null>(usernameIndexPath(username), null);
-  if (index?.userId) {
-    return index.userId;
-  }
-
-  // Fall back to an index from before usernames and move it onto by-username,
-  // so an existing account keeps working across the upgrade without a migration step.
-  let oldPath = emailIndexPath(username);
-  let old = await readJsonOrDefault<{ userId?: string } | null>(oldPath, null);
-  if (!old?.userId && isLegacyEmail(username)) {
-    oldPath = legacyEmailIndexPath(username);
-    old = await readJsonOrDefault<{ userId?: string } | null>(oldPath, null);
-  }
-  if (!old?.userId) {
-    return null;
-  }
-  await ensureUserDirs();
-  await atomicWriteFile(usernameIndexPath(username), JSON.stringify({ userId: old.userId }));
-  await fs.rm(oldPath, { force: true });
-  return old.userId;
+  return index?.userId ?? null;
 }
 
 function checkPassword(password: string): void {
@@ -269,19 +212,6 @@ export async function loginUser(username: string, password: string): Promise<Use
 
 async function saveUser(user: UserRecord): Promise<void> {
   await atomicWriteFile(userPath(user.id), JSON.stringify(user, null, 2));
-}
-
-export async function setSecurityQuestion(userId: string, question: unknown, answer: unknown): Promise<void> {
-  checkSecurityAnswer(question, answer);
-  const user = await getUserById(userId);
-  if (!user) {
-    throw httpError('Unauthorized', 401);
-  }
-  await saveUser({
-    ...user,
-    securityQuestion: question as string,
-    securityAnswerHash: await hashPassword(normalizeAnswer(answer as string)),
-  });
 }
 
 const MAX_RESET_FAILURES = 5;

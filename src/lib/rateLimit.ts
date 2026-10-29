@@ -8,10 +8,9 @@ type HitLog = Map<string, number[]>;
 interface RateLimitOptions {
   windowMs: number;
   max: number;
-  // Bucket key; defaults to the caller's IP. Auth routes override this to
-  // fold in the route + submitted username so login guessing is throttled per
-  // account, not just per address.
-  keyFn?: (req: Request) => string;
+  // Bucket key; defaults to the caller's IP. Null leaves the request out of
+  // this limiter.
+  keyFn?: (req: Request) => string | null;
 }
 
 function clientIp(req: Request): string {
@@ -47,6 +46,10 @@ export function rateLimit(options: RateLimitOptions): (req: Request, res: Respon
     }
 
     const key = keyFn ? keyFn(req) : clientIp(req);
+    if (key === null) {
+      next();
+      return;
+    }
     const now = Date.now();
     const recent = (hits.get(key) ?? []).filter((t) => t > now - windowMs);
     if (recent.length >= max) {
@@ -77,18 +80,23 @@ export function apiRateLimit(): (req: Request, res: Response, next: NextFunction
   });
 }
 
-// Stricter limiter for /api/auth/{login,register,token} - brute-force
-// protection on the credential endpoints. Keyed by IP + route + submitted
-// username so one IP can't grind many accounts and one account can't be ground
-// from many requests behind a shared NAT without also tripping the IP bucket.
+function submittedUsername(req: Request): string {
+  const body = req.body as { username?: unknown } | undefined;
+  return typeof body?.username === 'string' ? body.username.trim().toLowerCase() : '';
+}
+
+// Stricter limiter for the credential routes (/api/auth/*). Each request counts
+// against two buckets: one per address, route and submitted username, and one
+// per route and username alone, so guesses at one account spread over many
+// addresses still hit the limit.
 export function authRateLimit(): (req: Request, res: Response, next: NextFunction) => void {
-  return rateLimit({
-    windowMs: envLimit('AUTH_RATE_LIMIT_WINDOW_MS', 60_000),
-    max: envLimit('AUTH_RATE_LIMIT_MAX', 10),
-    keyFn: (req) => {
-      const body = req.body as { username?: unknown } | undefined;
-      const username = typeof body?.username === 'string' ? body.username.trim().toLowerCase() : '';
-      return `${clientIp(req)}|${req.path}|${username}`;
-    },
+  const windowMs = envLimit('AUTH_RATE_LIMIT_WINDOW_MS', 60_000);
+  const max = envLimit('AUTH_RATE_LIMIT_MAX', 10);
+  const perAddress = rateLimit({ windowMs, max, keyFn: (req) => `${clientIp(req)}|${req.path}|${submittedUsername(req)}` });
+  const perAccount = rateLimit({
+    windowMs,
+    max,
+    keyFn: (req) => (submittedUsername(req) ? `${req.path}|${submittedUsername(req)}` : null),
   });
+  return (req, res, next) => perAddress(req, res, () => perAccount(req, res, next));
 }

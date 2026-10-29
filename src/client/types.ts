@@ -1,11 +1,7 @@
 // The shapes of the JSON this app's own /api/* endpoints return.
 //
-// The response types themselves live in src/shared/api.ts and are re-exported
-// here, so the server modules that build them and the page scripts that render
-// them are typed by the same declarations. src/shared/types.ts holds the
-// prices-side unions the two sides also share. What is left below is genuinely
-// browser-only: the movers/search/item-detail view shapes the GE and Flip pages
-// consume.
+// The sync and character response types live in src/shared/api.ts and are
+// re-exported here. The GE and Flip shapes below still copy src/lib/types.ts.
 
 import type { MembersFilter, PriceRange, Confidence, SortDir, FlipSort, FlipItem } from '../shared/types.js';
 import { FLIP_SORTS } from '../shared/types.js';

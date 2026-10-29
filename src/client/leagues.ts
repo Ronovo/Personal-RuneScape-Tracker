@@ -27,19 +27,16 @@ const taskActivityTypeFiltersEl = document.getElementById('taskActivityTypeFilte
 prefillUsername(usernameInput);
 
 const SYNC_HELP_HTML = `
-  <p><strong>No synced leagues data found for this name.</strong> Progress only appears after syncing from the Leagues Task Randomizer plugin at least once:</p>
+  <p><strong>No synced leagues data found for this name.</strong> Tasks are completed in the Leagues Tasks RuneLite plugin and sent here by the Ronovo&apos;s Sync Tool plugin, so progress only appears after syncing at least once:</p>
   <ol>${syncSetupStepsHtml('Sync Tasks or Sync Everything')}
   </ol>
   <p>Then click <strong>Update</strong> here to load the latest snapshot.</p>`;
 
 // ---- Region / Difficulty / Activity Type filters ----
-// Same two-tier pattern as the Quests tab: a top strip picks which
-// dimension's options are showing, and only that one option row is visible.
-// All three filters stay applied either way - hiding a row doesn't clear it,
-// so the dot marker on the top strip is what tells you a hidden row is still
-// narrowing the list. Unlike the Quests tab's filter tabs (a fixed, known set
-// of options), region/difficulty/activityType option buttons come from the
-// server response and have to be (re)built after every load.
+// A top strip picks which dimension's options are showing. All three filters
+// stay applied when their row is hidden, and the strip's dot marks one that is.
+// The option buttons come from the server response, so they are rebuilt after
+// every load.
 
 const ALL = TASK_FILTER_ALL;
 type TaskFilterDimension = 'region' | 'difficulty' | 'activityType';
@@ -88,9 +85,6 @@ function markActiveDimensions(): void {
   markNarrowedDimensions<TaskFilterDimension>(taskFilterTabsEl, (dimension) => activeFilter[dimension] !== ALL);
 }
 
-// The top strip's own button list is fixed (unlike the option rows below it,
-// which are rebuilt from server data), so it reuses the same wiring as the
-// Quests tab's dimension strip.
 const selectFilterDimension = wireFilterGroup(taskFilterTabsEl, TASK_DIMENSION_TABS, (key) => {
   for (const dimension of Object.keys(TASK_OPTION_ROWS) as TaskFilterDimension[]) {
     TASK_OPTION_ROWS[dimension].hidden = dimension !== key;
@@ -158,8 +152,6 @@ function renderTasks(data: LeaguesTasksData): void {
   setFilterOptions('difficulty', data.filters.difficulties);
   setFilterOptions('activityType', data.filters.activityTypes);
 
-  // Also reset which dimension tab is showing, same as the Quests tab does
-  // on every fresh search.
   selectFilterDimension('region');
 }
 

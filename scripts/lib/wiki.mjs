@@ -1,9 +1,4 @@
 // Shared plumbing for the offline metadata scrapers.
-//
-// Both scrape scripts had grown their own copy of the repo root, the wiki
-// endpoint and the User-Agent - and the User-Agent copies had drifted from
-// the one the running server sends, while each carried a comment claiming
-// they matched.
 
 import path from 'path';
 import { fileURLToPath } from 'url';

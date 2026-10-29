@@ -164,7 +164,7 @@ async function getLatest(): Promise<LatestPrices> {
   return json.data;
 }
 
-// True 24h average prices + volumes. Replaces summing the last 24 hourly buckets.
+// True 24h average prices + volumes.
 async function get24h(): Promise<DayPrices> {
   const cached = dayCache.get();
   if (cached) return cached;
@@ -200,12 +200,9 @@ function stdev(values: number[]): number | null {
  * One item's slice of mapping + /latest + /24h, plus every value both the GE
  * and Flip views derive from it.
  *
- * The two row builders below are separate on purpose - they filter differently
+ * The two row builders below are separate on purpose: they filter differently
  * (movers need a 24h-ago price and either side of the book; flips need both
- * sides) and carry different columns, and folding them into one row would mean
- * computing confidence and scores for the GE grid that never shows them. What
- * they genuinely shared was this join and the five derived values hanging off
- * it, which each used to spell out in its own slightly different order.
+ * sides) and carry different columns.
  */
 interface PricedItem {
   /** The raw /latest key, for the sibling blobs that are keyed the same way. */
@@ -316,7 +313,7 @@ async function getJoinedPriceData(): Promise<JoinedPriceItem[]> {
       icon: p.icon,
       currentPrice,
       pastPrice,
-      volume: p.volume24h, // alias so the existing minVolume filter still works
+      volume: p.volume24h,
       volume24h: p.volume24h,
       pctChange: ((currentPrice - pastPrice) / pastPrice) * 100,
       pctChange1h: past1hPrice ? ((currentPrice - past1hPrice) / past1hPrice) * 100 : null,
@@ -347,7 +344,7 @@ async function getJoinedPriceData(): Promise<JoinedPriceItem[]> {
 // every key gets both directions - the same shape as getFlipCandidates. The
 // client sends 'asc' for Dropping-by-%-change, which is what makes that view
 // lead with the biggest fallers.
-// Profit-ranked scans (Penny Arcade / Spread / GP-per-Hour) live on the Flip Helper.
+// Profit-ranked scans live on the Flip Helper.
 export async function getMovers({
   minVolume = 500,
   minPrice = 50,
@@ -843,11 +840,8 @@ export async function getFlipCandidates({
   // sortDir flips the whole comparison rather than being baked into sortValue,
   // so every key gets both directions for free.
   //
-  // Sorted in place, over the rows themselves: `filtered` is already a fresh
-  // array from .filter(), and sorting references costs nothing per item. The
-  // bankroll columns are derived onto the one page that is actually returned
-  // rather than onto every candidate - a wide scan is a few thousand rows, and
-  // all but fifty of those copies were thrown away.
+  // Sorted in place: `filtered` is already a fresh array from .filter(). The
+  // bankroll columns are derived onto the returned page only, not every candidate.
   filtered.sort((a, b) => {
     const cmp = sort === 'name' ? a.name.localeCompare(b.name) : sortValue(a) - sortValue(b);
     return sortDir === 'desc' ? -cmp : cmp;

@@ -2,10 +2,7 @@
 //
 // Not authentication - that is auth.ts. This is just a name kept in
 // localStorage so the Flip watchlist and bankroll have something to be keyed
-// by and username boxes can pre-fill themselves. It used to live in session.ts
-// alongside the whole page header and auth panel; the header now listens for
-// the change event below rather than being called into from here, so this
-// module has no idea a header exists.
+// by and username boxes can pre-fill themselves.
 
 import { safeJsonParse, fetchJson, apiAuthHeaders, storageGet, storageRemove, storageSet, API_TOKEN_KEY } from './format.js';
 

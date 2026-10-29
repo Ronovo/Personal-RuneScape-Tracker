@@ -130,9 +130,9 @@ export async function ssoCallback(req: Request, res: Response): Promise<void> {
   res.redirect(`/link.html?link=${newCode(pendingChoices, { sub: payload.sub, name, expires })}`);
 }
 
-async function signedIn(res: Response, user: UserRecord, needsSecurityQuestion: boolean): Promise<void> {
+async function signedIn(res: Response, user: UserRecord): Promise<void> {
   const token = await mintApiToken(user.id, user.tokenVersion);
-  res.json({ token, user: { id: user.id, username: user.username, rsns: user.rsns }, needsSecurityQuestion });
+  res.json({ token, user: { id: user.id, username: user.username, rsns: user.rsns } });
 }
 
 export async function authPortfolio(req: Request, res: Response): Promise<void> {
@@ -147,7 +147,7 @@ export async function authPortfolio(req: Request, res: Response): Promise<void> 
   if (!user) {
     throw httpError('Unauthorized', 401);
   }
-  await signedIn(res, user, false);
+  await signedIn(res, user);
 }
 
 function heldChoice(req: Request): { code: string; choice: PendingChoice } {
@@ -174,13 +174,12 @@ export async function authPortfolioLink(req: Request, res: Response): Promise<vo
   const user = await loginUser(username.trim(), password);
   const linked = await linkPortfolio(user, choice.sub);
   pendingChoices.delete(code);
-  // Accounts made before security questions are asked to set one straight after signing in.
-  await signedIn(res, linked, !user.securityAnswerHash);
+  await signedIn(res, linked);
 }
 
 export async function authPortfolioNew(req: Request, res: Response): Promise<void> {
   const { code, choice } = heldChoice(req);
   const user = await portfolioUser(choice.sub, choice.name);
   pendingChoices.delete(code);
-  await signedIn(res, user, false);
+  await signedIn(res, user);
 }

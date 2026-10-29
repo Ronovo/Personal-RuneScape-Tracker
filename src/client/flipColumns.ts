@@ -1,12 +1,6 @@
-// The Flip Helper's result columns, declared once.
-//
-// Each column used to be spelled out in six places - the ColumnKey union, the
-// ALL_COLUMN_KEYS array, a <th> in flip.html, a checkbox <label> in flip.html,
-// an <option> in the mobile sort <select>, and a <td> template in flip.ts -
-// with the mobile card carrying a seventh, subtly different, list. The tooltips
-// had already drifted apart between the <th> and the checkbox that describe the
-// same number. Everything below is now generated from this one table, so a new
-// column is one entry here and nothing else.
+// The Flip Helper's result columns, declared once: the header, the column
+// checkboxes, the mobile sort list, the cells and the mobile card are all
+// generated from this table.
 
 import { fmt, fmtGp, fmtGpShort, fmtPct, fmtAgo, pctClass, escapeHtml } from './format.js';
 import type { FlipItem } from './types.js';
@@ -49,9 +43,8 @@ const gpOrNa = (value: number | null | undefined): string => fmtGp(value);
 
 /**
  * The confidence dot. Exported because the mobile card shows it in its header
- * rather than as a field, and both spellings drifting apart is exactly what
- * this module exists to prevent. The only value here derived from item text,
- * so the only one that has to escape.
+ * rather than as a field. The only value here derived from item text, so the
+ * only one that has to escape.
  */
 export function confidenceDotHtml(item: FlipItem): string {
   return `<span class="conf-dot conf-${item.confidence}" title="${escapeHtml(item.confidenceWhy || item.confidence)}"></span>`;
@@ -188,9 +181,8 @@ function headerLabel(column: FlipColumn): string {
 }
 
 /**
- * Which columns to emit. Hidden columns are left out of the markup rather than
- * rendered and hidden with [hidden] - at fifty rows that was two thirds of the
- * cells built for nothing. The caller re-renders when the selection changes.
+ * Which columns to emit. Hidden columns are left out of the markup, and the
+ * caller re-renders when the selection changes.
  */
 export type ColumnFilter = (key: ColumnKey) => boolean;
 

@@ -5,7 +5,7 @@ import { escapeHtml } from './format.js';
 import { syncBankrolls } from './identity.js';
 import {
   linkPortfolioAccount, loadAuthStatus, loginAccount, newPortfolioAccount, portfolioPending, registerAccount,
-  resetPassword, resetQuestion, saveSecurityQuestion, wirePortfolioButton,
+  resetPassword, resetQuestion, wirePortfolioButton,
 } from './auth.js';
 
 function element<T extends HTMLElement>(id: string): T | null {
@@ -54,12 +54,8 @@ function onSubmit(id: string, handler: () => Promise<void>, fallback: string): v
   });
 }
 
-async function finishSignIn(needsSecurityQuestion: boolean): Promise<void> {
+async function finishSignIn(): Promise<void> {
   await syncBankrolls();
-  if (needsSecurityQuestion) {
-    showForm('securityForm');
-    return;
-  }
   location.href = 'index.html';
 }
 
@@ -70,7 +66,7 @@ function wireRegister(portfolio: boolean, portfolioUrl: string | undefined): voi
     }
     await registerAccount(fieldValue('registerUsername').trim(), fieldValue('registerPassword'),
       fieldValue('registerQuestion'), fieldValue('registerAnswer'));
-    await finishSignIn(false);
+    await finishSignIn();
   }, 'Registration failed');
 
   const portfolioBtn = element('pagePortfolioBtn');
@@ -84,8 +80,8 @@ function wireRegister(portfolio: boolean, portfolioUrl: string | undefined): voi
 // the answer and a new password change it.
 function wireLogin(): void {
   onSubmit('loginForm', async () => {
-    const result = await loginAccount(fieldValue('loginUsername').trim(), fieldValue('loginPassword'));
-    await finishSignIn(result.needsSecurityQuestion);
+    await loginAccount(fieldValue('loginUsername').trim(), fieldValue('loginPassword'));
+    await finishSignIn();
   }, 'Log in failed');
 
   element('forgotLink')?.addEventListener('click', (e) => {
@@ -131,12 +127,12 @@ async function wireLinkPage(): Promise<void> {
     return;
   }
   onSubmit('linkForm', async () => {
-    const result = await linkPortfolioAccount(code, fieldValue('linkUsername').trim(), fieldValue('linkPassword'));
-    await finishSignIn(result.needsSecurityQuestion);
+    await linkPortfolioAccount(code, fieldValue('linkUsername').trim(), fieldValue('linkPassword'));
+    await finishSignIn();
   }, 'Linking failed');
   element('linkNewBtn')?.addEventListener('click', () => {
     void newPortfolioAccount(code)
-      .then(() => finishSignIn(false))
+      .then(finishSignIn)
       .catch((err: unknown) => showMessage(errorText(err, 'Could not make the account'), true));
   });
   element('linkPassword')?.focus();
@@ -154,10 +150,6 @@ async function mountAccountPage(): Promise<void> {
   if (element('registerForm')) wireRegister(Boolean(status.portfolio), status.portfolioUrl);
   if (element('loginForm')) wireLogin();
   if (element('linkForm')) await wireLinkPage();
-  onSubmit('securityForm', async () => {
-    await saveSecurityQuestion(fieldValue('securityQuestion'), fieldValue('securityAnswer'));
-    location.href = 'index.html';
-  }, 'Could not save');
 }
 
 document.addEventListener('DOMContentLoaded', () => {

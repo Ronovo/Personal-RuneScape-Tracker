@@ -1,9 +1,6 @@
-// Shared server-side shapes for the wiki prices API: prices.ts's derived
-// objects plus app.ts's query-enum types. hiscores.ts and collectionlog.ts
-// define their own local shapes instead, since their data isn't from this
-// API. Shapes identical on the client side (MembersFilter, PriceRange,
-// Confidence, SortDir, FlipSort/FLIP_SORTS, FlipRow/FlipItem) live in
-// src/shared/types.ts and are re-exported below rather than duplicated.
+// Server-side shapes for the wiki prices API: prices.ts's derived objects plus
+// app.ts's query-enum types. Shapes identical on the client side live in
+// src/shared/types.ts and are re-exported below.
 
 import type { MembersFilter, PriceRange, Confidence, SortDir, FlipSort, FlipRow, FlipItem } from '../shared/types.js';
 import { FLIP_SORTS } from '../shared/types.js';

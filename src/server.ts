@@ -4,13 +4,6 @@ import { jwtAuthConfigured, lanModeConfigured, mintWildcardToken } from './lib/a
 
 const PORT = process.env.PORT || 4123;
 
-if (process.env.SYNC_TOKEN?.trim()) {
-  console.error(
-    '[auth] SYNC_TOKEN was removed in v1. Set JWT_SECRET, and LAN_MODE=1 for LAN posture. See CHANGELOG.',
-  );
-  process.exit(1);
-}
-
 const app = createApp();
 
 // Non-internal IPv4 addresses so a phone on the same LAN can open the app.

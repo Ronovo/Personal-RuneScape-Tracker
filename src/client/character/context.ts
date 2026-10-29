@@ -22,9 +22,6 @@ export interface SyncedTabOptions<T> {
  * Every Character tab that reads plugin-synced data loads the same way: hide
  * both panels, fetch, treat 404 as "nothing synced yet" and show the setup
  * steps, render on success, and put anything else on the page's status line.
- * Quests, Diaries, Combat Achievements and Collection Log each carried their
- * own copy of this; the only real differences are the URL, the help text and
- * what render() does with the payload.
  */
 export async function loadSyncedTab<T>({
   url, ctx, resultEl, syncHelpEl, syncHelpHtml, errorText, render,

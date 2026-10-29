@@ -6,7 +6,7 @@ import { loadSyncedTab } from './context.js';
 import type { CharacterTabContext } from './context.js';
 
 const QUEST_SYNC_HELP_HTML = `
-  <p><strong>No synced quest data found for this name.</strong> Quests come from the Leagues Task Randomizer RuneLite plugin, not the hiscores:</p>
+  <p><strong>No synced quest data found for this name.</strong> Quests come from the Ronovo&apos;s Sync Tool RuneLite plugin, not the hiscores:</p>
   <ol>${syncSetupStepsHtml('Sync Quests or Sync Everything')}
   </ol>
   <p>Then search for your name again here.</p>`;

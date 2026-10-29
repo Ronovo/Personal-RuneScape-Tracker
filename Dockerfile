@@ -23,8 +23,6 @@ COPY --chown=node:node public ./public
 RUN npm run build && find dist public -name '*.test.js' -delete
 
 # Express's default error handler includes a stack trace unless this is set.
-# The app registers its own JSON error handler (src/lib/app.ts) so nothing
-# should reach that fallback, but a production build should say so anyway.
 ENV NODE_ENV=production
 ENV PORT=4123
 EXPOSE 4123

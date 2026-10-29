@@ -1,7 +1,4 @@
-// Slug-to-label helpers. Three modules had grown their own near-identical
-// version of this: combatachievements.ts and diaries.ts each split on '_' and
-// lower-cased the tail, leaguetasks.ts split on '-' and upper-cased the head,
-// and leaguetaskmeta.ts kept a bare capitalize() plus a one-line alias of it.
+// Slug-to-label helpers.
 
 export function capitalize(word: string): string {
   return word.charAt(0).toUpperCase() + word.slice(1);

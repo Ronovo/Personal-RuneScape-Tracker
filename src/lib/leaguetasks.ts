@@ -1,8 +1,8 @@
-// Leagues task completions come from the same plugin sync as quests - this
-// re-serves what's already on disk, decorated with the region/difficulty/
-// activity type classification the plugin can't send per-task (see
-// leaguetaskmeta.ts) plus the canonical filter option lists the Tasks page
-// filter UI uses.
+// Leagues task completions are made in the Leagues Tasks plugin and sent by
+// the same Ronovo's Sync Tool sync as quests - this re-serves what's already
+// on disk, decorated with the region/difficulty/activity type classification
+// the plugin can't send per-task (see leaguetaskmeta.ts) plus the canonical
+// filter option lists the Tasks page filter UI uses.
 
 import { lookupTaskMeta, displayDifficulty, TASK_REGIONS, TASK_DIFFICULTIES, TASK_ACTIVITY_TYPES } from './leaguetaskmeta.js';
 import { requireSection, requireSyncedFile } from './syncedSection.js';
@@ -14,7 +14,6 @@ export type { CompletedTaskWithMeta, LeaguesTasksData, TaskFilterOptions };
 
 const UNKNOWN = 'Unknown';
 
-/** Exported for tests: the metadata-miss path real synced data never hits. */
 export function withMeta(task: CompletedTaskRecord): CompletedTaskWithMeta {
   const meta = lookupTaskMeta(task.taskId);
   return {

@@ -1,5 +1,5 @@
 // Collection log browser. Jagex exposes no log contents, so this reads the
-// snapshot the Leagues Tasks RuneLite plugin uploads to this tracker — a 404
+// snapshot the Ronovo's Sync Tool RuneLite plugin uploads to this tracker — a 404
 // means the player hasn't synced, which we show as help rather than an error.
 
 import { fmt, fetchJson, errorMessage, onEnterOrClick, escapeHtml, fmtSyncedAt, syncSetupStepsHtml } from './format.js';

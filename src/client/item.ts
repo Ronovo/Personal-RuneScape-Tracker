@@ -51,7 +51,6 @@ function setCached(id: number, range: PriceRange, data: ItemDetail): void {
 function tile(value: string, label: string, valueClass = '', tooltip = ''): string {
   const cls = valueClass ? ` class="${valueClass}"` : '';
   const tip = tooltip ? ` class="stat-tip" title="${escapeHtml(tooltip)}"` : '';
-  // Hand-drawn SVG "i" badge - crisper and font-independent vs. the ⓘ glyph.
   const cue = tooltip
     ? ' <svg class="info-cue" aria-hidden="true" viewBox="0 0 16 16" width="12" height="12">'
       + '<circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.5" />'

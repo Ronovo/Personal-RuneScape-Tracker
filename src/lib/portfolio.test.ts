@@ -73,7 +73,7 @@ async function portfolioLogin(sub: string): Promise<{ page: string; code: string
   return { page: location.pathname, code: location.searchParams.get(param)! };
 }
 
-type LoginReply = { token: string; user: { id: string; username: string }; needsSecurityQuestion: boolean };
+type LoginReply = { token: string; user: { id: string; username: string } };
 type BankrollReply = { bankrolls: Record<string, { value: number; savedAt: number }> };
 
 async function postJson(url: string, body: unknown, token?: string): Promise<Response> {
@@ -105,7 +105,6 @@ test('the first portfolio login asks, then a new account is shared by every devi
   assert.deepEqual(await (await postJson('/api/auth/portfolio/pending', { code })).json(), { username: 'player10' });
   const first = await (await postJson('/api/auth/portfolio/new', { code })).json() as LoginReply;
   assert.equal(first.user.username, 'player10');
-  assert.equal(first.needsSecurityQuestion, false);
   assert.ok(first.token);
   assert.equal((await postJson('/api/auth/portfolio/new', { code })).status, 400, 'a used code is gone');
 
@@ -125,7 +124,6 @@ test('an existing account can be linked once', async () => {
   assert.equal((await postJson('/api/auth/portfolio/link', { code, username: 'linker', password: 'wrong' })).status, 401);
   const linked = await (await postJson('/api/auth/portfolio/link', { code, username: 'linker', password: 'password1' })).json() as LoginReply;
   assert.equal(linked.user.id, registered.user.id);
-  assert.equal(linked.needsSecurityQuestion, false);
 
   const again = await portfolioLogin('20');
   assert.equal(again.page, '/');

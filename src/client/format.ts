@@ -67,11 +67,6 @@ function ageSeconds(unixSec: Num): number | null {
 }
 
 // "7m ago", from a duration already measured in seconds - what flip rows carry.
-//
-// This used to accept a timestamp too, guessing which the caller meant from
-// two magic thresholds: anything over 1e8 was read as a timestamp, so a
-// duration of 3.2 years or more silently became a date. Call sites always know
-// which one they hold, so they say.
 export function fmtAgo(seconds: Num): string {
   if (seconds === null || seconds === undefined || Number.isNaN(seconds)) return 'n/a';
   const sec = Math.max(0, Math.floor(seconds));
@@ -187,7 +182,6 @@ export function safeJsonParse<T>(raw: string | null, fallback: T): T {
   }
 }
 
-// Typed getElementById - avoids repeating `document.getElementById(x) as Y` casts.
 export function el<T extends HTMLElement = HTMLElement>(id: string): T {
   return document.getElementById(id) as T;
 }
@@ -216,12 +210,8 @@ export interface FilterGroup<T extends string> {
 // A row of filter buttons: renders them, tracks which one is active, and runs
 // the caller's apply + refresh callbacks on every click.
 //
-// Used for every filter row in the app - the Quests tab's per-dimension
-// options, both pages' top-level "which dimension" strip, and the Leagues
-// page's region/difficulty/activityType rows. The last of those are rebuilt
-// from each response rather than fixed, which is why setOptions exists; that
-// case used to be a near-identical private copy of this function in leagues.ts,
-// with a comment on each side explaining why there were two.
+// The Leagues page's region/difficulty/activityType rows are rebuilt from each
+// response rather than fixed, which is why setOptions exists.
 export function wireFilterGroup<T extends string>(
   el: HTMLElement,
   options: FilterOption<T>[],
@@ -265,7 +255,7 @@ export function markNarrowedDimensions<K extends string>(tabsEl: HTMLElement, is
 // Leagues pages - identical everywhere except what the Sync URL points at.
 export function syncSetupStepsHtml(syncButtonLabel = 'Sync Everything'): string {
   return `
-    <li>In RuneLite, open the <strong>Leagues Tasks</strong> sidebar and go to <strong>Sync Settings</strong>.</li>
+    <li>In RuneLite, open the <strong>Ronovo&apos;s Sync Tool</strong> sidebar and go to <strong>Sync Settings</strong>.</li>
     <li>Set <strong>Server URL</strong> to this tracker&apos;s base URL (for example <code>http://localhost:4123</code>, or HTTPS / your LAN address).</li>
     <li>Set <strong>API Token</strong> to the value from <strong>Copy plugin token</strong> in the tracker header (LAN hosts fill the browser in automatically; public hosts show it after sign-in).</li>
     <li>Under <strong>Sync to Website</strong>, click <strong>${syncButtonLabel}</strong> while logged in on that character.</li>`;

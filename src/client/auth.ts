@@ -41,24 +41,12 @@ export function clearAuthStatusCache(): void {
   cachedStatus = null;
 }
 
-const PLACEHOLDER_TOKENS = new Set(['your-token', 'your-secret-here', 'your-secret']);
-
-export function isPlaceholderToken(token: string): boolean {
-  return PLACEHOLDER_TOKENS.has(token.trim().toLowerCase());
-}
-
 export function getStoredToken(): string {
-  const token = storageGet(localStorage, API_TOKEN_KEY)?.trim() ?? '';
-  if (token && isPlaceholderToken(token)) {
-    storageRemove(localStorage, API_TOKEN_KEY);
-    return '';
-  }
-  return token;
+  return storageGet(localStorage, API_TOKEN_KEY)?.trim() ?? '';
 }
 
 export function setStoredToken(token: string): boolean {
   const trimmed = token.trim();
-  if (trimmed && isPlaceholderToken(trimmed)) return false;
   if (trimmed) storageSet(localStorage, API_TOKEN_KEY, trimmed);
   else storageRemove(localStorage, API_TOKEN_KEY);
   // Read back rather than trusting the write: a store that silently drops
@@ -66,7 +54,7 @@ export function setStoredToken(token: string): boolean {
   return getStoredToken() === trimmed;
 }
 
-type SignIn = { token: string; user: AuthUser; needsSecurityQuestion: boolean };
+type SignIn = { token: string; user: AuthUser };
 
 async function postJson<T>(url: string, body: unknown): Promise<T> {
   const { ok, data } = await fetchJson<T & { error?: string }>(url, {
@@ -81,12 +69,12 @@ async function postJson<T>(url: string, body: unknown): Promise<T> {
 }
 
 async function signIn(url: string, body: unknown): Promise<SignIn> {
-  const data = await postJson<{ token?: string; user?: AuthUser; needsSecurityQuestion?: boolean }>(url, body);
+  const data = await postJson<{ token?: string; user?: AuthUser }>(url, body);
   if (!data.token || !data.user) {
     throw new Error('Sign in failed');
   }
   setStoredToken(data.token);
-  return { token: data.token, user: data.user, needsSecurityQuestion: Boolean(data.needsSecurityQuestion) };
+  return { token: data.token, user: data.user };
 }
 
 export function registerAccount(username: string, password: string, question: string, answer: string): Promise<SignIn> {
@@ -113,10 +101,6 @@ export function linkPortfolioAccount(code: string, username: string, password: s
 
 export function newPortfolioAccount(code: string): Promise<SignIn> {
   return signIn('/api/auth/portfolio/new', { code });
-}
-
-export async function saveSecurityQuestion(question: string, answer: string): Promise<void> {
-  await postJson('/api/auth/security-question', { question, answer });
 }
 
 export async function resetQuestion(username: string): Promise<string> {

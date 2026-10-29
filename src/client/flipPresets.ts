@@ -6,9 +6,7 @@
 // currently in the drawer, so picking a method always produces the same scan
 // (Members is the one exception - see applyPreset in flip.ts).
 //
-// Six presets, which is what the toolbar grid is sized for. A one-off scan the
-// list doesn't cover is still reachable by hand: "Min. margin vs avg" plus the
-// x-avg sort is the old Widening Spread preset, for instance.
+// Six presets, which is what the toolbar grid is sized for.
 // Broad market views (Rising, Dropping, High Volume, Random) live on the
 // Grand Exchange page; everything here ranks by profit you would actually make.
 

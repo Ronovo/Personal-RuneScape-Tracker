@@ -374,7 +374,9 @@
       </div>
       <div class="card">
         <h3><span class="dot"></span>Progress from RuneLite</h3>
-        <p>What the hiscores don't show, synced from the
+        <p>What the hiscores don't show, synced by the
+          <a href="https://github.com/Ronovo/Ronovos-Sync-Tool">Ronovo's Sync Tool</a> plugin.
+          Leagues tasks come from the
           <a href="https://github.com/Ronovo/Leagues-Task-Plugin">Leagues Tasks</a> plugin.</p>
         <ul>
           <li>Quests, with type and membership filters</li>
@@ -415,18 +417,22 @@
     <h2>Plugin sync</h2>
     <p class="lede">
       Jagex doesn't publish quests, diaries, combat achievements or the collection log.
-      Those tabs fill in when you sync from the RuneLite plugin, pointed at your tracker.
+      Those tabs fill in when you sync from the
+      <a href="https://github.com/Ronovo/Ronovos-Sync-Tool">Ronovo's Sync Tool</a> RuneLite
+      plugin, pointed at your tracker.
     </p>
     <div class="panel-box">
       <ol class="steps">
         <li><span>Run the tracker (below) and copy your token with <b>Copy plugin token</b>
           in the header.</span></li>
-        <li><span>In the plugin's <b>Sync Settings</b>, set <b>Server URL</b> to the
+        <li><span>In Ronovo's Sync Tool's <b>Sync Settings</b>, set <b>Server URL</b> to the
           tracker's base address (for example <code>http://localhost:4123</code>, or
           <code>https://</code> for anything not on this computer) and paste the
           <b>API Token</b>.</span></li>
         <li><span>Log in to OSRS and press a Sync button. The collection log syncs from
-          the <b>Sync</b> button on the in-game Collection Log.</span></li>
+          the <b>Sync</b> button on the in-game Collection Log. Completed Leagues tasks
+          are read from the Leagues Tasks plugin, whose <b>Sync Progress</b> button
+          also sends them.</span></li>
       </ol>
       <p class="note">
         Each sync only updates the sections it sends. Leaving a section out never

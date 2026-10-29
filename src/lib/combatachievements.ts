@@ -1,4 +1,4 @@
-// Combat achievement progress comes from the Leagues Tasks plugin sync - the
+// Combat achievement progress comes from the Ronovo's Sync Tool plugin sync - the
 // plugin reads CA task varbits and total points when the user syncs.
 
 import { lookupCombatAchievementMeta } from './combatachievementmeta.js';

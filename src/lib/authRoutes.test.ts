@@ -235,11 +235,7 @@ test('public posture: a password reset needs the security answer and retires old
     const me = await fetch(`${base}/api/auth/me`, { headers: { Authorization: `Bearer ${token}` } });
     assert.equal(me.status, 401, 'the token from before the reset no longer works');
     const login = await post('login', { username: 'resetme', password: 'newpassword' });
-    const { token: fresh, needsSecurityQuestion } = await login.json() as { token: string; needsSecurityQuestion: boolean };
-    assert.equal(needsSecurityQuestion, false);
+    const { token: fresh } = await login.json() as { token: string };
     assert.equal((await fetch(`${base}/api/auth/me`, { headers: { Authorization: `Bearer ${fresh}` } })).status, 200);
-
-    assert.equal((await post('security-question', { question: QUESTION, answer: 'x' })).status, 401);
-    assert.equal((await post('security-question', { question: QUESTION, answer: 'Brown' }, fresh)).status, 200);
   });
 });

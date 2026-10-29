@@ -9,7 +9,7 @@ import { acceptLeaguesSync, acceptSectionSync, requirePlayerDataAuth, assertAllo
 import type { SyncSection } from './sync.js';
 import {
   authBankrolls, authLogin, authMe, authMintToken, authRegister, authResetPassword, authResetQuestion,
-  authSecurityQuestion, authStatus,
+  authStatus,
 } from './authRoutes.js';
 import { authPortfolio, authPortfolioLink, authPortfolioNew, authPortfolioPending, ssoCallback, ssoLogin } from './portfolio.js';
 import { fetchQuestProgress } from './quests.js';
@@ -73,11 +73,8 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
 
-// Every route follows the same "run the handler, JSON-ify a thrown httpError"
-// shape; this removes the identical try/catch each one used to repeat. The
-// JSON-ifying itself lives in jsonErrors() below, so route rejections and
-// errors thrown by middleware (a malformed body never reaches a handler) are
-// shaped by one piece of code rather than two that can drift.
+// Runs an async handler and passes a rejection to jsonErrors() below, which
+// also shapes errors thrown by middleware.
 function asyncHandler(
   handler: (req: Request, res: Response) => Promise<void>
 ): (req: Request, res: Response, next: NextFunction) => void {
@@ -151,9 +148,8 @@ export function createApp(): Express {
   app.use(securityHeaders);
   app.use(express.json({ limit: '1mb' }));
 
-  // Ahead of the rate limiter so uptime checks are never throttled. The
-  // version answers the question you actually have after a rebuild: not "is
-  // something up" but "is the thing I just built the thing that is up".
+  // Ahead of the rate limiter so uptime checks are never throttled. The version
+  // shows which build is running.
   app.get('/api/health', (_req, res) => {
     res.json({ ok: true, version: APP_VERSION });
   });
@@ -171,7 +167,6 @@ export function createApp(): Express {
   app.post('/api/auth/portfolio/link', authLimiter, asyncHandler(authPortfolioLink));
   app.post('/api/auth/portfolio/new', authLimiter, asyncHandler(authPortfolioNew));
   app.post('/api/auth/bankrolls', asyncHandler(authBankrolls));
-  app.post('/api/auth/security-question', authLimiter, asyncHandler(authSecurityQuestion));
   app.post('/api/auth/reset-question', authLimiter, asyncHandler(authResetQuestion));
   app.post('/api/auth/reset-password', authLimiter, asyncHandler(authResetPassword));
   app.get('/sso/login', ssoLogin);
@@ -182,7 +177,7 @@ export function createApp(): Express {
     res.json(data);
   }));
 
-  // Collection log, read from the Leagues Tasks plugin sync. 404 if the player hasn't synced.
+  // Collection log, read from the Ronovo's Sync Tool plugin sync. 404 if the player hasn't synced.
   app.get('/api/collectionlog/:username', asyncHandler(async (req, res) => {
     const username = String(req.params.username);
     await playerDataAuth(req, username);
@@ -202,8 +197,6 @@ export function createApp(): Express {
     const membersOnly = membersFilter(req.query.membersOnly);
     const sort = whitelisted(req.query.sort, MOVERS_SORTS, 'pctChange');
     const sortDir: SortDir = req.query.sortDir === 'asc' ? 'asc' : 'desc';
-    // Clamped at both ends: `?limit=-1` used to reach .slice(0, -1), which
-    // quietly returned the page minus its last row.
     const limit = clamp(num(req.query.limit, 25), 1, 50);
     const view = whitelisted(req.query.view, GE_VIEWS, 'risers');
     const seed = typeof req.query.seed === 'string' ? req.query.seed.slice(0, 64) : '';
