@@ -1,5 +1,6 @@
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
+import { SECURITY_QUESTIONS } from '../shared/securityQuestions.js';
 import { generateKeyPairSync } from 'node:crypto';
 import fs from 'node:fs/promises';
 import os from 'node:os';
@@ -73,6 +74,17 @@ async function portfolioLogin(sub: string): Promise<{ page: string; code: string
   return { page: location.pathname, code: location.searchParams.get(param)! };
 }
 
+const EXPIRED = 'Your portfolio login expired. Try again.';
+const REJECTED = "That portfolio login didn't check out. Try again.";
+
+/** The reason a failed callback sent the browser to the log in page with. */
+function loginError(res: Response): string | null {
+  assert.equal(res.status, 302);
+  const location = new URL(res.headers.get('location')!, base);
+  assert.equal(location.pathname, '/login.html');
+  return location.searchParams.get('error');
+}
+
 type LoginReply = { token: string; user: { id: string; username: string } };
 type BankrollReply = { bankrolls: Record<string, { value: number; savedAt: number }> };
 
@@ -90,13 +102,13 @@ test('status offers portfolio login and the portfolio address when it is configu
   assert.ok(res.headers.get('content-security-policy')?.includes("connect-src 'self' http://portfolio.test;"));
 });
 
-test('callback rejects a wrong state, another app\'s token and an expired token', async () => {
+test('callback sends a wrong state, another app\'s token and an expired token back to the log in page', async () => {
   const first = await startLogin();
-  assert.equal((await callback('wrong', first.cookie, await portfolioToken('1'))).status, 400);
+  assert.equal(loginError(await callback('wrong', first.cookie, await portfolioToken('1'))), EXPIRED);
   const second = await startLogin();
-  assert.equal((await callback(second.state, second.cookie, await portfolioToken('1', { aud: 'casino' }))).status, 400);
+  assert.equal(loginError(await callback(second.state, second.cookie, await portfolioToken('1', { aud: 'casino' }))), REJECTED);
   const third = await startLogin();
-  assert.equal((await callback(third.state, third.cookie, await portfolioToken('1', { expiresIn: '-10s' }))).status, 400);
+  assert.equal(loginError(await callback(third.state, third.cookie, await portfolioToken('1', { expiresIn: '-10s' }))), REJECTED);
 });
 
 test('the first portfolio login asks, then a new account is shared by every device', async () => {
@@ -117,7 +129,7 @@ test('the first portfolio login asks, then a new account is shared by every devi
 
 test('an existing account can be linked once', async () => {
   const registered = await (await postJson('/api/auth/register', {
-    username: 'linker', password: 'password1', question: "What is your mother's maiden name?", answer: 'rex',
+    username: 'linker', password: 'password1', question: SECURITY_QUESTIONS[0], answer: 'rex',
   })).json() as LoginReply;
 
   const { code } = await portfolioLogin('20');
@@ -143,7 +155,7 @@ test('made-up codes are refused', async () => {
 
 test('bankrolls merge per player with the newer value winning', async () => {
   const { token } = await (await postJson('/api/auth/register', {
-    username: 'bank', password: 'password1', question: "What is your mother's maiden name?", answer: 'rex',
+    username: 'bank', password: 'password1', question: SECURITY_QUESTIONS[0], answer: 'rex',
   })).json() as LoginReply;
   assert.equal((await postJson('/api/auth/bankrolls', { bankrolls: {} })).status, 401);
 
@@ -166,7 +178,7 @@ test('bankrolls merge per player with the newer value winning', async () => {
 
 test('bankroll entries that are empty or not amounts are skipped', async () => {
   const { token } = await (await postJson('/api/auth/register', {
-    username: 'bank2', password: 'password1', question: "What is your mother's maiden name?", answer: 'rex',
+    username: 'bank2', password: 'password1', question: SECURITY_QUESTIONS[0], answer: 'rex',
   })).json() as LoginReply;
   const reply = await (await postJson('/api/auth/bankrolls', {
     bankrolls: { empty: null, words: { value: 'lots', savedAt: 1 }, kept: { value: 3, savedAt: 1 } },
@@ -176,12 +188,12 @@ test('bankroll entries that are empty or not amounts are skipped', async () => {
 
 test('callback refuses a login with no state cookie, or a token with an empty subject', async () => {
   const { state } = await startLogin();
-  assert.equal((await callback(state, '', await portfolioToken('1'))).status, 400);
+  assert.equal(loginError(await callback(state, '', await portfolioToken('1'))), EXPIRED);
   const next = await startLogin();
-  assert.equal((await callback(next.state, next.cookie, await portfolioToken(''))).status, 400);
+  assert.equal(loginError(await callback(next.state, next.cookie, await portfolioToken(''))), REJECTED);
 });
 
-test('callback refuses a browser that sends no cookies or no form at all', async () => {
+test('callback refuses a browser that sends no cookies, no form at all, or a form with no token', async () => {
   const { state } = await startLogin();
   const noCookies = await fetch(`${base}/sso/callback`, {
     method: 'POST',
@@ -189,10 +201,18 @@ test('callback refuses a browser that sends no cookies or no form at all', async
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({ state, token: await portfolioToken('1') }),
   });
-  assert.equal(noCookies.status, 400);
+  assert.equal(loginError(noCookies), EXPIRED);
   const next = await startLogin();
   const noForm = await fetch(`${base}/sso/callback`, { method: 'POST', redirect: 'manual', headers: { Cookie: next.cookie } });
-  assert.equal(noForm.status, 400);
+  assert.equal(loginError(noForm), EXPIRED);
+  const last = await startLogin();
+  const noToken = await fetch(`${base}/sso/callback`, {
+    method: 'POST',
+    redirect: 'manual',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded', Cookie: last.cookie },
+    body: new URLSearchParams({ state: last.state }),
+  });
+  assert.equal(loginError(noToken), REJECTED);
 });
 
 test('a login code that is not text is refused', async () => {

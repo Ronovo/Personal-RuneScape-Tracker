@@ -1,5 +1,6 @@
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
+import { SECURITY_QUESTIONS } from '../shared/securityQuestions.js';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -12,7 +13,7 @@ const { mintApiToken, mintWildcardToken, requireBearerToken, extractBearerToken 
 const { registerUser, loginUser, bindJagexAccountForSync } = await import('./users.js');
 
 before(async () => {
-  await registerUser('jwt-user', 'password123', "What is your mother's maiden name?", 'rex');
+  await registerUser('jwt-user', 'password123', SECURITY_QUESTIONS[0], 'rex');
 });
 
 after(async () => {

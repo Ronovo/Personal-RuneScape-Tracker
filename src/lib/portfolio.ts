@@ -15,12 +15,15 @@ import { getUserById, getUserByPortfolioSub, linkPortfolio, loginUser, portfolio
 // /api/auth/portfolio for this app's own API token. The first time, it sends
 // the page to link.html with a different code (?link=) instead, where the
 // player links an account they already have or makes a new one. The two names
-// differ because every page's chrome script consumes ?portfolio=.
+// differ because every page's chrome script consumes ?portfolio=. A callback
+// that fails sends the browser to login.html with the reason in ?error=.
 
 const APP_ID = 'osrs-tracker';
 const ISSUER = 'portfolio';
 const STATE_COOKIE = 'osrs_tracker_sso_state';
 const LOGIN_TTL_MS = 10 * 60 * 1000;
+const EXPIRED_LOGIN = 'Your portfolio login expired. Try again.';
+const REJECTED_LOGIN = "That portfolio login didn't check out. Try again.";
 
 interface PendingLogin {
   userId: string;
@@ -100,25 +103,32 @@ export function ssoLogin(req: Request, res: Response): void {
   res.redirect(`${portfolioUrl()}/sso/authorize?${query.toString()}`);
 }
 
+function loginFailed(res: Response, message: string): void {
+  res.redirect(`/login.html?${new URLSearchParams({ error: message }).toString()}`);
+}
+
 export async function ssoCallback(req: Request, res: Response): Promise<void> {
   requireConfigured();
   const expected = readCookie(req, STATE_COOKIE);
   res.clearCookie(STATE_COOKIE, { path: '/sso' });
   const { state, token } = (req.body ?? {}) as Record<string, unknown>;
-  if (!expected || typeof state !== 'string' || typeof token !== 'string' || !sameString(expected, state)) {
-    throw httpError('Invalid portfolio login', 400);
+  if (!expected || typeof state !== 'string' || !sameString(expected, state)) {
+    loginFailed(res, EXPIRED_LOGIN);
+    return;
   }
 
   let payload;
   try {
-    ({ payload } = await jwtVerify(token, publicKey(), {
+    ({ payload } = await jwtVerify(typeof token === 'string' ? token : '', publicKey(), {
       algorithms: ['RS256'], audience: APP_ID, issuer: ISSUER, requiredClaims: ['exp', 'sub'],
     }));
   } catch {
-    throw httpError('Invalid portfolio login', 400);
+    loginFailed(res, REJECTED_LOGIN);
+    return;
   }
   if (typeof payload.sub !== 'string' || !payload.sub) {
-    throw httpError('Invalid portfolio login', 400);
+    loginFailed(res, REJECTED_LOGIN);
+    return;
   }
 
   const expires = Date.now() + LOGIN_TTL_MS;

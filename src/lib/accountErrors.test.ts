@@ -1,5 +1,6 @@
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
+import { SECURITY_QUESTIONS } from '../shared/securityQuestions.js';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -23,7 +24,7 @@ const auth = await import('./auth.js');
 const server = createApp().listen(0);
 await new Promise<void>((resolve) => server.once('listening', resolve));
 const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
-const QUESTION = "What is your mother's maiden name?";
+const QUESTION = SECURITY_QUESTIONS[0]!;
 
 after(async () => {
   await new Promise<void>((resolve, reject) => server.close((err) => (err ? reject(err) : resolve())));

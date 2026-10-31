@@ -5,7 +5,7 @@ import { el, errorMessage, escapeHtml } from './format.js';
 import { syncBankrolls } from './identity.js';
 import {
   linkPortfolioAccount, loadAuthStatus, loginAccount, newPortfolioAccount, portfolioPending, registerAccount,
-  resetPassword, resetQuestion, wirePortfolioButton,
+  resetPassword, resetQuestion, wirePortfolioButton, type AuthStatus,
 } from './auth.js';
 
 function fieldValue(id: string): string {
@@ -53,7 +53,7 @@ async function finishSignIn(): Promise<void> {
   location.href = 'index.html';
 }
 
-function wireRegister(portfolio: boolean, portfolioUrl: string | undefined): void {
+function wireRegister(): void {
   onSubmit('registerForm', async () => {
     if (fieldValue('registerPassword') !== fieldValue('registerConfirm')) {
       throw new Error('Passwords do not match');
@@ -62,17 +62,30 @@ function wireRegister(portfolio: boolean, portfolioUrl: string | undefined): voi
       fieldValue('registerQuestion'), fieldValue('registerAnswer'));
     await finishSignIn();
   }, 'Registration failed');
+}
 
+// The log in and register pages offer portfolio login under their forms.
+function wirePagePortfolioButton(status: AuthStatus): void {
   const portfolioBtn = el<HTMLElement | null>('pagePortfolioBtn');
-  if (portfolio && portfolioBtn) {
+  if (status.portfolio && portfolioBtn) {
     el('portfolioLink').hidden = false;
-    wirePortfolioButton(portfolioBtn, portfolioUrl);
+    wirePortfolioButton(portfolioBtn, status.portfolioUrl);
   }
+}
+
+// A failed portfolio login lands on login.html?error=<reason>. The reason comes
+// out of the address bar straight away so a reload or a shared link won't show it again.
+function showLoginError(): void {
+  const error = new URLSearchParams(location.search).get('error');
+  if (!error) return;
+  history.replaceState(null, '', location.pathname);
+  showMessage(error, true);
 }
 
 // Reset takes two steps: the username brings up its security question, then
 // the answer and a new password change it.
 function wireLogin(): void {
+  showLoginError();
   onSubmit('loginForm', async () => {
     await loginAccount(fieldValue('loginUsername').trim(), fieldValue('loginPassword'));
     await finishSignIn();
@@ -146,7 +159,8 @@ async function mountAccountPage(): Promise<void> {
     return;
   }
   fillSecurityFields();
-  if (el<HTMLElement | null>('registerForm')) wireRegister(Boolean(status.portfolio), status.portfolioUrl);
+  wirePagePortfolioButton(status);
+  if (el<HTMLElement | null>('registerForm')) wireRegister();
   if (el<HTMLElement | null>('loginForm')) wireLogin();
   if (el<HTMLElement | null>('linkForm')) await wireLinkPage();
 }

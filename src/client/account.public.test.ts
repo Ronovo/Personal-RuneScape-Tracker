@@ -78,6 +78,23 @@ test('logging in goes home, and a wrong password says so', async () => {
   assert.equal(page.navigations.length, 1);
 });
 
+test('the log in page offers portfolio login, named after the portfolio account, when the server has it', async () => {
+  const page = await open('login.html');
+  assert.equal(byId(page, 'portfolioLink').hidden, false);
+  assert.equal(byId(page, 'pagePortfolioBtn').textContent, 'Log in as Gambler');
+  click(page, 'pagePortfolioBtn');
+  assert.equal(page.navigations.length, 1);
+});
+
+test('a failed portfolio login shows its reason once and takes it out of the address bar', async () => {
+  const page = await open('login.html', {}, '?error=Your+portfolio+login+expired.+Try+again.');
+  assert.deepEqual(message(page), { text: 'Your portfolio login expired. Try again.', error: true, hidden: false });
+  assert.equal(page.window.location.search, '');
+  assert.equal(byId(page, 'loginForm').hidden, false);
+  click(page, 'forgotLink');
+  assert.equal(message(page).hidden, true);
+});
+
 test('a forgotten password is reset in two steps, and Back reloads the log in page', async () => {
   const page = await open('login.html', {
     'POST /api/auth/reset-question': { body: { question: SECURITY_QUESTIONS[2] } },
