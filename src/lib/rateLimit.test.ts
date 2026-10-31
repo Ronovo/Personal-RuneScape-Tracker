@@ -48,6 +48,21 @@ test('keyFn buckets requests separately', () => {
   assert.equal(status(), 429);
 });
 
+test('without an IP the limiter keys by the socket address, and then by one shared bucket', () => {
+  const mw = rateLimit({ windowMs: 60_000, max: 1 });
+  const noop: NextFunction = () => {};
+  const bySocket = countingRes();
+  mw({ socket: { remoteAddress: '3.3.3.3' } } as unknown as Request, bySocket.res, noop);
+  mw(fakeReq('3.3.3.3'), bySocket.res, noop);
+  assert.equal(bySocket.status(), 429);
+
+  const unknown = countingRes();
+  mw({ socket: {} } as unknown as Request, unknown.res, noop);
+  assert.equal(unknown.status(), 200);
+  mw({ socket: {} } as unknown as Request, unknown.res, noop);
+  assert.equal(unknown.status(), 429);
+});
+
 test('pruneStale drops keys with only stale timestamps, keeps live ones', () => {
   const now = 1_000_000;
   const hits = new Map<string, number[]>([

@@ -127,6 +127,34 @@ test('route round-trip: sync then read back leagues/quests/collectionlog', async
   assert.ok(ca.groups.length >= 1);
 });
 
+test('combat achievements are counted per boss, completed or not', async () => {
+  const username = 'ca-groups-user';
+  const postRes = await fetch(`${base}/api/sync/leagues`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...AUTH },
+    body: JSON.stringify({
+      username,
+      combatAchievements: {
+        points: 12,
+        tasks: [
+          { task: 'ABYSSALSIRE_KILLCOUNT_1', complete: true },
+          { task: 'ABYSSALSIRE_KILLCOUNT_2', complete: false },
+          { task: 'ABYSSALSIRE_MECHANICAL_1', complete: true },
+          { task: 'ABBERANT_SPECTRE_KILLCOUNT_1', complete: false },
+        ],
+      },
+    }),
+  });
+  assert.equal(postRes.status, 200);
+  const caRes = await fetch(`${base}/api/combatachievements/${username}`, { headers: AUTH });
+  const ca = (await caRes.json()) as { groups: { name: string; complete: number; total: number }[] };
+  assert.deepEqual(ca.groups.map(({ name, complete, total }) => ({ name, complete, total })), [
+    { name: 'Aberrant Spectre', complete: 0, total: 1 },
+    { name: 'Abyssal Sire', complete: 2, total: 3 },
+  ]);
+});
+
+
 test('POST sync omitting completedTasks preserves the previously synced tasks', async () => {
   const username = 'quests-only-usr';
   const firstRes = await fetch(`${base}/api/sync/leagues`, {
@@ -417,4 +445,53 @@ test('jsonErrors keeps a deliberate 5xx message and masks an unexpected one', as
   // body-parser tags its own failures with a `type`, which wins over both.
   assert.deepEqual(capture(Object.assign(new SyntaxError('Unexpected token'), { type: 'entity.parse.failed', statusCode: 400 })),
     { status: 400, body: { error: 'Invalid JSON body' } });
+});
+
+test('the coverage reports are served from their folder, without the client CSP', async () => {
+  const folder = await fs.mkdtemp(path.join(os.tmpdir(), 'osrs-app-coverage-'));
+  await fs.mkdir(path.join(folder, 'coverage', 'ts'), { recursive: true });
+  await fs.writeFile(path.join(folder, 'coverage', 'index.html'), 'landing page');
+  await fs.writeFile(path.join(folder, 'coverage', 'ts', 'index.html'), 'ts report');
+  await fs.writeFile(path.join(folder, 'secret.txt'), 'secret');
+  const reports = createApp({ coverageDir: path.join(folder, 'coverage') }).listen(0);
+  await new Promise<void>((resolve) => reports.once('listening', resolve));
+  const reportsBase = `http://127.0.0.1:${(reports.address() as AddressInfo).port}`;
+  try {
+    const bare = await fetch(`${reportsBase}/coverage`, { redirect: 'manual' });
+    assert.equal(bare.status, 301);
+    assert.equal(bare.headers.get('location'), '/coverage/');
+    const landing = await fetch(`${reportsBase}/coverage/`);
+    assert.equal(await landing.text(), 'landing page');
+    assert.equal(landing.headers.get('content-security-policy'), null);
+    assert.equal(await (await fetch(`${reportsBase}/coverage/ts/`)).text(), 'ts report');
+    assert.equal((await fetch(`${reportsBase}/coverage/js/`)).status, 404);
+    const escape = await fetch(`${reportsBase}/coverage/%2e%2e/secret.txt`);
+    assert.notEqual(escape.status, 200);
+    assert.notEqual(await escape.text(), 'secret');
+    assert.ok((await fetch(`${reportsBase}/`)).headers.get('content-security-policy'));
+  } finally {
+    await new Promise<void>((resolve) => reports.close(() => resolve()));
+    await fs.rm(folder, { recursive: true, force: true });
+  }
+});
+
+test('jsonErrors hands an error to Express once a response has started', async () => {
+  const { jsonErrors } = await import('./app.js');
+  const passed: unknown[] = [];
+  const err = new Error('late');
+  jsonErrors(err, {} as never, { headersSent: true } as never, (e?: unknown) => { passed.push(e); });
+  assert.deepEqual(passed, [err]);
+});
+
+test('TRUST_PROXY takes a hop count or a named preset', async () => {
+  const saved = process.env.TRUST_PROXY;
+  try {
+    for (const [value, expected] of [['2', 2], ['loopback', 'loopback'], ['  ', false]] as const) {
+      process.env.TRUST_PROXY = value;
+      assert.equal(createApp().get('trust proxy'), expected, `TRUST_PROXY="${value}"`);
+    }
+  } finally {
+    if (saved === undefined) delete process.env.TRUST_PROXY;
+    else process.env.TRUST_PROXY = saved;
+  }
 });

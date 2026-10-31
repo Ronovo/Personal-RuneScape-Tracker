@@ -413,6 +413,7 @@ export async function loadLeaguesSync(username: string): Promise<LeaguesSyncPayl
     try {
       setSection(stored, key, SECTIONS[key].parse(raw[key]));
     } catch (err) {
+      /* c8 ignore next - the section parsers only throw Errors */
       console.warn(`[sync] dropped ${username}'s stored ${key}: ${err instanceof Error ? err.message : String(err)}`);
     }
   }
@@ -422,6 +423,7 @@ export async function loadLeaguesSync(username: string): Promise<LeaguesSyncPayl
 async function bindJwtSyncIdentity(req: Request, username: string): Promise<void> {
   if (req.auth?.scope !== 'user' || !req.auth.userId) return;
   const hash = parseAccountHash(
+    /* c8 ignore next - parsePayload has already refused a body that is not an object */
     req.body && typeof req.body === 'object' ? (req.body as Record<string, unknown>).accountHash : undefined,
   );
   const user = await bindJagexAccountForSync(req.auth.userId, username, hash);

@@ -142,6 +142,19 @@ test('a field whose element is absent is skipped rather than throwing', () => {
   assert.ok(!('maxPrice' in row.read()));
 });
 
+test('a field the defaults do not mention is cleared to blank or unticked', () => {
+  const note = new FakeInput();
+  const pinned = new FakeInput();
+  note.value = 'old';
+  pinned.checked = true;
+  elements.set('note', note);
+  elements.set('pinned', pinned);
+  const wider = createFilterRow<Row>('test_filters', [{ id: 'note' }, { id: 'pinned', kind: 'checked' }], DEFAULTS);
+  wider.apply({});
+  assert.equal(note.value, '');
+  assert.equal(pinned.checked, false);
+});
+
 test('sortDirLabel and flipSortDir agree on which way is which', () => {
   assert.equal(sortDirLabel('desc'), '↓ High to low');
   assert.equal(sortDirLabel('asc'), '↑ Low to high');

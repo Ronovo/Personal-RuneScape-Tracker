@@ -2,6 +2,32 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { cachedByKey, makeCacheSlot } from './http.js';
 
+test('upstream calls name the contact a deployer sets, or the project repo', async () => {
+  const realFetch = globalThis.fetch;
+  const agents: (string | null)[] = [];
+  globalThis.fetch = (async (_url: string | URL, init?: RequestInit) => {
+    agents.push(new Headers(init?.headers).get('User-Agent'));
+    return new Response('{}');
+  }) as typeof fetch;
+  try {
+    let copy = 0;
+    for (const contact of ['  ops@example.test  ', '   ', undefined]) {
+      if (contact === undefined) delete process.env.WIKI_API_CONTACT;
+      else process.env.WIKI_API_CONTACT = contact;
+      const { fetchWithUserAgent } = (await import(`./http.js?copy=${++copy}`)) as typeof import('./http.js');
+      await fetchWithUserAgent('https://prices.example.test/latest');
+    }
+  } finally {
+    globalThis.fetch = realFetch;
+    delete process.env.WIKI_API_CONTACT;
+  }
+  assert.deepEqual(agents, [
+    'osrs-tracker (+ops@example.test)',
+    'osrs-tracker (+https://github.com/Ronovo/Personal-RuneScape-Tracker)',
+    'osrs-tracker (+https://github.com/Ronovo/Personal-RuneScape-Tracker)',
+  ]);
+});
+
 // Both cachedByKey and makeCacheSlot key their TTL check off Date.now(), so
 // mocking it gives deterministic expiry without real sleeps. Always awaits
 // fn's result before restoring Date.now - a bare try/finally around an async

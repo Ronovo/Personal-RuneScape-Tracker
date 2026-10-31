@@ -33,7 +33,7 @@ const MONSTER_PREFIX_TO_WIKI = {
   BRUTAL_BLACK_DRAGON: 'Brutal Black Dragon',
   BRYOPHYTA: 'Bryophyta',
   CALLISTO: 'Callisto',
-  CATA_BOSS: 'Cerberus',
+  CATA_BOSS: 'Skotizo',
   CERBERUS: 'Cerberus',
   CHAOSELE: 'Chaos Elemental',
   CHAOSFANATIC: 'Chaos Fanatic',
@@ -53,7 +53,7 @@ const MONSTER_PREFIX_TO_WIKI = {
   GREATER_DEMON: 'Greater Demon',
   HELLHOUND: 'Hellhound',
   HESPORI: 'Hespori',
-  HILLGIANT_BOSS: 'Giants',
+  HILLGIANT_BOSS: 'Obor',
   HYDRABOSS: 'Alchemical Hydra',
   JAD: 'TzTok-Jad',
   KALPHITE: 'Kalphite Queen',
@@ -79,7 +79,7 @@ const MONSTER_PREFIX_TO_WIKI = {
   THEATREOFBLOOD_STORY: 'Theatre of Blood: Entry Mode',
   THERMY: 'Thermonuclear Smoke Devil',
   THRALL: 'Whisperer',
-  TZHAARKETRAK: 'TzKal-Zuk',
+  TZHAARKETRAK: "TzHaar-Ket-Rak's Challenges",
   VENENATIS: 'Venenatis',
   VETION: 'Vet\'ion',
   VORKATH: 'Vorkath',
@@ -165,6 +165,7 @@ function buildWikiIndex(tasks) {
 function buildVarbitMappings(slugs, wikiByMonsterType) {
   const mapping = new Map();
   const groups = new Map();
+  const assignedTo = new Map();
 
   for (const slug of slugs) {
     const parsed = parseVarbitSlug(slug);
@@ -184,6 +185,12 @@ function buildVarbitMappings(slugs, wikiByMonsterType) {
 
     entries.sort((a, b) => a.index - b.index);
     for (let i = 0; i < entries.length && i < wikiTasks.length; i++) {
+      // Two prefixes pointed at one wiki monster would both be handed its tasks.
+      const taken = assignedTo.get(wikiTasks[i].id);
+      if (taken) {
+        throw new Error(`${taken} and ${entries[i].slug} both map to the wiki task "${wikiTasks[i].name}" - check MONSTER_PREFIX_TO_WIKI`);
+      }
+      assignedTo.set(wikiTasks[i].id, entries[i].slug);
       mapping.set(entries[i].slug, wikiTasks[i]);
     }
   }
@@ -247,6 +254,18 @@ function check() {
   if (missing.length) {
     console.error(`Metadata missing ${missing.length} varbit slug(s):`);
     for (const slug of missing.slice(0, 30)) console.error(`  ${slug}`);
+    process.exit(1);
+  }
+  const firstWithTask = new Map();
+  const shared = [];
+  for (const task of file.tasks) {
+    const key = `${task.monster}\0${task.type}\0${task.name}`;
+    if (firstWithTask.has(key)) shared.push(`${firstWithTask.get(key)} and ${task.slug} (${task.name})`);
+    else firstWithTask.set(key, task.slug);
+  }
+  if (shared.length) {
+    console.error(`${shared.length} pair(s) of varbit slugs share one wiki task:`);
+    for (const pair of shared) console.error(`  ${pair}`);
     process.exit(1);
   }
   console.log(`Metadata covers all ${slugs.length} varbit slugs`);

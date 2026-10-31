@@ -1,6 +1,6 @@
 {
   "source": "https://oldschool.runescape.wiki/api.php (bucket combat_achievement)",
-  "scrapedAt": "2026-08-26T17:33:21.637Z",
+  "scrapedAt": "2026-10-30T16:25:33.214Z",
   "tasks": [
     {
       "slug": "ABBERANT_SPECTRE_KILLCOUNT_1",
@@ -312,31 +312,52 @@
     },
     {
       "slug": "CATA_BOSS_KILLCOUNT_1",
-      "name": "Cerberus Veteran",
-      "monster": "Cerberus",
-      "tier": "Elite",
+      "name": "Skotizo Champion",
+      "monster": "Skotizo",
+      "tier": "Medium",
       "type": "Kill Count"
     },
     {
       "slug": "CATA_BOSS_KILLCOUNT_2",
-      "name": "Cerberus Master",
-      "monster": "Cerberus",
-      "tier": "Master",
+      "name": "Skotizo Adept",
+      "monster": "Skotizo",
+      "tier": "Hard",
       "type": "Kill Count"
     },
     {
       "slug": "CATA_BOSS_MECHANICAL_1",
-      "name": "Arooo No More",
-      "monster": "Cerberus",
-      "tier": "Master",
+      "name": "Demonic Weakening",
+      "monster": "Skotizo",
+      "tier": "Medium",
       "type": "Mechanical"
     },
     {
       "slug": "CATA_BOSS_PERFECTION_1",
-      "name": "Unrequired Antifire",
-      "monster": "Cerberus",
+      "name": "Demon Evasion",
+      "monster": "Skotizo",
       "tier": "Elite",
       "type": "Perfection"
+    },
+    {
+      "slug": "CATA_BOSS_RESTRICTION_1",
+      "name": "Demonbane Weaponry",
+      "monster": "Skotizo",
+      "tier": "Medium",
+      "type": "Restriction"
+    },
+    {
+      "slug": "CATA_BOSS_RESTRICTION_2",
+      "name": "Up for the Challenge",
+      "monster": "Skotizo",
+      "tier": "Elite",
+      "type": "Restriction"
+    },
+    {
+      "slug": "CATA_BOSS_RESTRICTION_3",
+      "name": "Precise Positioning",
+      "monster": "Skotizo",
+      "tier": "Master",
+      "type": "Restriction"
     },
     {
       "slug": "CERBERUS_KILLCOUNT_1",
@@ -893,10 +914,45 @@
     },
     {
       "slug": "HILLGIANT_BOSS_KILLCOUNT_1",
-      "name": "Into the Den of Giants",
-      "monster": "Giants",
+      "name": "Obor Novice",
+      "monster": "Obor",
       "tier": "Easy",
       "type": "Kill Count"
+    },
+    {
+      "slug": "HILLGIANT_BOSS_KILLCOUNT_2",
+      "name": "Obor Champion",
+      "monster": "Obor",
+      "tier": "Medium",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "HILLGIANT_BOSS_MECHANICAL_1",
+      "name": "Sleeping Giant",
+      "monster": "Obor",
+      "tier": "Easy",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "HILLGIANT_BOSS_MECHANICAL_2",
+      "name": "Back to the Wall",
+      "monster": "Obor",
+      "tier": "Medium",
+      "type": "Mechanical"
+    },
+    {
+      "slug": "HILLGIANT_BOSS_PERFECTION_1",
+      "name": "Squashing the Giant",
+      "monster": "Obor",
+      "tier": "Medium",
+      "type": "Perfection"
+    },
+    {
+      "slug": "HILLGIANT_BOSS_RESTRICTION_1",
+      "name": "Fighting as Intended",
+      "monster": "Obor",
+      "tier": "Easy",
+      "type": "Restriction"
     },
     {
       "slug": "HYDRABOSS_KILLCOUNT_1",
@@ -2020,57 +2076,78 @@
     },
     {
       "slug": "TZHAARKETRAK_KILLCOUNT_1",
-      "name": "Half-Way There",
-      "monster": "TzKal-Zuk",
+      "name": "The II Jad Challenge",
+      "monster": "TzHaar-Ket-Rak's Challenges",
       "tier": "Elite",
       "type": "Kill Count"
     },
     {
       "slug": "TZHAARKETRAK_KILLCOUNT_2",
-      "name": "Inferno Grandmaster",
-      "monster": "TzKal-Zuk",
+      "name": "The IV Jad Challenge",
+      "monster": "TzHaar-Ket-Rak's Challenges",
+      "tier": "Master",
+      "type": "Kill Count"
+    },
+    {
+      "slug": "TZHAARKETRAK_KILLCOUNT_3",
+      "name": "The VI Jad Challenge",
+      "monster": "TzHaar-Ket-Rak's Challenges",
       "tier": "Grandmaster",
       "type": "Kill Count"
     },
     {
       "slug": "TZHAARKETRAK_MECHANICAL_1",
-      "name": "The Floor Is Lava",
-      "monster": "TzKal-Zuk",
-      "tier": "Grandmaster",
+      "name": "Multi-Style Specialist",
+      "monster": "TzHaar-Ket-Rak's Challenges",
+      "tier": "Master",
       "type": "Mechanical"
     },
     {
       "slug": "TZHAARKETRAK_PERFECTION_1",
-      "name": "No Luck Required",
-      "monster": "TzKal-Zuk",
-      "tier": "Grandmaster",
-      "type": "Perfection"
-    },
-    {
-      "slug": "TZHAARKETRAK_PERFECTION_2",
-      "name": "Nibblers, Begone!",
-      "monster": "TzKal-Zuk",
+      "name": "Supplies? Who Needs 'em?",
+      "monster": "TzHaar-Ket-Rak's Challenges",
       "tier": "Master",
       "type": "Perfection"
     },
     {
-      "slug": "TZHAARKETRAK_RESTRICTION_1",
-      "name": "Wasn't Even Close",
-      "monster": "TzKal-Zuk",
+      "slug": "TZHAARKETRAK_PERFECTION_2",
+      "name": "It Wasn't a Fluke",
+      "monster": "TzHaar-Ket-Rak's Challenges",
       "tier": "Grandmaster",
+      "type": "Perfection"
+    },
+    {
+      "slug": "TZHAARKETRAK_RESTRICTION_1",
+      "name": "Facing Jad Head-on III",
+      "monster": "TzHaar-Ket-Rak's Challenges",
+      "tier": "Elite",
       "type": "Restriction"
     },
     {
       "slug": "TZHAARKETRAK_RESTRICTION_2",
-      "name": "Budget Setup",
-      "monster": "TzKal-Zuk",
-      "tier": "Grandmaster",
+      "name": "Facing Jad Head-on IV",
+      "monster": "TzHaar-Ket-Rak's Challenges",
+      "tier": "Master",
       "type": "Restriction"
     },
     {
       "slug": "TZHAARKETRAK_SPEED_1",
-      "name": "Inferno Speed-Runner",
-      "monster": "TzKal-Zuk",
+      "name": "TzHaar-Ket-Rak's Speed-Trialist",
+      "monster": "TzHaar-Ket-Rak's Challenges",
+      "tier": "Elite",
+      "type": "Speed"
+    },
+    {
+      "slug": "TZHAARKETRAK_SPEED_2",
+      "name": "TzHaar-Ket-Rak's Speed-Chaser",
+      "monster": "TzHaar-Ket-Rak's Challenges",
+      "tier": "Master",
+      "type": "Speed"
+    },
+    {
+      "slug": "TZHAARKETRAK_SPEED_3",
+      "name": "TzHaar-Ket-Rak's Speed-Runner",
+      "monster": "TzHaar-Ket-Rak's Challenges",
       "tier": "Grandmaster",
       "type": "Speed"
     },
@@ -2685,20 +2762,9 @@
     }
   ],
   "unmatched": [
-    "CATA_BOSS_RESTRICTION_1",
-    "CATA_BOSS_RESTRICTION_2",
-    "CATA_BOSS_RESTRICTION_3",
     "FILTER",
-    "HILLGIANT_BOSS_KILLCOUNT_2",
-    "HILLGIANT_BOSS_MECHANICAL_1",
-    "HILLGIANT_BOSS_MECHANICAL_2",
-    "HILLGIANT_BOSS_PERFECTION_1",
-    "HILLGIANT_BOSS_RESTRICTION_1",
     "TEMPOROSS_PERFECTION_0",
     "THRALL_MECHANICAL_1",
-    "TZHAARKETRAK_KILLCOUNT_3",
-    "TZHAARKETRAK_SPEED_2",
-    "TZHAARKETRAK_SPEED_3",
     "VORKATH_MECHANICAL_2",
     "WINTERTODT_PERFECTION_2"
   ]

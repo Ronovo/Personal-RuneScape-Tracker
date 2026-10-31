@@ -27,12 +27,14 @@ import { loadJsonAsset } from './jsonStore.js';
 import { apiRateLimit, authRateLimit } from './rateLimit.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const COVERAGE_DIR = path.join(__dirname, '..', '..', 'coverage');
 
 // package.json sits two levels up from dist/lib at runtime and from src/lib in
 // the tree, so the same relative path works either way.
 const APP_VERSION: string = loadJsonAsset<{ version?: string }>(
   import.meta.url,
   path.join('..', '..', 'package.json'),
+/* c8 ignore next - package.json always has a version */
 ).version ?? 'unknown';
 
 // Query params come in as strings; NaN should fall back rather than leak into filters.
@@ -116,7 +118,7 @@ async function playerDataAuth(req: Request, username: string): Promise<void> {
   assertAllowedUsername(req, username);
 }
 
-export function createApp(): Express {
+export function createApp({ coverageDir = COVERAGE_DIR }: { coverageDir?: string } = {}): Express {
   const app = express();
   app.disable('x-powered-by');
 
@@ -128,6 +130,9 @@ export function createApp(): Express {
   if (trustProxy) {
     app.set('trust proxy', /^\d+$/.test(trustProxy) ? Number(trustProxy) : trustProxy);
   }
+
+  // The test coverage reports. Their pages run inline scripts, so they are served ahead of the client's CSP.
+  app.use('/coverage', express.static(coverageDir));
 
   app.use(securityHeaders);
   app.use(express.json({ limit: '1mb' }));

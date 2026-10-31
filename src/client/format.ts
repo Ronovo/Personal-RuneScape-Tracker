@@ -112,30 +112,38 @@ export function escapeHtml(s: unknown): string {
 }
 
 // Web storage is not always available or writable: a locked-down or private
-// browsing context can throw on the very first access, and setItem throws
-// QuotaExceededError once a store is full. Both are recoverable - a lost
-// preference is not worth taking a page down for - but only if every access
-// goes through here. Reads fall back, writes report whether they landed.
-export function storageGet(store: Storage, key: string): string | null {
+// browsing context can throw on the very first access, which is reading the
+// localStorage property itself, and setItem throws QuotaExceededError once a
+// store is full. Both are recoverable - a lost preference is not worth taking
+// a page down for - but only if every access goes through here, so callers
+// name the store and it is read inside the try. Reads fall back, writes
+// report whether they landed.
+export type StoreName = 'local' | 'session';
+
+function webStorage(store: StoreName): Storage {
+  return store === 'local' ? localStorage : sessionStorage;
+}
+
+export function storageGet(store: StoreName, key: string): string | null {
   try {
-    return store.getItem(key);
+    return webStorage(store).getItem(key);
   } catch {
     return null;
   }
 }
 
-export function storageSet(store: Storage, key: string, value: string): boolean {
+export function storageSet(store: StoreName, key: string, value: string): boolean {
   try {
-    store.setItem(key, value);
+    webStorage(store).setItem(key, value);
     return true;
   } catch {
     return false;
   }
 }
 
-export function storageRemove(store: Storage, key: string): void {
+export function storageRemove(store: StoreName, key: string): void {
   try {
-    store.removeItem(key);
+    webStorage(store).removeItem(key);
   } catch {
     // Nothing to recover: the value is already unreadable to us.
   }
@@ -147,7 +155,7 @@ export const UNAUTHORIZED_HINT =
 
 export function apiAuthHeaders(extra?: Record<string, string>): Record<string, string> {
   const headers: Record<string, string> = { ...extra };
-  const token = storageGet(localStorage, API_TOKEN_KEY)?.trim();
+  const token = storageGet('local', API_TOKEN_KEY)?.trim();
   if (token) headers.Authorization = `Bearer ${token}`;
   return headers;
 }

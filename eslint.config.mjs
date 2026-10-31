@@ -11,7 +11,7 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   // public/ holds the compiled browser bundle (client/ and shared/).
-  { ignores: ['dist/**', 'public/**/*.js', 'node_modules/**'] },
+  { ignores: ['dist/**', 'public/**/*.js', 'node_modules/**', 'coverage/**'] },
   js.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
   {

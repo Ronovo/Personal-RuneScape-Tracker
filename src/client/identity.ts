@@ -24,16 +24,16 @@ export function emitSessionChange(): void {
 }
 
 export function clearUsername(): void {
-  storageRemove(localStorage, CURRENT_USER_KEY);
+  storageRemove('local', CURRENT_USER_KEY);
   emitSessionChange();
 }
 
 function readJson<T>(key: string, fallback: T): T {
-  return safeJsonParse(storageGet(localStorage, key), fallback);
+  return safeJsonParse(storageGet('local', key), fallback);
 }
 
 export function getUsername(): string | null {
-  return storageGet(localStorage, CURRENT_USER_KEY) || null;
+  return storageGet('local', CURRENT_USER_KEY) || null;
 }
 
 // Pre-fills a username box from the current session, if one is set.
@@ -49,10 +49,10 @@ export function getKnownUsers(): string[] {
 export function setUsername(name: string): void {
   const trimmed = name.trim();
   if (!trimmed) return;
-  storageSet(localStorage, CURRENT_USER_KEY, trimmed);
+  storageSet('local', CURRENT_USER_KEY, trimmed);
 
   const known = [trimmed, ...getKnownUsers().filter((n) => n.toLowerCase() !== trimmed.toLowerCase())].slice(0, KNOWN_USERS_MAX);
-  storageSet(localStorage, KNOWN_USERS_KEY, JSON.stringify(known));
+  storageSet('local', KNOWN_USERS_KEY, JSON.stringify(known));
 
   emitSessionChange();
 }
@@ -70,6 +70,8 @@ function userKey(prefix: string): string {
 // loadWatchlist() is the async call that fills it, at startup and whenever
 // the "Playing as" identity changes.
 let watchlistCache: number[] = [];
+// The name whose list watchlistCache holds (null for the guest list).
+let watchlistOwner: string | null = null;
 
 function guestWatchlist(): number[] {
   return readJson<number[]>(userKey('osrs_flip_watchlist'), []);
@@ -83,14 +85,23 @@ export async function loadWatchlist(): Promise<number[]> {
   const username = getUsername();
   if (!username) {
     watchlistCache = guestWatchlist();
+    watchlistOwner = null;
     return watchlistCache;
   }
 
   try {
     const { ok, data } = await fetchJson<{ itemIds?: number[] }>(`/api/watchlist/${encodeURIComponent(username)}`);
-    if (ok) watchlistCache = Array.isArray(data.itemIds) ? data.itemIds : [];
+    if (ok) {
+      watchlistCache = Array.isArray(data.itemIds) ? data.itemIds : [];
+      watchlistOwner = username;
+    }
   } catch {
     // Server unreachable - keep whatever's cached rather than blanking the list.
+  }
+  // A failed read keeps the cache only for the name it belongs to.
+  if (watchlistOwner !== username) {
+    watchlistCache = [];
+    watchlistOwner = username;
   }
   return watchlistCache;
 }
@@ -104,7 +115,7 @@ export function toggleWatchlist(id: number, onFail: (message: string) => void = 
 
   const username = getUsername();
   if (!username) {
-    storageSet(localStorage, userKey('osrs_flip_watchlist'), JSON.stringify(watchlistCache));
+    storageSet('local', userKey('osrs_flip_watchlist'), JSON.stringify(watchlistCache));
     return watchlistCache;
   }
 
@@ -122,7 +133,7 @@ export function toggleWatchlist(id: number, onFail: (message: string) => void = 
 
 // Bankroll for the Flip Helper "Fits My Bankroll" preset, same per-user bucket.
 export function getBankroll(): number {
-  const n = Number(storageGet(localStorage, userKey(BANKROLL_KEY)));
+  const n = Number(storageGet('local', userKey(BANKROLL_KEY)));
   return Number.isFinite(n) && n > 0 ? n : 0;
 }
 
@@ -131,8 +142,8 @@ export function setBankroll(n: number): number {
   if (!Number.isFinite(value) || value < 0) return getBankroll();
   // Only a real change is stamped, so opening Flip can't make a stale bankroll look newer than another device's.
   if (value === getBankroll()) return value;
-  storageSet(localStorage, userKey(BANKROLL_KEY), String(value));
-  storageSet(localStorage, userKey(BANKROLL_SAVED_KEY), String(Date.now()));
+  storageSet('local', userKey(BANKROLL_KEY), String(value));
+  storageSet('local', userKey(BANKROLL_SAVED_KEY), String(Date.now()));
   void syncBankrolls();
   return value;
 }
@@ -146,9 +157,9 @@ function localBankrolls(): Record<string, SavedBankroll> {
       const key = localStorage.key(i);
       if (!key?.startsWith(BANKROLL_PREFIX)) continue;
       const bucket = key.slice(BANKROLL_PREFIX.length);
-      const value = Number(storageGet(localStorage, key));
+      const value = Number(storageGet('local', key));
       if (!Number.isFinite(value) || value < 0) continue;
-      bankrolls[bucket] = { value, savedAt: Number(storageGet(localStorage, BANKROLL_SAVED_PREFIX + bucket)) || 0 };
+      bankrolls[bucket] = { value, savedAt: Number(storageGet('local', BANKROLL_SAVED_PREFIX + bucket)) || 0 };
     }
   } catch {
     // Storage blocked - nothing local to send.
@@ -164,7 +175,7 @@ function localBankrolls(): Record<string, SavedBankroll> {
  */
 export async function syncBankrolls(): Promise<boolean> {
   // Only an account token has bankrolls; a LAN host's browser holds the wildcard token instead.
-  if (!storageGet(localStorage, API_TOKEN_KEY) || (await loadAuthStatus()).mode !== 'public') return false;
+  if (!storageGet('local', API_TOKEN_KEY) || (await loadAuthStatus()).mode !== 'public') return false;
   let changed = false;
   try {
     const local = localBankrolls();
@@ -176,8 +187,8 @@ export async function syncBankrolls(): Promise<boolean> {
     if (!ok || !data.bankrolls) return false;
     for (const [bucket, entry] of Object.entries(data.bankrolls)) {
       if (local[bucket]?.value === entry.value) continue;
-      storageSet(localStorage, BANKROLL_PREFIX + bucket, String(entry.value));
-      storageSet(localStorage, BANKROLL_SAVED_PREFIX + bucket, String(entry.savedAt));
+      storageSet('local', BANKROLL_PREFIX + bucket, String(entry.value));
+      storageSet('local', BANKROLL_SAVED_PREFIX + bucket, String(entry.savedAt));
       changed = true;
     }
   } catch {

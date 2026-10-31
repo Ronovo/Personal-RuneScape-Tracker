@@ -47,6 +47,7 @@ function caGroupToggleLabel(): string {
   if (caGroupPanelOpen) return 'Hide boss filter';
   if (caSelectedGroup === 'all') return 'Filter by Boss';
   const group = caGroupsData.find((g) => g.key === caSelectedGroup);
+  /* c8 ignore next - each lookup resets the boss filter to All, so a selected boss is always in the list */
   return group ? `Filter by Boss: ${group.name}` : 'Filter by Boss';
 }
 

@@ -17,6 +17,7 @@ import type {
 
 function taskGroupKey(task: string): string {
   const idx = task.indexOf('_');
+  /* c8 ignore next - only slugs from the wiki metadata reach here, and every one has an underscore */
   return idx > 0 ? task.slice(0, idx) : task;
 }
 
@@ -92,6 +93,7 @@ export async function fetchCombatAchievements(username: string): Promise<CombatA
 
   const tasks = [...snapshot.tasks]
     .map(withTaskView)
+    /* c8 ignore next - no two tasks share a boss and a name, so the slug never decides the order */
     .sort((a, b) => a.group.localeCompare(b.group) || a.name.localeCompare(b.name) || a.task.localeCompare(b.task));
 
   return {

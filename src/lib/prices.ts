@@ -409,6 +409,7 @@ export async function getMovers({
           if (item.volume24h < 1_000) return false;
           return nowSec - Math.min(item.highTime, item.lowTime) <= STALE_SECONDS;
         })
+        /* c8 ignore next - two items only tie on a 32-bit hash collision */
         .sort((a, b) => hashForSeed(a) - hashForSeed(b) || a.id - b.id);
       break;
   }
@@ -609,6 +610,7 @@ export async function searchItems(query: string, membersOnly: MembersFilter = 'a
     });
   }
 
+  /* c8 ignore next - volume24h is always a number here */
   results.sort((a, b) => a.score - b.score || (b.volume24h ?? 0) - (a.volume24h ?? 0));
   return results.slice(0, limit).map(({ score: _score, ...rest }) => rest);
 }
@@ -643,8 +645,10 @@ export function describeConfidence(volume: number, age: number | null, marginVsA
     return { confidence: 'high', confidenceWhy: 'volume ≥ 10k · fresh · typical margin' };
   }
   if (volume >= CONFIDENCE_VOLUME_MEDIUM && age != null && age <= CONFIDENCE_AGE_MEDIUM_SEC && (marginVsAvg == null || marginVsAvg <= CONFIDENCE_MARGIN_MEDIUM_RATIO)) {
+    /* c8 ignore next - passing every check is high, so a medium always has a reason */
     return { confidence: 'medium', confidenceWhy: reasons.length ? reasons.join(' · ') : 'ok volume · reasonably fresh' };
   }
+  /* c8 ignore next - passing every check is high, so a low always has a reason */
   return { confidence: 'low', confidenceWhy: reasons.length ? reasons.join(' · ') : 'thin or stale' };
 }
 
@@ -661,6 +665,7 @@ function flipScore(
   age: number | null,
   confidence: Confidence
 ): number {
+  /* c8 ignore next - every flip row has an ROI, since a flip needs a buy price */
   const roiScore = clamp((roi ?? 0) / 10, 0, 1); // 10% ROI = full marks
   const throughputScore = clamp(Math.log10(Math.max(profitPerLimit ?? 1, 1)) / 7, 0, 1); // ~10m/limit
   const volumeScore = clamp(Math.log10(Math.max(volume24h, 1)) / 6, 0, 1); // ~1m/day
@@ -805,9 +810,11 @@ export async function getFlipCandidates({
       case 'capital': return item.capital ?? -Infinity;
       case 'age': return item.age ?? -Infinity;
       case 'profit': return item.profit;
+      /* c8 ignore next - every flip row has an ROI, since a flip needs a buy price */
       case 'roi': return item.roi ?? -Infinity;
       case 'volume': return item.volume24h;
       case 'realisticProfit': return realisticProfit(item, bankroll) ?? item.profitPerLimit ?? -Infinity;
+      /* c8 ignore next - every flip row has a margin */
       case 'margin': return item.margin ?? -Infinity;
       case 'marginVsAvg': return item.marginVsAvg ?? -Infinity;
       case 'score': return item.score;

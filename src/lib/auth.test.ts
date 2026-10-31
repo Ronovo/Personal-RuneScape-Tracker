@@ -86,4 +86,22 @@ test('requireBearerToken rejects any token when JWT_SECRET is unset', async () =
 test('extractBearerToken parses Authorization header', () => {
   const req = fakeReq('Bearer abc.def.ghi');
   assert.equal(extractBearerToken(req), 'abc.def.ghi');
+  assert.equal(extractBearerToken(fakeReq('Bearer    ')), undefined);
+});
+
+test('a token minted before tokens carried a version still works for an account that never changed its password', async () => {
+  const { SignJWT } = await import('jose');
+  const secret = new TextEncoder().encode('test-jwt-secret-for-auth-suite');
+  const user = await loginUser('jwt-user', 'password123');
+  const unversioned = await new SignJWT({ typ: 'api', sub: user.id }).setProtectedHeader({ alg: 'HS256' }).sign(secret);
+  const req = fakeReq(`Bearer ${unversioned}`);
+  await requireBearerToken(req);
+  assert.equal(req.auth?.userId, user.id);
+});
+
+test('requireBearerToken rejects a correctly signed token that is not an API token', async () => {
+  const { SignJWT } = await import('jose');
+  const secret = new TextEncoder().encode('test-jwt-secret-for-auth-suite');
+  const session = await new SignJWT({ typ: 'session', sub: 'jwt-user' }).setProtectedHeader({ alg: 'HS256' }).sign(secret);
+  await assert.rejects(() => requireBearerToken(fakeReq(`Bearer ${session}`)), /Unauthorized/);
 });

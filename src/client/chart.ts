@@ -37,6 +37,7 @@ function cssVar(name: string, fallback: string): string {
 
 // Nice-number rounding so y-axis ticks land on 1/2/5 * 10^n instead of ugly floats.
 function niceNum(range: number, round: boolean): number {
+  /* c8 ignore next 2 - niceTicks never passes a range of 0 */
   const exp = Math.floor(Math.log10(range || 1));
   const frac = (range || 1) / 10 ** exp;
   let nice: number;
@@ -44,6 +45,7 @@ function niceNum(range: number, round: boolean): number {
     if (frac < 1.5) nice = 1;
     else if (frac < 3) nice = 2;
     else if (frac < 7) nice = 5;
+    /* c8 ignore next - tick steps are a 1, 2 or 5 range divided by four, so the rounded step never reaches 7 */
     else nice = 10;
   } else if (frac <= 1) nice = 1;
   else if (frac <= 2) nice = 2;
@@ -133,6 +135,7 @@ function coordSegments(coords: (Coord | null)[]): Coord[][] {
 
 // Straight segments suit GE step data better than cubic splines.
 function linePath(coords: Coord[]): string {
+  /* c8 ignore next - coordSegments never makes an empty run, and the volume line needs two points */
   if (coords.length === 0) return '';
   if (coords.length === 1) return '';
   let d = `M ${coords[0]!.x.toFixed(1)},${coords[0]!.y.toFixed(1)}`;
@@ -143,6 +146,7 @@ function linePath(coords: Coord[]): string {
 }
 
 function areaPath(coords: Coord[], baseline: number): string {
+  /* c8 ignore next - areaPath only runs after linePath drew a line, which takes two points */
   if (coords.length < 2) return '';
   const first = coords[0]!;
   const last = coords[coords.length - 1]!;

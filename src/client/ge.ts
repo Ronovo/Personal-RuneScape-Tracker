@@ -90,8 +90,12 @@ function updateSortUi(): void {
   sortDirBtn.textContent = sortDirLabel(state.sortDir);
 }
 
+// The default and sizes saved on the other layout land on this layout's
+// equivalent; a saved size that is no size at all gets the default.
 function applyFiltersToForm(values: Partial<GeFilters>, sortDir?: SortDir): void {
-  filters.apply(values);
+  const wanted = mapGridSize(Number(values.gridSize ?? DEFAULTS.gridSize));
+  const gridSize = gridSizeChoices().includes(wanted) ? wanted : mapGridSize(Number(DEFAULTS.gridSize));
+  filters.apply({ ...values, gridSize: String(gridSize) });
   state.sortDir = sortDir === 'asc' || sortDir === 'desc'
     ? sortDir
     : defaultSortDir(sortByEl.value, state.view);
@@ -111,7 +115,7 @@ function restoreFilters(): void {
   // it, and setView's entering-a-view side effects would overwrite the saved
   // sort key and direction. It runs first because the direction fallback
   // depends on which view we are on.
-  setViewActive(saved.view && saved.view in VIEW_TITLES ? saved.view : 'risers');
+  setViewActive(saved.view && (Object.keys(VIEW_TITLES) as GeView[]).includes(saved.view) ? saved.view : 'risers');
   applyFiltersToForm(saved, saved.sortDir);
 }
 
@@ -145,6 +149,7 @@ function mapGridSize(n: number): number {
 
 function currentGridSize(): number {
   const n = Number(gridSizeEl.value);
+  /* c8 ignore next - the size box always holds one of its sizes */
   return Number.isFinite(n) && n > 0 ? n : gridSizeChoices()[2]!;
 }
 
@@ -174,6 +179,7 @@ function itemCell(item: MoverItem | SearchResult): string {
       </a>
       <span class="price">${priceHtml}</span>
       ${pctHtml}
+      /* c8 ignore next - the meta line always has the daily volume in it */
       ${metaBits.length ? `<span class="meta">${metaBits.join(' · ')}</span>` : ''}
       <a class="flip-link" href="flip.html?ids=${item.id}&amp;from=ge">Flip</a>
     </div>`;
@@ -312,6 +318,7 @@ searchInput.addEventListener('input', () => {
 
 viewButtons.forEach((btn) => {
   btn.addEventListener('click', () => {
+    clearTimeout(searchTimer);
     searchInput.value = '';
     setView(btn.dataset.view as GeView);
     void loadMovers();
@@ -350,6 +357,7 @@ MOBILE_MQ.addEventListener('change', () => {
   reloadGrid();
 });
 
-restoreFilters();
 syncGridSizeOptions();
+restoreFilters();
+f2p.sync();
 void loadMovers();

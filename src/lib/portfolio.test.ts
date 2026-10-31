@@ -163,3 +163,84 @@ test('bankrolls merge per player with the newer value winning', async () => {
   assert.deepEqual(Object.getOwnPropertyDescriptor(third.bankrolls, '__proto__')?.value, { value: 7, savedAt: 4000 });
   assert.deepEqual(Object.getOwnPropertyDescriptor(third.bankrolls, 'toString')?.value, { value: 8, savedAt: 4000 });
 });
+
+test('bankroll entries that are empty or not amounts are skipped', async () => {
+  const { token } = await (await postJson('/api/auth/register', {
+    username: 'bank2', password: 'password1', question: "What is your mother's maiden name?", answer: 'rex',
+  })).json() as LoginReply;
+  const reply = await (await postJson('/api/auth/bankrolls', {
+    bankrolls: { empty: null, words: { value: 'lots', savedAt: 1 }, kept: { value: 3, savedAt: 1 } },
+  }, token)).json() as BankrollReply;
+  assert.deepEqual(reply.bankrolls, { kept: { value: 3, savedAt: 1 } });
+});
+
+test('callback refuses a login with no state cookie, or a token with an empty subject', async () => {
+  const { state } = await startLogin();
+  assert.equal((await callback(state, '', await portfolioToken('1'))).status, 400);
+  const next = await startLogin();
+  assert.equal((await callback(next.state, next.cookie, await portfolioToken(''))).status, 400);
+});
+
+test('callback refuses a browser that sends no cookies or no form at all', async () => {
+  const { state } = await startLogin();
+  const noCookies = await fetch(`${base}/sso/callback`, {
+    method: 'POST',
+    redirect: 'manual',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ state, token: await portfolioToken('1') }),
+  });
+  assert.equal(noCookies.status, 400);
+  const next = await startLogin();
+  const noForm = await fetch(`${base}/sso/callback`, { method: 'POST', redirect: 'manual', headers: { Cookie: next.cookie } });
+  assert.equal(noForm.status, 400);
+});
+
+test('a login code that is not text is refused', async () => {
+  assert.equal((await postJson('/api/auth/portfolio', { code: 5 })).status, 400);
+  assert.equal((await postJson('/api/auth/portfolio', {})).status, 400);
+});
+
+test('a portfolio account with no name gets a made-up username', async () => {
+  const { state, cookie } = await startLogin();
+  const nameless = await new SignJWT({})
+    .setProtectedHeader({ alg: 'RS256' }).setIssuer('portfolio').setAudience('osrs-tracker').setSubject('50')
+    .setIssuedAt().setExpirationTime('5m').sign(privateKey);
+  const res = await callback(state, cookie, nameless);
+  const location = new URL(res.headers.get('location')!, base);
+  assert.equal(location.pathname, '/link.html');
+  const code = location.searchParams.get('link')!;
+  assert.deepEqual(await (await postJson('/api/auth/portfolio/pending', { code })).json(), { username: '' });
+  const made = await (await postJson('/api/auth/portfolio/new', { code })).json() as LoginReply;
+  assert.match(made.user.username, /^player\d*$/);
+});
+
+test('portfolio login is not offered when it is not set up', async () => {
+  const saved = process.env.PORTFOLIO_SSO_URL;
+  delete process.env.PORTFOLIO_SSO_URL;
+  try {
+    assert.equal((await fetch(`${base}/sso/login`, { redirect: 'manual' })).status, 404);
+  } finally {
+    process.env.PORTFOLIO_SSO_URL = saved;
+  }
+});
+
+test('a login code for an account removed since is refused', async () => {
+  const { storagePathFor } = await import('./jsonStore.js');
+  const { code } = await portfolioLogin('640');
+  const made = (await (await postJson('/api/auth/portfolio/new', { code })).json()) as LoginReply;
+  const again = await portfolioLogin('640');
+  await fs.rm(storagePathFor(usersTmp, made.user.id));
+  assert.equal((await postJson('/api/auth/portfolio', { code: again.code })).status, 401);
+});
+
+test('login codes left unused expire', async () => {
+  const { code } = await portfolioLogin('30');
+  const realNow = Date.now;
+  Date.now = () => realNow() + 11 * 60 * 1000;
+  try {
+    await portfolioLogin('31');
+    assert.equal((await postJson('/api/auth/portfolio/pending', { code })).status, 400);
+  } finally {
+    Date.now = realNow;
+  }
+});

@@ -40,6 +40,7 @@ const filterRow = createFilterRow<Record<string, string>>(FILTERS_KEY, [
   { id: 'membersOnly' },
   { id: 'pageSize' },
 ], {
+  /* c8 ignore start - DEFAULTS sets every one of these fields */
   minVolume: String(DEFAULTS.minVolume ?? ''),
   minPrice: String(DEFAULTS.minPrice ?? ''),
   maxPrice: '',
@@ -49,6 +50,7 @@ const filterRow = createFilterRow<Record<string, string>>(FILTERS_KEY, [
   maxAgeMinutes: '',
   membersOnly: DEFAULTS.membersOnly ?? 'all',
   pageSize: String(DEFAULTS.pageSize ?? 50),
+  /* c8 ignore stop */
 });
 
 // Toggleable table columns (Item and the action buttons are always shown;
@@ -98,8 +100,10 @@ const state: {
   page: number;
   totalPages: number;
 } = {
+  /* c8 ignore start - DEFAULTS sets both */
   sort: DEFAULTS.sort ?? 'profitPerLimit',
   sortDir: DEFAULTS.sortDir ?? 'desc',
+  /* c8 ignore stop */
   preset: null,
   idsFromUrl: null,
   page: 1,
@@ -116,7 +120,7 @@ let pendingCalculatorItemId: number | null = null;
 // Checkbox toggles during the session are scratch-only (see the columnsPanel
 // change listener below) - only Set as Default writes to DEFAULT_COLUMNS_KEY.
 function loadVisibleColumns(): Set<ColumnKey> {
-  const parsed = safeJsonParse<string[]>(storageGet(localStorage, DEFAULT_COLUMNS_KEY), []);
+  const parsed = safeJsonParse<string[]>(storageGet('local', DEFAULT_COLUMNS_KEY), []);
   const valid = parsed.filter((k): k is ColumnKey => (ALL_COLUMN_KEYS as string[]).includes(k));
   return valid.length ? new Set(valid) : new Set(FACTORY_DEFAULT_COLUMNS);
 }
@@ -137,14 +141,18 @@ function isColumnVisible(key: ColumnKey): boolean {
   return key !== 'realisticProfit' || bankrollOnForColumns;
 }
 
+function renderHeader(): void {
+  headRowEl.querySelectorAll('th[data-col]').forEach((th) => th.remove());
+  headRowEl.insertAdjacentHTML('beforeend', columnHeadersHtml(isColumnVisible));
+  updateSortUi();
+}
+
 // Rebuilds the header and, if rows are on screen, re-renders them for the new
 // column set. Hidden columns are left out of the markup entirely, so this is a
 // render rather than a visibility toggle - still no re-fetch, since the last
 // payload is kept in lastItems.
 function renderColumns(): void {
-  headRowEl.querySelectorAll('th[data-col]').forEach((th) => th.remove());
-  headRowEl.insertAdjacentHTML('beforeend', columnHeadersHtml(isColumnVisible));
-  updateSortUi();
+  renderHeader();
   document.querySelectorAll<HTMLInputElement>('#columnsPanel input[type="checkbox"]').forEach((cb) => {
     cb.checked = visibleColumns.has(cb.dataset.col as ColumnKey);
   });
@@ -216,6 +224,7 @@ function restoreFilters(): void {
   if (saved.sort && !FLIP_SORTS.includes(saved.sort)) {
     saved.sort = DEFAULTS.sort;
   }
+  if (saved.sortDir !== 'asc' && saved.sortDir !== 'desc') delete saved.sortDir;
   applyFiltersToForm(saved, getBankroll());
 }
 
@@ -246,6 +255,7 @@ function setPresetActive(name: PresetName | null): void {
 // not part of the scan method, so picking a preset must not silently clear it.
 function applyPreset(name: PresetName): void {
   const preset = PRESETS[name];
+  /* c8 ignore next - preset buttons only carry real preset names */
   if (!preset) return;
   const membersOnly = preset.membersOnly ?? (el<HTMLSelectElement>('membersOnly').value as MembersFilter);
   applyFiltersToForm({ ...presetFilters(name), membersOnly }, el<HTMLInputElement>('bankroll').value || getBankroll());
@@ -264,6 +274,7 @@ function buildQuery(): URLSearchParams | null {
   if (bankroll > 0) params.set('bankroll', String(bankroll));
   params.set('sort', state.sort);
   params.set('sortDir', state.sortDir);
+  /* c8 ignore next - the page size select always holds a value */
   params.set('pageSize', String(f.pageSize || 50));
   params.set('page', String(state.page));
 
@@ -287,6 +298,7 @@ function buildQuery(): URLSearchParams | null {
   params.set('minRoi', String(f.minRoi || 0));
   if (f.minMarginVsAvg !== '') params.set('minMarginVsAvg', String(f.minMarginVsAvg));
   if (f.maxAgeMinutes !== '') params.set('maxAgeMinutes', String(f.maxAgeMinutes));
+  /* c8 ignore next - the Members select always holds a value */
   params.set('membersOnly', f.membersOnly || 'all');
   if (state.preset === 'bankroll' && bankroll > 0) params.set('maxCapital', String(bankroll));
   const search = el<HTMLInputElement>('flipSearch').value.trim();
@@ -342,7 +354,11 @@ function renderCard(item: FlipItem, watched: Set<number>, ctx: { bankrollOn: boo
 
 function renderRows(items: FlipItem[], bankrollOn: boolean): void {
   const watched = watchedSet();
-  bankrollOnForColumns = bankrollOn;
+  // The bankroll decides whether Realistic is shown, so the header follows it.
+  if (bankrollOn !== bankrollOnForColumns) {
+    bankrollOnForColumns = bankrollOn;
+    renderHeader();
+  }
   lastItems = items;
   if (!items.length) {
     renderEmpty('No items match.');
@@ -439,6 +455,7 @@ function updateCalc(): void {
   const profitEach = sell - buy - taxEach;
   el('calcTax').textContent = fmtGp(taxEach * qty);
   el('calcProfit').textContent = fmtGp(profitEach * qty);
+  /* c8 ignore next - buy was checked above */
   el('calcRoi').textContent = fmtPct(buy ? (profitEach / buy) * 100 : null);
   el('calcCapital').textContent = fmtGp(buy * qty);
 }
@@ -453,6 +470,7 @@ function loadIntoCalculator(id: number, name: string, buy: number, sell: number,
         ...activeResultView,
         id,
         filters: { ...activeResultView.filters },
+        /* c8 ignore next 3 - there is no result view only while the table is empty, so no calculator button to press */
         idsFromUrl: activeResultView.idsFromUrl ? [...activeResultView.idsFromUrl] : null
       }
     : null;
@@ -468,6 +486,7 @@ function loadIntoCalculator(id: number, name: string, buy: number, sell: number,
 // scrolling, so pagination or later filter changes cannot strand the item.
 async function returnToCalculatorItem(): Promise<void> {
   const selection = calculatorSelection;
+  /* c8 ignore next - Return to item stays hidden until an item comes in from a result view */
   if (!selection) return;
 
   clearTimeout(searchTimer);
@@ -633,14 +652,14 @@ el('setDefaultBtn').addEventListener('click', () => {
   }
   clearTimeout(setDefaultArmTimer);
   setDefaultArmTimer = null;
-  storageSet(localStorage, DEFAULT_COLUMNS_KEY, JSON.stringify([...visibleColumns]));
+  storageSet('local', DEFAULT_COLUMNS_KEY, JSON.stringify([...visibleColumns]));
   el('setDefaultBtn').textContent = 'Set as Default';
   showColumnsStatus('Saved - this column set now loads by default.');
 });
 
 el('resetDefaultBtn').addEventListener('click', () => {
   cancelSetDefaultArmed();
-  storageRemove(localStorage, DEFAULT_COLUMNS_KEY);
+  storageRemove('local', DEFAULT_COLUMNS_KEY);
   visibleColumns = new Set(FACTORY_DEFAULT_COLUMNS);
   renderColumns();
   showColumnsStatus('Reset to the factory default columns.');
@@ -667,6 +686,7 @@ el('flipResults').addEventListener('click', (ev) => {
   if (!calcBtn) return;
   loadIntoCalculator(
     Number(calcBtn.dataset.id),
+    /* c8 ignore next - every calculator button carries a name */
     calcBtn.dataset.name ?? '',
     Number(calcBtn.dataset.buy),
     Number(calcBtn.dataset.sell),

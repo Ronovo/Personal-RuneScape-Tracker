@@ -313,6 +313,7 @@ export async function bindJagexAccountForSync(
     if (hashChanged || !hashOwner) {
       await writeClaim('hash-claims', next.accountHash!, next.id);
     }
+    /* c8 ignore next - an account only gains RSNs here, with its hash, so a known RSN means nothing changed */
     if (rsnChanged || !rsnOwner) {
       await writeClaim('rsn-claims', rsn, next.id);
     }
@@ -337,7 +338,7 @@ export async function getUserByPortfolioSub(sub: string): Promise<UserRecord | n
 }
 
 /** Links an account the player already has to their portfolio account. */
-export function linkPortfolio(userId: string, sub: string): Promise<UserRecord> {
+export async function linkPortfolio(userId: string, sub: string): Promise<UserRecord> {
   checkPortfolioSub(sub);
   return oneAtATime(`portfolio:${sub}`, () => oneAtATime(userId, async () => {
     const user = await requireUser(userId);
@@ -359,7 +360,7 @@ export function linkPortfolio(userId: string, sub: string): Promise<UserRecord> 
  * password is random and never shown, so logging in with the portfolio
  * account is the only way in.
  */
-export function portfolioUser(sub: string, portfolioName: string): Promise<UserRecord> {
+export async function portfolioUser(sub: string, portfolioName: string): Promise<UserRecord> {
   checkPortfolioSub(sub);
   return oneAtATime(`portfolio:${sub}`, async () => {
     const existing = await getUserByPortfolioSub(sub);
@@ -375,6 +376,7 @@ export function portfolioUser(sub: string, portfolioName: string): Promise<UserR
         return user;
       }
     }
+  /* c8 ignore next - the loop only ends by returning the new account */
   });
 }
 

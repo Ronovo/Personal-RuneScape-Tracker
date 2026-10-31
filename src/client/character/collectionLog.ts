@@ -48,6 +48,7 @@ function matchesProgressFilter(c: CollectionCategory): boolean {
 
 function renderGroupPills(groupName: string): void {
   const group = groupsData.find((g) => g.group === groupName);
+  /* c8 ignore next - the selected group always comes from the list */
   if (!group) return;
   const categories = group.categories.filter(matchesProgressFilter);
   if (!categories.length) {

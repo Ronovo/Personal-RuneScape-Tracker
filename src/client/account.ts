@@ -9,11 +9,13 @@ import {
 } from './auth.js';
 
 function fieldValue(id: string): string {
+  /* c8 ignore next - every field it reads is on the account page */
   return el<HTMLInputElement | HTMLSelectElement | null>(id)?.value ?? '';
 }
 
 function showMessage(text: string, isError = false): void {
   const message = el<HTMLElement | null>('accountMessage');
+  /* c8 ignore next - the account page always has its message line */
   if (!message) return;
   message.hidden = !text;
   message.textContent = text;

@@ -331,7 +331,7 @@ npm run build          # Build dist/ and browser JavaScript
 npm run build:server   # Build the Express server and copy its JSON asset
 npm run build:client   # Compile src/client and src/shared into public/client and public/shared
 npm test               # Build server and client, run both node:test suites
-npm run test:coverage  # Same, with a per-file coverage report
+npm run test:coverage  # Same, measured with c8: an HTML report in coverage/ts that fails below 100%
 npm start              # Build, then run the server (see npm run stop below)
 npm run stop           # Free the port by killing whatever is listening on it
 npm run restart        # stop, then start - for picking up a fresh build/config
@@ -339,6 +339,14 @@ npm run scrape:quests  # Refresh src/lib/quest-metadata.json from the wiki
 npm run scrape:combatachievements  # Refresh combat achievement metadata from the wiki
 npm run import:leagues -- <path>   # Refresh leagues-task-metadata.json from the plugin's leagues_tasks.json
 ```
+
+### Coverage
+
+`npm run test:coverage` builds with source maps so c8 reports against the TypeScript in `src/`, and counts every
+file, including the ones no test loads (`.c8rc.json`). The Docker image builds the report and serves it at
+`/coverage/`, under the landing page in `coverage-index/`, the `ronovos-coverage-index` submodule, with this repo's
+`coverage-reports.json`. The coverage pages are served ahead of the app's Content Security Policy because they run inline
+scripts. Failing tests or low coverage don't stop the image build; the report shows what is missing.
 
 ## Data sources
 

@@ -1,7 +1,19 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { lookupCombatAchievementMeta } from './combatachievementmeta.js';
+import { lookupCombatAchievementMeta, type CombatAchievementMeta } from './combatachievementmeta.js';
 import { withTaskView, summarizeCombatAchievements } from './combatachievements.js';
+import { loadJsonAsset } from './jsonStore.js';
+
+test('every varbit slug in the scraped metadata names a different wiki task', () => {
+  const { tasks } = loadJsonAsset<{ tasks: CombatAchievementMeta[] }>(import.meta.url, 'combat-achievement-metadata.json');
+  const bySignature = new Map<string, string[]>();
+  for (const task of tasks) {
+    const signature = `${task.monster} | ${task.type} | ${task.name}`;
+    bySignature.set(signature, [...(bySignature.get(signature) ?? []), task.slug]);
+  }
+  const shared = [...bySignature].filter(([, slugs]) => slugs.length > 1).map(([signature, slugs]) => `${signature}: ${slugs.join(', ')}`);
+  assert.deepEqual(shared, []);
+});
 
 test('lookupCombatAchievementMeta resolves a known varbit slug', () => {
   const meta = lookupCombatAchievementMeta('ABYSSALSIRE_KILLCOUNT_1');

@@ -64,6 +64,7 @@ let authNotice: { text: string; isError: boolean } | null = null;
 function currentPage(): string {
   const path = location.pathname;
   const i = path.lastIndexOf('/');
+  /* c8 ignore next - a page's path always starts with / */
   return i >= 0 ? path.slice(i + 1) : path;
 }
 
@@ -213,6 +214,7 @@ function wirePlayingAs(username: string | null): void {
   }
 
   const input = el<HTMLInputElement | null>('sessionUsernameInput');
+  /* c8 ignore next - the name box is drawn just before this runs */
   const submit = () => setUsername(input?.value ?? '');
   el<HTMLElement | null>('sessionSetBtn')?.addEventListener('click', submit);
   input?.addEventListener('keydown', (e) => {

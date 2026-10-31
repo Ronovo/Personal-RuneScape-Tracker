@@ -99,6 +99,7 @@ export function parseHiscoresCsv(text: string, username: string): HiscoresData {
   const skills: SkillEntry[] = SKILLS.map((name, i) => {
     // A short or malformed CSV line leaves these undefined; NaN keeps every
     // comparison below false, so the row falls back to rank null / level 1.
+    /* c8 ignore next 2 - the length check above gives every skill a line, and split always gives a first field */
     const [rank, level, xp] = (lines[i] ?? '').split(',').map(Number);
     const r = rank ?? NaN;
     const l = level ?? NaN;
@@ -120,6 +121,7 @@ export function parseHiscoresCsv(text: string, username: string): HiscoresData {
     if (activity.category === 'unknown' || activity.name === null) return;
     const line = activityLines[i];
     if (!line) return;
+    /* c8 ignore next 2 - split always gives a first field */
     const [rank, score] = line.split(',').map(Number);
     const r = rank ?? NaN;
     const s = score ?? NaN;

@@ -39,13 +39,13 @@ export async function loadAuthStatus(): Promise<AuthStatus> {
 }
 
 export function getStoredToken(): string {
-  return storageGet(localStorage, API_TOKEN_KEY)?.trim() ?? '';
+  return storageGet('local', API_TOKEN_KEY)?.trim() ?? '';
 }
 
 export function setStoredToken(token: string): boolean {
   const trimmed = token.trim();
-  if (trimmed) storageSet(localStorage, API_TOKEN_KEY, trimmed);
-  else storageRemove(localStorage, API_TOKEN_KEY);
+  if (trimmed) storageSet('local', API_TOKEN_KEY, trimmed);
+  else storageRemove('local', API_TOKEN_KEY);
   // Read back rather than trusting the write: a store that silently drops
   // values would otherwise leave the caller thinking the token was saved.
   return getStoredToken() === trimmed;

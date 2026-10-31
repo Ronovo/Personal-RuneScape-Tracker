@@ -11,6 +11,7 @@ const app = createApp();
 function lanUrls(port: number | string): string[] {
   const urls: string[] = [];
   for (const addrs of Object.values(os.networkInterfaces())) {
+    /* c8 ignore next - every interface networkInterfaces lists has addresses */
     for (const a of addrs || []) {
       if (a.family === 'IPv4' && !a.internal) urls.push(`http://${a.address}:${port}`);
     }
@@ -18,8 +19,10 @@ function lanUrls(port: number | string): string[] {
   return urls;
 }
 
-// 0.0.0.0 so it's reachable on LAN/phone, not just localhost.
-const server = app.listen(Number(PORT), '0.0.0.0', () => {
+// 0.0.0.0 so it's reachable on LAN/phone, not just localhost. Express 5 also
+// calls this on a listen error, which the 'error' handler below reports.
+const server = app.listen(Number(PORT), '0.0.0.0', (err?: Error) => {
+  if (err) return;
   console.log(`OSRS Tracker running at http://localhost:${PORT}`);
   for (const url of lanUrls(PORT)) {
     console.log(`Phone on LAN: ${url}`);
@@ -35,6 +38,7 @@ const server = app.listen(Number(PORT), '0.0.0.0', () => {
       .then((token) => {
         console.log(`\nLAN mode - stable plugin/browser API token:\n  ${token}\n`);
       })
+      /* c8 ignore next 3 - minting only fails without a JWT secret, and LAN mode is off without one */
       .catch((err: unknown) => {
         console.error('[auth] could not mint the LAN token:', err);
       });

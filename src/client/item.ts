@@ -23,19 +23,19 @@ const RANGE_KEY = 'osrs_item_range';
 let lastData: ItemDetail | null = null;
 
 function getRange(): PriceRange {
-  const stored = storageGet(localStorage, RANGE_KEY);
+  const stored = storageGet('local', RANGE_KEY);
   return (PRICE_RANGES as readonly string[]).includes(stored ?? '') ? (stored as PriceRange) : '1w';
 }
 
 function setRange(range: PriceRange): void {
-  storageSet(localStorage, RANGE_KEY, range);
+  storageSet('local', RANGE_KEY, range);
   rangeToggle.querySelectorAll<HTMLButtonElement>('button').forEach((b) => b.classList.toggle('active', b.dataset.range === range));
 }
 
 // sessionStorage, keyed by id AND range, so switching 1W → 1M doesn't show stale points.
 function getCached(id: number, range: PriceRange): ItemDetail | null {
   const entry = safeJsonParse<{ at: number; data: ItemDetail } | null>(
-    storageGet(sessionStorage, `ge_item_${id}_${range}`), null
+    storageGet('session', `ge_item_${id}_${range}`), null
   );
   if (!entry || Date.now() - entry.at > CACHE_TTL_MS) return null;
   return entry.data;
@@ -46,7 +46,7 @@ function getCached(id: number, range: PriceRange): ItemDetail | null {
 // cache is not a failure to load - storageSet swallows it, so a full store
 // cannot turn a successful fetch into "Failed to load item".
 function setCached(id: number, range: PriceRange, data: ItemDetail): void {
-  storageSet(sessionStorage, `ge_item_${id}_${range}`, JSON.stringify({ at: Date.now(), data }));
+  storageSet('session', `ge_item_${id}_${range}`, JSON.stringify({ at: Date.now(), data }));
 }
 
 function tile(value: string, label: string, valueClass = '', tooltip = ''): string {
@@ -83,6 +83,7 @@ function seriesState(): SeriesState {
 function drawChart(data: ItemDetail): void {
   renderChart(chartEl, {
     points: data.history ?? [],
+    /* c8 ignore next - render() has already read data.range, so it is always set */
     range: data.range ?? getRange(),
     series: seriesState(),
     rangeHigh: data.rangeHigh,
@@ -171,6 +172,7 @@ async function load(): Promise<void> {
   }
 
   statusEl.textContent = 'Loading...';
+  statusEl.classList.remove('error');
   try {
     const { ok, data } = await fetchJson<ItemDetail & ApiErrorBody>(`/api/ge/item/${id}?range=${range}`);
     if (!isCurrent()) return;

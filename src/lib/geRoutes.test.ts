@@ -33,6 +33,8 @@ function jsonResponse(body: unknown): Response {
 
 const originalFetch = globalThis.fetch;
 let base = '';
+let timeseriesCalls = 0;
+let timeseriesFails = false;
 
 globalThis.fetch = (async (url: string | URL, init?: RequestInit) => {
   const u = String(url);
@@ -48,6 +50,15 @@ globalThis.fetch = (async (url: string | URL, init?: RequestInit) => {
   }
   if (u.endsWith('/24h')) {
     return jsonResponse({ data: { [ITEM_ID]: { avgHighPrice: 800, avgLowPrice: 750, highPriceVolume: 2000, lowPriceVolume: 2000 } } });
+  }
+  if (u.includes('index_lite.ws')) {
+    const skills = Array.from({ length: 25 }, (_, i) => `${i + 1},99,13034431`);
+    return new Response([...skills, ...Array.from({ length: 21 }, () => '-1,-1')].join('\n'), { status: 200 });
+  }
+  if (u.includes('/timeseries?')) {
+    timeseriesCalls++;
+    if (timeseriesFails) return new Response('upstream down', { status: 503 });
+    return jsonResponse({ data: [{ timestamp: TRADE_TIME - 3600, avgHighPrice: 990, avgLowPrice: 890, highPriceVolume: 5, lowPriceVolume: 6 }] });
   }
   if (u.includes('/1h?timestamp=')) {
     return jsonResponse({ data: { [ITEM_ID]: { avgHighPrice: 950, avgLowPrice: 900 } } });
@@ -149,6 +160,26 @@ test('/api/ge/flips falls back to the nearest whitelisted pageSize', async () =>
   assert.equal(data.pageSize, 50);
 });
 
+test('/api/ge/flips ignores a blank or repeated name, but a real one filters', async () => {
+  const items = async (query: string) => {
+    const res = await fetch(`${base}/api/ge/flips?${query}`);
+    assert.equal(res.status, 200, query);
+    return ((await res.json()) as { items: { id: number }[] }).items.map((i) => i.id);
+  };
+  assert.deepEqual(await items('name=%20%20'), [ITEM_ID]);
+  assert.deepEqual(await items('name=nothing&name=alike'), [ITEM_ID]);
+  assert.deepEqual(await items('name=nothing'), []);
+  assert.deepEqual(await items('name=test%20item&sortDir=asc'), [ITEM_ID]);
+});
+
+test('/api/ge/movers Random takes a seed of any length, and treats a repeated one as no seed', async () => {
+  for (const seed of ['seed=abc', `seed=${'x'.repeat(200)}`, 'seed=a&seed=b']) {
+    const res = await fetch(`${base}/api/ge/movers?view=random&${seed}`);
+    assert.equal(res.status, 200, seed);
+    assert.ok(Array.isArray(((await res.json()) as { items: unknown[] }).items), seed);
+  }
+});
+
 test('/api/ge/flips ids= bypasses filters and drops non-integer entries', async () => {
   const res = await fetch(`${base}/api/ge/flips?ids=${ITEM_ID},notanumber&minVolume=999999999`);
   assert.equal(res.status, 200);
@@ -170,4 +201,32 @@ test('/api/ge/movers clamps limit at both ends', async () => {
   assert.equal((await risersFor('limit=0')).length, 1, 'and so does zero');
   assert.equal((await risersFor('limit=1')).length, 1);
   assert.ok((await risersFor('limit=9999')).length <= 50, 'still capped at 50');
+});
+
+test('/api/ge/item serves an item with its history, and a repeat within a minute from memory', async () => {
+  const before = timeseriesCalls;
+  const res = await fetch(`${base}/api/ge/item/${ITEM_ID}?range=1m`);
+  assert.equal(res.status, 200);
+  const item = (await res.json()) as { name: string; range: string; history: unknown[] };
+  assert.deepEqual([item.name, item.range, item.history.length], ['Test Item', '1m', 1]);
+  assert.equal((await fetch(`${base}/api/ge/item/${ITEM_ID}?range=1m`)).status, 200);
+  assert.equal(timeseriesCalls, before + 1);
+});
+
+test('/api/ge/item answers 502 when the price API fails', async () => {
+  timeseriesFails = true;
+  try {
+    const res = await fetch(`${base}/api/ge/item/${ITEM_ID}?range=3m`);
+    assert.equal(res.status, 502);
+  } finally {
+    timeseriesFails = false;
+  }
+});
+
+test('/api/hiscores answers with the player levels', async () => {
+  const res = await fetch(`${base}/api/hiscores/Zezima`);
+  assert.equal(res.status, 200);
+  const data = (await res.json()) as { skills: { level: number }[]; combatLevel: number };
+  assert.equal(data.skills.length, 25);
+  assert.equal(data.combatLevel, 126);
 });

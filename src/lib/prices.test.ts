@@ -679,6 +679,23 @@ test('getFlipCandidates: sorting (ascending/descending, including by name) and p
   assert.ok(pastTheEnd.items.length > 0);
 });
 
+test('getFlipCandidates sorts by every column the Flip Helper offers, highest first', async () => {
+  type Item = Awaited<ReturnType<typeof getFlipCandidates>>['items'][number];
+  const columns: Record<string, (r: Item) => number | null | undefined> = {
+    buy: (r) => r.buy, sell: (r) => r.sell, tax: (r) => r.tax, limit: (r) => r.limit, capital: (r) => r.capital,
+    age: (r) => r.age, profit: (r) => r.profit, roi: (r) => r.roi, volume: (r) => r.volume24h, margin: (r) => r.margin,
+    marginVsAvg: (r) => r.marginVsAvg, score: (r) => r.score, gpPerHour: (r) => r.gpPerHour,
+    profitPerLimit: (r) => r.profitPerLimit, confidence: (r) => ({ low: 0, medium: 1, high: 2 })[r.confidence],
+    realisticProfit: (r) => r.realisticProfit ?? r.profitPerLimit,
+  };
+  for (const [sort, value] of Object.entries(columns)) {
+    const { items } = await getFlipCandidates({ sort: sort as never, bankroll: 1_000_000, minVolume: 0, minPrice: 0, pageSize: 50 });
+    const values = items.map((r) => value(r) ?? -Infinity);
+    assert.ok(values.length > 1, sort);
+    assert.deepEqual(values, [...values].sort((a, b) => b - a), sort);
+  }
+});
+
 test('getFlipCandidates: marginVsAvg is current spread over the 24h-average spread, and minMarginVsAvg / sort use it', async () => {
   const all = await getFlipCandidates({ minVolume: 0, minPrice: 0, pageSize: 50 });
   const scimitar = all.items.find((i) => i.id === 1)!;

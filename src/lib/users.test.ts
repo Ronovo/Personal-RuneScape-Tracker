@@ -11,6 +11,7 @@ process.env.JWT_SECRET = 'users-test-secret';
 
 const {
   registerUser, loginUser, bindJagexAccountForSync, getUserById, mergeBankrolls, portfolioUser, resetPassword,
+  linkPortfolio,
   securityQuestionFor,
 } = await import('./users.js');
 const { SECURITY_QUESTIONS } = await import('../shared/securityQuestions.js');
@@ -170,4 +171,35 @@ test('a new portfolio account login makes one account, named after it, that has 
   await register('taken2');
   assert.equal((await portfolioUser('43', 'taken2')).username, 'taken22');
   await assert.rejects(() => resetPassword('ronovo', '', 'newpassword'), /logs in with the portfolio/);
+});
+
+test('a portfolio name that will not do as a username becomes "player", numbered when taken', async () => {
+  const first = (await portfolioUser('44', 'not a name!')).username;
+  const second = (await portfolioUser('45', '')).username;
+  assert.match(first, /^player\d*$/);
+  assert.match(second, /^player\d+$/);
+  assert.notEqual(first, second);
+});
+
+test('a security answer that is not text is no answer', async () => {
+  await assert.rejects(() => registerUser('numberanswer', 'longpassword', QUESTION, 42 as unknown as string),
+    /Answer your security question/);
+});
+
+test('a bad portfolio id comes back as a rejected promise, not a throw', async () => {
+  const first = await register('badsub');
+  let linking: Promise<unknown> | undefined;
+  let making: Promise<unknown> | undefined;
+  assert.doesNotThrow(() => { linking = linkPortfolio(first.id, '../escape'); });
+  assert.doesNotThrow(() => { making = portfolioUser('../escape', 'badsub'); });
+  await assert.rejects(linking!, /Invalid portfolio account/);
+  await assert.rejects(making!, /Invalid portfolio account/);
+});
+
+test('a portfolio account already linked to one tracker account cannot be linked to another', async () => {
+  const first = await register('linkedfirst');
+  const second = await register('linkedsecond');
+  await linkPortfolio(first.id, '77');
+  await assert.rejects(() => linkPortfolio(second.id, '77'), /already linked to another tracker account/);
+  assert.equal((await getUserById(second.id))?.portfolioSub, undefined);
 });

@@ -1,0 +1,8 @@
+{
+  "title": "Personal RuneScape Tracker",
+  "source": "https://github.com/Ronovo/Personal-RuneScape-Tracker",
+  "reports": [
+    { "label": "TypeScript", "path": "ts/", "summary": "coverage-summary.json", "format": "istanbul",
+      "about": "src/, the Express server and the browser pages, measured with c8 over node --test" }
+  ]
+}

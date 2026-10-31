@@ -81,15 +81,15 @@ export function createFilterRow<V extends Record<string, FilterValue>>(
   }
 
   function persist(extra: Record<string, unknown> = {}): void {
-    storageSet(localStorage, storageKey, JSON.stringify({ ...read(), ...extra }));
+    storageSet('local', storageKey, JSON.stringify({ ...read(), ...extra }));
   }
 
   function saved<T extends object>(): Partial<V> & Partial<T> {
-    return safeJsonParse<Partial<V> & Partial<T>>(storageGet(localStorage, storageKey), {});
+    return safeJsonParse<Partial<V> & Partial<T>>(storageGet('local', storageKey), {});
   }
 
   function clear(): void {
-    storageRemove(localStorage, storageKey);
+    storageRemove('local', storageKey);
   }
 
   return { read, apply, persist, saved, clear };

@@ -9,6 +9,7 @@ data/
 
 # Local build output and review notes.
 dist
+coverage
 public/client
 docs
 *.md

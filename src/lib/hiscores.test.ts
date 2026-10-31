@@ -61,6 +61,23 @@ test('parseHiscoresCsv maps activity lines to the right name by position', () =>
   assert.equal(data.bosses[0]!.score, 120);
 });
 
+test('parseHiscoresCsv files the other activities, keeps an unranked score, and reads short lines as unranked', () => {
+  const lines = buildCsv({ 1: '1000,25', 7: '-1,12', 16: '', 20: '50' }).split('\n');
+  lines[3] = '5';
+  lines[4] = 'x,y,z';
+  const data = parseHiscoresCsv(lines.join('\n'), 'testuser');
+  assert.deepEqual(data.others, [
+    { name: 'League Points', rank: 1000, score: 25 },
+    { name: 'Clue Scrolls (all)', rank: null, score: 12 },
+  ]);
+  assert.deepEqual(data.minigames, []);
+  assert.deepEqual(data.bosses, [{ name: 'Abyssal Sire', rank: 50, score: 0 }]);
+  assert.deepEqual(data.skills.slice(3, 5).map(({ rank, level, xp }) => ({ rank, level, xp })), [
+    { rank: 5, level: 1, xp: 0 },
+    { rank: null, level: 1, xp: 0 },
+  ]);
+});
+
 test('parseHiscoresCsv throws on a too-short response', () => {
   assert.throws(() => parseHiscoresCsv('1,1,1\n1,1,1', 'testuser'), /Unexpected hiscores response format/);
 });
